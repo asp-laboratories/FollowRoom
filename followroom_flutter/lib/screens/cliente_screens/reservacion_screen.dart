@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/reservacion_estado.dart';
