@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/inicio_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/reservacion_estado.dart';
 import 'package:followroom_flutter/screens/cliente_screens/solicitudes_screen.dart';
@@ -31,7 +32,7 @@ class _FollowRoomState extends State<FollowRoom> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("data"),),
+      appBar: AppBar(title: Text("Reservacion"),),
       body: _pantallas[_indiceSeleccionado],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -61,19 +62,5 @@ class _FollowRoomState extends State<FollowRoom> {
         ],
       ),
     );
-  }
-}
-
-class Reservacion extends StatefulWidget {
-  const Reservacion({super.key});
-
-  @override
-  State<Reservacion> createState() => _ReservacionState();
-}
-
-class _ReservacionState extends State<Reservacion> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
   }
 }

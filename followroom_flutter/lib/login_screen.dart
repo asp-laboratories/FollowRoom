@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:followroom_flutter/screens/cliente_screens/reservacion_screen.dart';
+import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart';
+import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart';
 import 'package:followroom_flutter/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -42,14 +43,19 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         SizedBox(height: 24,),
         ElevatedButton(onPressed: (){
+
           if(email.text == 'example' && password.text =='123'){
             Navigator.push(context,
             MaterialPageRoute(builder: (context)=>FollowRoom()));
+          } else if ((email.text == 'exa' && password.text =='321')){
+            Navigator.push(context,
+            MaterialPageRoute(builder: (context)=>Almacen()));
           } else {
-            setState(() {
+              setState(() {
               mensajeError = "Campos incorrectos";
-            });
+            });  
           }
+
         },
          child: Text("Iniciar sesión")),
          Text(mensajeError),
