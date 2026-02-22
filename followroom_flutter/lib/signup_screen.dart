@@ -10,7 +10,10 @@ class Registro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Regresar", style: TextEstilos.encabezados,), backgroundColor: AppColores.secundary,),
+      appBar: AppBar(
+        title: Text("Regresar", style: TextEstilos.encabezados),
+        backgroundColor: AppColores.secundary,
+      ),
       backgroundColor: AppColores.primary,
       body: Center(
         child: Padding(
@@ -26,8 +29,11 @@ class Registro extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
-                  Text("Registrate", style: TextEstilos.encabezados, textAlign: TextAlign.center,),
+                  Text(
+                    "Registrate",
+                    style: TextEstilos.encabezados,
+                    textAlign: TextAlign.center,
+                  ),
 
                   SizedBox(height: 24),
 
@@ -37,36 +43,36 @@ class Registro extends StatelessWidget {
                       prefixIcon: Icon(Icons.person),
                     ),
                   ),
-          
+
                   SizedBox(height: 12),
-          
+
                   TextField(
                     decoration: createAppDecoration(
                       labelText: 'Correo electronico',
                       prefixIcon: Icon(Icons.email),
                     ),
                   ),
-          
+
                   SizedBox(height: 12),
-          
+
                   TextField(
                     decoration: createAppDecoration(
                       labelText: 'Contraseña',
                       prefixIcon: Icon(Icons.password_sharp),
                     ),
                   ),
-          
+
                   SizedBox(height: 12),
-          
+
                   TextField(
                     decoration: createAppDecoration(
                       labelText: 'Confirmar contraseña',
                       prefixIcon: Icon(Icons.password_outlined),
                     ),
                   ),
-          
+
                   SizedBox(height: 12),
-          
+
                   ElevatedButton(
                     onPressed: () {},
                     child: Text("Registrarse"),

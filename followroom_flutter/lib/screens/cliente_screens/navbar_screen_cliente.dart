@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/inicio_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
@@ -20,10 +22,10 @@ class _FollowRoomState extends State<FollowRoom> {
     ReservacionEstado(),
     HistorialScreen(),
     SolicitudesScreen(),
-    ManualScreen()
+    ManualScreen(),
   ];
 
-  void _alPresionar(int indice){
+  void _alPresionar(int indice) {
     setState(() {
       _indiceSeleccionado = indice;
     });
@@ -32,34 +34,47 @@ class _FollowRoomState extends State<FollowRoom> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Reservacion"),),
+      appBar: AppBar(
+        title: Text("Reservacion", style: TextEstilos.encabezados),
+        backgroundColor: AppColores.primary,
+      ),
       body: _pantallas[_indiceSeleccionado],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _indiceSeleccionado,
-        onTap: _alPresionar,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: "Reservacion",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.watch_later),
-            label: "Estado",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.sms),
-            label: "Solicitar",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: "Historial",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_document),
-            label: "Manual",
-          ),
-        ],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+
+        child: BottomNavigationBar(
+          backgroundColor: AppColores.primary,
+          selectedItemColor: Colors.white,
+          //selectedFontSize: 16,
+          //unselectedFontSize: 14,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _indiceSeleccionado,
+          onTap: _alPresionar,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month),
+              label: "Reservacion",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.watch_later),
+              label: "Estado",
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.sms), label: "Solicitar"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: "Historial",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.edit_document),
+              label: "Manual",
+            ),
+          ],
+        ),
       ),
     );
   }
