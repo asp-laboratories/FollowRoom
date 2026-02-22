@@ -9,8 +9,8 @@ class AppColores {
   //static const Color background = Color(0xf2f8fc);
   //static const Color background = Color(0xf4f1f8);
   //static const Color background = Color(0xfcfcf7);
-  //static const Color backgroundComponent = Color(0xf5ddb2);
-  //static const Color backgroundComponentSelected = Color(0xf5ddb2); 
+  static const Color backgroundComponent = Color(0xFFF5DEB2);
+  static const Color backgroundComponentSelected = Color(0xFFF5DEB2); 
 
   static const Color foreground = Color(0xFF36454F);
   //static const Color foreground = Color(0x282828);
