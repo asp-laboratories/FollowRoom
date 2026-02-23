@@ -39,6 +39,7 @@ class _FollowRoomState extends State<FollowRoom> {
         backgroundColor: AppColores.primary,
       ),
       body: _pantallas[_indiceSeleccionado],
+      
       bottomNavigationBar: ClipRRect(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),

@@ -29,29 +29,54 @@ class _AlmacenState extends State<Almacen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Almacen"),),
+      
+      appBar: AppBar(title: Text("Almacen"), scrolledUnderElevation: 0, backgroundColor: const Color.fromARGB(255, 255, 255, 255),),
+
       body: _pantallas[_indiceSeleccionado],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _indiceSeleccionado,
-        onTap: _alPresionar,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: "Reservacion",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.sms),
-            label: "Solicitar",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_document),
-            label: "Manual",
-          ),
-        ],
+      
+      bottomNavigationBar: Theme(
+
+        data: ThemeData(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+
+        child: BottomNavigationBar(
+
+          type: BottomNavigationBarType.shifting,
+          currentIndex: _indiceSeleccionado,
+          onTap: _alPresionar,
+
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+        
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today_outlined, size: 24),
+              label: "Eventos",
+              activeIcon: Icon(Icons.calendar_month, size: 32),
+              tooltip: ("Ir a la seccion de eventos"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.check_box_outline_blank, size: 24),
+              label: "Estados",
+              activeIcon: Icon(Icons.check_box, size: 32),
+              tooltip: ("Ir a la seccion de estados"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.send_outlined, size: 24),
+              label: "Solicitudes",
+              activeIcon: Icon(Icons.send, size: 32),
+              tooltip: ("Ir a la seccion de solicitudes de eventos"),
+            ),
+          ],
+        ),
+
       ),
     );
+  
   }
+
 }
 
 

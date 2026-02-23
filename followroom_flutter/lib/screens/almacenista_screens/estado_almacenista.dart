@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/screens/almacenista_screens/subnavbar_almacenista.dart';
 
 class AlmacenistaEstadoScreen extends StatefulWidget {
   const AlmacenistaEstadoScreen({super.key});
@@ -8,8 +9,32 @@ class AlmacenistaEstadoScreen extends StatefulWidget {
 }
 
 class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
+  int _actualIndice = 0;
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Column(
+
+      children: [
+        Textos(
+          
+          texts: ['Mobiliarios', 'Equipamientos',],
+          
+          seleccionActual: _actualIndice,
+          
+          alSeleccionar: (int nuevoIndice) {
+            setState(() {
+              _actualIndice = nuevoIndice;
+            });
+          }, 
+        ),
+
+        Text("Hola q hacen")
+
+      ],
+
+    );
+  
   }
+
 }
