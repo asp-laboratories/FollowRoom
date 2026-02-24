@@ -35,6 +35,7 @@ class Textos extends StatelessWidget {
             labelStyle: TextStyle(
               color: estaSeleccionado ? Colors.white : Colors.black,
               fontWeight: estaSeleccionado ? FontWeight.bold : FontWeight.normal,
+              fontSize: estaSeleccionado ?16 :12,
 
             ),
 

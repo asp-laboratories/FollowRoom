@@ -200,7 +200,7 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
               ),
             ),
         ),
-      // Este salto es por la cosa ternaria
+      
     );
   }
 }

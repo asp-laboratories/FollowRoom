@@ -14,6 +14,8 @@ class Almacen extends StatefulWidget {
 class _AlmacenState extends State<Almacen> {
   int _indiceSeleccionado = 0;
 
+  final PageController _controladorPagina = PageController();
+
   final List<Widget> _pantallas = [
     InicioAlmacenista(),
     AlmacenistaEstadoScreen(),
@@ -23,7 +25,20 @@ class _AlmacenState extends State<Almacen> {
   void _alPresionar(int indice){
     setState(() {
       _indiceSeleccionado = indice;
+
+      _controladorPagina.animateToPage(
+        indice, duration: 
+        const Duration(milliseconds: 300), 
+        curve: Curves.easeInOut,
+      );
+
     });
+  }
+
+  @override
+  void dispose() {
+    _controladorPagina.dispose();
+    super.dispose();
   }
 
   @override
@@ -32,7 +47,20 @@ class _AlmacenState extends State<Almacen> {
       
       appBar: AppBar(title: Text("Almacen"), scrolledUnderElevation: 0, backgroundColor: const Color.fromARGB(255, 255, 255, 255),),
 
-      body: _pantallas[_indiceSeleccionado],
+      body: PageView(
+        controller: _controladorPagina,
+
+        physics: const FisicasFriccion(),
+
+        onPageChanged: (int indice) {
+          setState(() {
+            _indiceSeleccionado = indice;
+          });
+
+        },
+
+        children: _pantallas,
+      ),
       
       bottomNavigationBar: Theme(
 
@@ -80,3 +108,17 @@ class _AlmacenState extends State<Almacen> {
 }
 
 
+class FisicasFriccion extends ScrollPhysics {
+  const FisicasFriccion({super.parent});
+
+  @override
+  FisicasFriccion applyTo(ScrollPhysics? ancestor) {
+    return FisicasFriccion(parent: buildParent(ancestor));
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics posicion, double offset){
+    return super.applyPhysicsToUserOffset(posicion, offset * 0.5);
+  }
+
+}
