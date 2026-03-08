@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:followroom_flutter/login_screen.dart';
-
+import 'package:followroom_flutter/features/auth/screens/login_screen.dart';
 
 void main() => runApp(const MyApp());
 

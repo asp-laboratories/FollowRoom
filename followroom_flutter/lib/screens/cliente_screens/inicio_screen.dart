@@ -11,6 +11,50 @@ class Reservacion extends StatefulWidget {
 }
 
 class _ReservacionState extends State<Reservacion> {
+  // Simulación de datos que vendrían de una base de datos
+  final List<Map<String, dynamic>> paquetesDB = [
+    {
+      'id': 1,
+      'nombre': 'Paquete Birthday',
+      'descripcion': 'Festeja tu cumpleaños',
+      'precio': 1500,
+      'icono': Icons.celebration,
+      'color': Colors.blue,
+    },
+    {
+      'id': 2,
+      'nombre': 'Paquete Corporativo',
+      'descripcion': 'Reuniones y conferencias',
+      'precio': 2500,
+      'icono': Icons.business,
+      'color': Colors.purple,
+    },
+    {
+      'id': 3,
+      'nombre': 'Paquete Boda',
+      'descripcion': 'El día más especial',
+      'precio': 5000,
+      'icono': Icons.groups,
+      'color': Colors.orange,
+    },
+    {
+      'id': 4,
+      'nombre': 'Paquete Graduación',
+      'descripcion': 'Celebra tu logro',
+      'precio': 3000,
+      'icono': Icons.school,
+      'color': Colors.green,
+    },
+    {
+      'id': 5,
+      'nombre': 'Paquete Prueba',
+      'descripcion': 'Celebra tu PRUEBA',
+      'precio': 3000,
+      'icono': Icons.school,
+      'color': Colors.green,
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -20,7 +64,6 @@ class _ReservacionState extends State<Reservacion> {
       ),
       child: Column(
         children: [
-
           SizedBox(height: 24),
 
           Padding(
@@ -36,7 +79,7 @@ class _ReservacionState extends State<Reservacion> {
                   Text("Reservar"),
 
                   Text("Hacer una reservacion"),
-            
+
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -55,20 +98,43 @@ class _ReservacionState extends State<Reservacion> {
 
           SizedBox(height: 24),
 
+          // Carousel generado dinámicamente desde la "base de datos"
           CarouselSlider(
-            options: CarouselOptions(height: 140.0),
-            items: [1, 2, 3, 4, 5].map((i) {
+            options: CarouselOptions(height: 180.0),
+            items: paquetesDB.map((paquete) {
               return Builder(
                 builder: (BuildContext context) {
                   return Container(
                     width: MediaQuery.of(context).size.width,
                     margin: EdgeInsets.symmetric(horizontal: 5.0),
-                    decoration: BoxDecoration(color: Colors.amber),
+                    decoration: BoxDecoration(
+                      color: (paquete['color'] as Color).withAlpha(51),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Paquete $i', style: TextStyle(fontSize: 16.0)),
+                        Icon(
+                          paquete['icono'] as IconData,
+                          size: 40,
+                          color: paquete['color'] as Color,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          paquete['nombre'] as String,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(paquete['descripcion'] as String),
+                        Text(
+                          '\$${paquete['precio']}',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         ElevatedButton(
                           onPressed: () {
+                            // Aquí podrías pasar el paquete seleccionado
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -76,7 +142,7 @@ class _ReservacionState extends State<Reservacion> {
                               ),
                             );
                           },
-                          child: Icon(Icons.add),
+                          child: Text("Ver más"),
                         ),
                       ],
                     ),

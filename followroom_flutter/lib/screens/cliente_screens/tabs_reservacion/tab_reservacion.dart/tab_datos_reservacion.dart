@@ -6,7 +6,9 @@ import 'package:from_to_time_picker/from_to_time_picker.dart';
 import 'package:flutter/services.dart';
 
 class TabDatosReservacion extends StatefulWidget {
-  const TabDatosReservacion({super.key});
+  final Function(Map<String, String>) onDatosChanged;
+
+  const TabDatosReservacion({super.key, required this.onDatosChanged});
 
   @override
   State<TabDatosReservacion> createState() => _TabDatosReservacionState();
@@ -16,9 +18,10 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
   final List<String> tiposEvento = ['1', '2', '3'];
   String? tipoEventoSelccionado;
 
+  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
-
   final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _asistentesController = TextEditingController();
 
   void showLightTimePicker() {
     showDialog(
@@ -72,6 +75,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
 
             Text("Nombre del evento", textAlign: TextAlign.start),
             TextField(
+              controller: _nombreController,
               decoration: createAppDecoration(
                 labelText: 'Ingrese nombre del evento',
               ),
@@ -138,9 +142,9 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
               ),
             ),
 
-
             Text("Cantidad de asistentes"),
             TextField(
+              controller: _asistentesController,
               decoration: InputDecoration(
                 labelText: 'Asistentes',
                 filled: true,
@@ -154,6 +158,21 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.digitsOnly, // Only allow digits 0-9
               ],
+            ),
+
+            SizedBox(height: 20),
+
+            ElevatedButton(
+              onPressed: () {
+                widget.onDatosChanged({
+                  'nombre': _nombreController.text,
+                  'fecha': _fechaController.text,
+                  'horario': _timeController.text,
+                  'tipo': tipoEventoSelccionado ?? '',
+                  'asistentes': _asistentesController.text,
+                });
+              },
+              child: Text("Guardar datos"),
             ),
           ],
         ),
@@ -176,16 +195,6 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 //Container(
 //          decoration: BoxDecoration(

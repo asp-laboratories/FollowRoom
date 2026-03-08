@@ -5,7 +5,7 @@ import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart';
-import 'package:followroom_flutter/signup_screen.dart';
+import 'package:followroom_flutter/features/auth/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

@@ -14,6 +14,21 @@ class ReservacionProceso extends StatefulWidget {
 }
 
 class _ReservacionProcesoState extends State<ReservacionProceso> {
+  Map<String, String> datosReservacion = {};
+  String? montajeSeleccionado;
+
+  void actualizarDatos(Map<String, String> nuevosDatos) {
+    setState(() {
+      datosReservacion.addAll(nuevosDatos);
+    });
+  }
+
+  void actualizarMontaje(String montaje) {
+    setState(() {
+      montajeSeleccionado = montaje;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -33,7 +48,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
             ),
             radius: 70,
             tabs: [
-              Tab(text: "Reservacion",),
+              Tab(text: "Reservacion"),
               Tab(text: "Datos cliente"),
               Tab(text: "Salones"),
               Tab(text: "Resumen"),
@@ -44,10 +59,16 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
         ),
         body: TabBarView(
           children: [
-            TabDatosReservacion(),
+            TabDatosReservacion(onDatosChanged: actualizarDatos),
             TabClienteReservacion(),
-            TabSalon(),
-            TabResumen()
+            TabSalon(
+              montajeSeleccionado: montajeSeleccionado,
+              onMontajeSelected: actualizarMontaje,
+            ),
+            TabResumen(
+              datosReservacion: datosReservacion,
+              montajeSeleccionado: montajeSeleccionado,
+            ),
           ],
         ),
       ),
