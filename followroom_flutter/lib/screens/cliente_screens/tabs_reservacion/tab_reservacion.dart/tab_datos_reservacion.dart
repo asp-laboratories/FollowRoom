@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:from_to_time_picker/from_to_time_picker.dart';
+import 'package:flutter/services.dart';
 
 class TabDatosReservacion extends StatefulWidget {
   const TabDatosReservacion({super.key});
@@ -11,10 +13,12 @@ class TabDatosReservacion extends StatefulWidget {
 }
 
 class _TabDatosReservacionState extends State<TabDatosReservacion> {
+  final List<String> tiposEvento = ['1', '2', '3'];
+  String? tipoEventoSelccionado;
+
   final TextEditingController _fechaController = TextEditingController();
 
-  String startTime = 'from';
-  String endTime = 'to' '';
+  final TextEditingController _timeController = TextEditingController();
 
   void showLightTimePicker() {
     showDialog(
@@ -26,64 +30,134 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
             print('from $from to $to');
           }
           setState(() {
-            if(from.hour>to.hour){
-              startTime = '';
-              endTime = 'Error';
+            if (from.hour > to.hour) {
+              _timeController.text = "Error";
             } else {
-              startTime = from.hour.toString();
-              endTime = to.hour.toString();
+              _timeController.text =
+                  "Inicio ${from.hour.toString()} - Cierre ${to.hour.toString()}";
             }
-
           });
           Navigator.pop(context);
         },
+        dialogBackgroundColor: const Color(0xFF121212),
+        fromHeadlineColor: Colors.white,
+        toHeadlineColor: Colors.white,
+        upIconColor: Colors.white,
+        downIconColor: Colors.white,
+        timeBoxColor: const Color(0xFF1E1E1E),
+        timeHintColor: Colors.grey,
+        timeTextColor: Colors.white,
+        dividerColor: const Color(0xFF121212),
+        doneTextColor: Colors.white,
+        dismissTextColor: Colors.white,
+        defaultDayNightColor: const Color(0xFF1E1E1E),
+        defaultDayNightTextColor: Colors.white,
+        colonColor: Colors.white,
+        showHeaderBullet: true,
+        headerText: 'Time available from 01:00 AM to 11:00 PM',
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 12),
+    return Padding(
+      padding: const EdgeInsets.all(23.0),
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 12),
 
-        Text("Nombre del evento", textAlign: TextAlign.start),
-
-        TextField(
-          decoration: createAppDecoration(
-            labelText: 'Correo electronico',
-            prefixIcon: Icon(Icons.email),
-          ),
-        ),
-
-        TextField(
-          controller: _fechaController,
-          decoration: InputDecoration(
-            labelText: 'Fecha',
-            filled: true,
-            prefixIcon: Icon(Icons.calendar_today),
-            enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue),
+            Text("Nombre del evento", textAlign: TextAlign.start),
+            TextField(
+              decoration: createAppDecoration(
+                labelText: 'Ingrese nombre del evento',
+              ),
             ),
-          ),
-          readOnly: true,
-          onTap: () {
-            _selectDate();
-          },
-        ),
-        const SizedBox(height: 10),
 
-        const Text('selected duration'),
-        const SizedBox(height: 10),
-        Text('$startTime - $endTime'),
-        const SizedBox(height: 40),
-        ElevatedButton(
-          onPressed: () => showLightTimePicker(),
-          child: const Text(' show light time picker'),
+            SizedBox(height: 12),
+
+            Text("Fecha del evento"),
+
+            TextField(
+              controller: _fechaController,
+              decoration: InputDecoration(
+                labelText: 'Fecha',
+                filled: true,
+                prefixIcon: Icon(Icons.calendar_today),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              readOnly: true,
+              onTap: () {
+                _selectDate();
+              },
+            ),
+            const SizedBox(height: 10),
+
+            Text("Horario del evento"),
+            TextField(
+              controller: _timeController,
+              decoration: InputDecoration(
+                labelText: 'Horario',
+                filled: true,
+                prefixIcon: Icon(Icons.punch_clock_rounded),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              readOnly: true,
+              onTap: () => showLightTimePicker(),
+            ),
+
+            const SizedBox(height: 20),
+
+            Text("Tipo de evento"),
+            Flexible(
+              child: DropdownMenu<String>(
+                dropdownMenuEntries: tiposEvento.map<DropdownMenuEntry<String>>(
+                  (String value) {
+                    return DropdownMenuEntry<String>(
+                      value: value,
+                      label: value,
+                    );
+                  },
+                ).toList(),
+                onSelected: (String? nuevoValor) {
+                  setState(() {
+                    tipoEventoSelccionado = nuevoValor;
+                  });
+                },
+
+                label: const Text('Selecciona un tipo de evento'),
+              ),
+            ),
+
+
+            Text("Cantidad de asistentes"),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Asistentes',
+                filled: true,
+                prefixIcon: Icon(Icons.people),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly, // Only allow digits 0-9
+              ],
+            ),
+          ],
         ),
-        const SizedBox(height: 20),
-      ],
+      ),
     );
   }
 
