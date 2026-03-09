@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class InputStyles {
   static final input = InputDecoration(
@@ -6,17 +7,26 @@ class InputStyles {
     hintText: 'predeterminado',
     prefixIcon: Icon(Icons.person),
 
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10.0),
-    ),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
 
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: Colors.black),
-      borderRadius: BorderRadius.circular(10)
+      borderRadius: BorderRadius.circular(10),
     ),
 
     filled: true,
-    fillColor: Colors.grey
+    fillColor: const Color.fromARGB(255, 0, 0, 0),
+  );
+
+  static final input2 = InputDecoration(
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+    hintText: "Escribe aquí...",
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.black),
+    ),
+    filled: true,
+    fillColor: Colors.white,
   );
 }
 
@@ -33,13 +43,11 @@ InputDecoration createAppDecoration({
     prefixIcon: prefixIcon,
     suffixIcon: suffixIcon,
     errorText: errorText,
-    
+
     // Estilos fijos que quieres reutilizar
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10.0),
-    ),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
     focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: const Color(0xFFFFFFFF), width: 2.0),
+      borderSide: BorderSide(color: AppColores.primary, width: 2.0),
       borderRadius: BorderRadius.circular(10.0),
     ),
     errorBorder: OutlineInputBorder(
@@ -50,9 +58,15 @@ InputDecoration createAppDecoration({
       borderSide: BorderSide(color: Colors.orange, width: 2.0),
       borderRadius: BorderRadius.circular(10.0),
     ),
+    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+    labelStyle: const TextStyle(color: AppColores.primary),
+    // Color cuando el usuario hace clic (Focus)
+    floatingLabelStyle: const TextStyle(
+      color: AppColores.primary,
+      fontWeight: FontWeight.bold,
+    ),
     filled: true,
-    fillColor: Colors.grey[100],
-    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    fillColor: const Color.fromARGB(255, 255, 255, 255),
+    // contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
 }
-

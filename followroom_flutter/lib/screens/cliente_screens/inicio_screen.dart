@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/reservacion_proceso.dart';
 
@@ -61,7 +63,6 @@ class _ReservacionState extends State<Reservacion> {
     return Container(
       decoration: BoxDecoration(
         color: AppColores.backgroundComponent,
-        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
@@ -74,33 +75,52 @@ class _ReservacionState extends State<Reservacion> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(5),
               ),
-              height: 120,
-              child: Row(
+              child: Column(
                 children: [
-
-
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ReservacionProceso(),
-                        ),
-                      );
-                    },
-                    child: Text("Solicitar reservacion"),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Text("Comienza ahora!", style: TextEstilos.subtitulos),
+                      ],
+                    ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    NavigatorEventosReservacion(),
+                              ),
+                            );
+                          },
+                          style: BotonStyles.botonesAccion,
 
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NavigatorEventosReservacion(),
+                          child: Text("Ver eventos", ),
                         ),
-                      );
-                    },
-                    child: Text("Ver eventos"),
+
+                        SizedBox(width: 10),
+
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReservacionProceso(),
+                              ),
+                            );
+                          },
+                          style: BotonStyles.botonesAccion,
+
+                          child: Text("Solicitar reservacion"),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

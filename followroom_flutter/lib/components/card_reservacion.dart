@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 
 class CardReservacion extends StatelessWidget {
   final String nombreEvento;
@@ -24,11 +24,10 @@ class CardReservacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      margin: ContainerStyles.marginCardBottom,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: ContainerStyles.paddingCard,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -36,14 +35,7 @@ class CardReservacion extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    nombreEvento,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColores.foreground,
-                    ),
-                  ),
+                  child: Text(nombreEvento, style: ContainerStyles.tituloCard),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -72,25 +64,25 @@ class CardReservacion extends StatelessWidget {
             SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.meeting_room, size: 16, color: Colors.grey),
+                ContainerStyles.iconCard(Icons.meeting_room),
                 SizedBox(width: 6),
-                Text(salon, style: TextStyle(color: Colors.grey.shade700)),
+                Text(salon, style: ContainerStyles.subtituloCard),
               ],
             ),
             SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                ContainerStyles.iconCard(Icons.calendar_today),
                 SizedBox(width: 6),
-                Text(fecha, style: TextStyle(color: Colors.grey.shade700)),
+                Text(fecha, style: ContainerStyles.subtituloCard),
               ],
             ),
             SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey),
+                ContainerStyles.iconCard(Icons.access_time),
                 SizedBox(width: 6),
-                Text(hora, style: TextStyle(color: Colors.grey.shade700)),
+                Text(hora, style: ContainerStyles.subtituloCard),
               ],
             ),
           ],

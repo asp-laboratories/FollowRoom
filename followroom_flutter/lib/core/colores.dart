@@ -10,7 +10,13 @@ class AppColores {
   //static const Color background = Color(0xf4f1f8);
   //static const Color background = Color(0xfcfcf7);
   static const Color backgroundComponent = Color(0xFFF5DEB2);
-  static const Color backgroundComponentSelected = Color(0xFFF5DEB2); 
+  static const Color backgroundComponentSelected = Color(0xFFF5E7CC); 
+
+  static const Color accionAzul = Color(0xFF2B5F9B);
+  static const Color accionGuardar = Color(0xFF2B9B32);
+  static const Color accionCancelar = Color(0xFFCA301B);
+  
+  //static const Color backgroundComponentSelected = Color(0xFFF5DEB2); 
 
   static const Color foreground = Color(0xFF36454F);
   //static const Color foreground = Color(0x282828);
