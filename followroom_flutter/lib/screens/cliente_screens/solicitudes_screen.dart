@@ -13,18 +13,14 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   List<Map<String, dynamic>> mobiliario = [];
   List<Map<String, dynamic>> equipamiento = [];
 
-// Aqui va lo de cargar datos cuando esten en la base de datos
   @override
   void initState() {
     super.initState();
-    cargarDatos(); // esto es para cargar los datos con api 
+    cargarDatos();
   }
 
-  Future<void> cargarDatos() async { // aqui
-  }
-// hasta aqui
+  Future<void> cargarDatos() async {}
 
-// aqui abajo es para incrementar o desincrementar las cantidades de los cuadros
   void incrementar(List lista, int index) {
     setState(() {
       lista[index]["cantidad"]++;
@@ -43,21 +39,9 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: AppColores.background,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: AppColores.background,
-          elevation: 0,
-          title: const Text(
-            "Solicitudes Extra",
-            style: TextStyle(
-              color: AppColores.foreground,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          centerTitle: true,
-          bottom: ButtonsTabBar(
+      child: Column(
+        children: [
+          ButtonsTabBar(
             backgroundColor: AppColores.primary,
             unselectedBackgroundColor: Colors.white,
             labelStyle: const TextStyle(
@@ -74,19 +58,18 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               Tab(text: "Equipamiento"),
             ],
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildLista(mobiliario),
-            _buildLista(equipamiento),
-          ],
-        ),
+          Expanded(
+            child: TabBarView(
+              children: [_buildLista(mobiliario), _buildLista(equipamiento)],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildLista(List<Map<String, dynamic>> lista) {
-    if (lista.isEmpty) { // si la lista de datos esta vacia, como en este caso pues se despliega ese mensaje
+    if (lista.isEmpty) {
       return const Center(
         child: Text(
           "No hay elementos disponibles",
@@ -118,19 +101,16 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                     color: AppColores.foreground,
                   ),
                 ),
-
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const Text("Cantidad"),
                     const SizedBox(width: 15),
-
                     _cantidadButton(
                       icon: Icons.remove,
                       onPressed: () => disminuir(lista, index),
                     ),
-
                     const SizedBox(width: 10),
                     Text(
                       lista[index]["cantidad"].toString(),
@@ -139,14 +119,13 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(width: 10),
                     _cantidadButton(
                       icon: Icons.add,
                       onPressed: () => incrementar(lista, index),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           );

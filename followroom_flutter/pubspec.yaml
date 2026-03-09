@@ -41,6 +41,8 @@ dependencies:
 
   from_to_time_picker: ^1.2.2
 
+  blurrycontainer: ^2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
