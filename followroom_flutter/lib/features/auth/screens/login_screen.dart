@@ -6,6 +6,8 @@ import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart';
+import 'package:followroom_flutter/screens/coordinador_screens/navegacion_barra.dart';
+import 'package:followroom_flutter/screens/coordinador_screens/panelprincipal.dart';
 import 'package:followroom_flutter/features/auth/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -108,12 +110,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     builder: (context) => Almacen(),
                                   ),
                                 );
-                              } else {
-                                setState(() {
-                                  mensajeError = "Campos incorrectos";
-                                });
-                              }
-                            },
+                              } else if (email.text == 'coordinador' &&
+                                  password.text == '456') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NavegacionBarra(),
+                                  ),
+                                );
+                                } else {
+                                  setState(() {
+                                    mensajeError = "Campos incorrectos";
+                                  });
+                                }},
+
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.white,
                               backgroundColor: AppColores.primary,
