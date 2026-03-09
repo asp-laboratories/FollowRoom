@@ -85,10 +85,6 @@ class _FollowRoomState extends State<FollowRoom> {
                 icon: Icon(Icons.history),
                 label: "Historial",
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.edit_document),
-                label: "Manual",
-              ),
             ],
           ),
         ),
