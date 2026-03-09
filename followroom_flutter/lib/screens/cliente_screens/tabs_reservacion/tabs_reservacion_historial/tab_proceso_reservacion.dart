@@ -1,15 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/card_reservacion.dart';
 
-class TabProcesoReservacion extends StatefulWidget {
+class TabProcesoReservacion extends StatelessWidget {
   const TabProcesoReservacion({super.key});
 
   @override
-  State<TabProcesoReservacion> createState() => _TabProcesoReservacionState();
-}
-
-class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
-  @override
   Widget build(BuildContext context) {
-    return Container();
+    final List<Map<String, dynamic>> reservaciones = [
+      {
+        'nombre': 'Boda Rodríguez',
+        'salon': 'Salón Premium',
+        'fecha': '25 de Marzo 2026',
+        'hora': '16:00 - 22:00',
+      },
+      {
+        'nombre': 'Exposición Arte',
+        'salon': 'Salón Imperial',
+        'fecha': '28 de Marzo 2026',
+        'hora': '08:00 - 17:00',
+      },
+    ];
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: reservaciones.length,
+      itemBuilder: (context, index) {
+        final r = reservaciones[index];
+        return CardReservacion(
+          nombreEvento: r['nombre'],
+          salon: r['salon'],
+          fecha: r['fecha'],
+          hora: r['hora'],
+          estado: 'En Proceso',
+          estadoColor: Colors.orange,
+          estadoIcono: Icons.hourglass_top,
+        );
+      },
+    );
   }
 }

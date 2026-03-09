@@ -77,9 +77,7 @@ class _ReservacionState extends State<Reservacion> {
               height: 120,
               child: Row(
                 children: [
-                  Text("Reservar"),
 
-                  Text("Hacer una reservacion"),
 
                   ElevatedButton(
                     onPressed: () {
@@ -90,7 +88,7 @@ class _ReservacionState extends State<Reservacion> {
                         ),
                       );
                     },
-                    child: Icon(Icons.add),
+                    child: Text("Solicitar reservacion"),
                   ),
 
                   ElevatedButton(

@@ -26,7 +26,7 @@ class _FollowRoomState extends State<FollowRoom> {
   final List<String> _titulos = [
     "Bienvenido",
     "Historial",
-    "Solicitudes",
+    "Solicitudes extra",
     "Manual",
   ];
 
