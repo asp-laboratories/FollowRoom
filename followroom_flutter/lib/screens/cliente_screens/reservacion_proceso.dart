@@ -18,7 +18,8 @@ class ReservacionProceso extends StatefulWidget {
 class _ReservacionProcesoState extends State<ReservacionProceso> {
   Map<String, String> datosReservacion = {};
   Map<String, String> datosCliente = {};
-  String? montajeSeleccionado;
+  Map<int, String> montajesPorSalon = {};
+  Map<String, dynamic>? salonSeleccionado;
   List<Map<String, dynamic>> serviciosSeleccionados = [];
   List<Map<String, dynamic>> equipamientosSeleccionados = [];
 
@@ -28,16 +29,21 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
     });
   }
 
-
   void actualizarDatosCliente(Map<String, String> nuevosDatos) {
     setState(() {
       datosCliente.addAll(nuevosDatos);
     });
   }
 
-  void actualizarMontaje(String montaje) {
+  void actualizarMontaje(int salonId, String montaje) {
     setState(() {
-      montajeSeleccionado = montaje;
+      montajesPorSalon[salonId] = montaje;
+    });
+  }
+
+  void actualizarSalon(Map<String, dynamic>? salon) {
+    setState(() {
+      salonSeleccionado = salon;
     });
   }
 
@@ -82,15 +88,17 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
             ],
           ),
 
-          title: Text("data"),
+          title: Text("Solicitar reservacion"),
         ),
         body: TabBarView(
           children: [
             TabDatosReservacion(onDatosChanged: actualizarDatos),
             TabClienteReservacion(onDatosChanged: actualizarDatosCliente),
             TabSalon(
-              montajeSeleccionado: montajeSeleccionado,
+              montajesPorSalon: montajesPorSalon,
+              salonSeleccionado: salonSeleccionado,
               onMontajeSelected: actualizarMontaje,
+              onSalonSelected: actualizarSalon,
             ),
             TabServiciosReservacion(
               onServiciosChanged: actualizarServicios,
@@ -103,7 +111,8 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
             TabResumen(
               datosReservacion: datosReservacion,
               datosCliente: datosCliente,
-              montajeSeleccionado: montajeSeleccionado,
+              salonSeleccionado: salonSeleccionado,
+              montajesPorSalon: montajesPorSalon,
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/reservacion_proceso.dart';
 
 class Reservacion extends StatefulWidget {
@@ -90,6 +91,18 @@ class _ReservacionState extends State<Reservacion> {
                       );
                     },
                     child: Icon(Icons.add),
+                  ),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NavigatorEventosReservacion(),
+                        ),
+                      );
+                    },
+                    child: Text("Ver eventos"),
                   ),
                 ],
               ),

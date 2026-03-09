@@ -18,50 +18,53 @@ class TabEquipamientosReservacion extends StatefulWidget {
 
 class _TabEquipamientosReservacionState
     extends State<TabEquipamientosReservacion> {
+  final List<String> tiposEquipamiento = ['sillas', 'mesas'];
+  String? tiposEquipamientoSeleccionado;
+
   final List<Map<String, dynamic>> equipamientosDB = [
     {
       'id': 1,
-      'nombre': 'Sillas',
+      'nombre': 'Silla de madera',
+      'tipo': 'sillas',
       'descripcion': 'Sillas estándar',
       'precio': 50,
       'stock': 100,
     },
     {
       'id': 2,
-      'nombre': 'Mesas',
-      'descripcion': 'Mesas rectangulares',
-      'precio': 100,
+      'nombre': 'Silla tijera',
+      'tipo': 'sillas',
+      'descripcion': 'Sillas elegantes',
+      'precio': 80,
       'stock': 50,
     },
     {
       'id': 3,
-      'nombre': 'Proyector',
-      'descripcion': 'Proyector HD',
-      'precio': 500,
-      'stock': 5,
+      'nombre': 'Mesa redonda',
+      'tipo': 'mesas',
+      'descripcion': 'Mesas redondas',
+      'precio': 100,
+      'stock': 30,
     },
     {
       'id': 4,
-      'nombre': 'Pantalla',
-      'descripcion': 'Pantalla de 100 pulgadas',
-      'precio': 300,
-      'stock': 3,
-    },
-    {
-      'id': 5,
-      'nombre': 'Sistema de sonido',
-      'descripcion': 'Bocinas y micrófono',
-      'precio': 800,
-      'stock': 2,
-    },
-    {
-      'id': 6,
-      'nombre': 'Manteles',
-      'descripcion': 'Manteles de tela',
-      'precio': 30,
-      'stock': 100,
+      'nombre': 'Mesa rectangular',
+      'tipo': 'mesas',
+      'descripcion': 'Mesas para banquetes',
+      'precio': 150,
+      'stock': 25,
     },
   ];
+
+  List<Map<String, dynamic>> get equipamientosFiltrados {
+    if (tiposEquipamientoSeleccionado == null ||
+        tiposEquipamientoSeleccionado == 'todos') {
+      return equipamientosDB;
+    }
+    return equipamientosDB
+        .where((equipa) => equipa['tipo'] == tiposEquipamientoSeleccionado)
+        .toList();
+  }
 
   void actualizarCantidad(Map<String, dynamic> equipamiento, int cantidad) {
     final List<Map<String, dynamic>> nuevaLista = List.from(
@@ -142,6 +145,30 @@ class _TabEquipamientosReservacionState
 
         Padding(
           padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Text("Filtrar:", style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(width: 16),
+              DropdownButton<String>(
+                value: tiposEquipamientoSeleccionado,
+                hint: Text("Todos"),
+                items: [
+                  DropdownMenuItem(value: 'todos', child: Text("Todos")),
+                  DropdownMenuItem(value: 'sillas', child: Text("Sillas")),
+                  DropdownMenuItem(value: 'mesas', child: Text("Mesas")),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    tiposEquipamientoSeleccionado = value;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             "Catálogo de equipamiento:",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -151,9 +178,9 @@ class _TabEquipamientosReservacionState
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: equipamientosDB.length,
+            itemCount: equipamientosFiltrados.length,
             itemBuilder: (context, index) {
-              final equipamiento = equipamientosDB[index];
+              final equipamiento = equipamientosFiltrados[index];
               final cantidad = getCantidad(equipamiento);
 
               return Card(

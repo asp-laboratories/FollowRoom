@@ -59,7 +59,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
     return serviciosDB
         .where((s) => s['tipo'] == tiposServicioSeleccionado)
         .toList();
-  }
+  } 
 
   void toggleServicio(Map<String, dynamic> servicio) {
     final List<Map<String, dynamic>> nuevaLista = List.from(

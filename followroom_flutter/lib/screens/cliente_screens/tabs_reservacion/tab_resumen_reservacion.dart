@@ -4,7 +4,8 @@ import 'package:followroom_flutter/core/colores.dart';
 class TabResumen extends StatefulWidget {
   final Map<String, String> datosReservacion;
   final Map<String, String> datosCliente;
-  final String? montajeSeleccionado;
+  final Map<String, dynamic>? salonSeleccionado;
+  final Map<int, String> montajesPorSalon;
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
 
@@ -12,7 +13,8 @@ class TabResumen extends StatefulWidget {
     super.key,
     required this.datosReservacion,
     required this.datosCliente,
-    required this.montajeSeleccionado,
+    required this.salonSeleccionado,
+    required this.montajesPorSalon,
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
   });
@@ -92,9 +94,7 @@ class _TabResumenState extends State<TabResumen> {
                   "Colonia: ${widget.datosCliente['colonia'] ?? 'No definido'}",
                 ),
 
-                Text(
-                  "Calle: ${widget.datosCliente['calle'] ?? 'No definido'}",
-                ),
+                Text("Calle: ${widget.datosCliente['calle'] ?? 'No definido'}"),
                 Text(
                   "Numero: ${widget.datosCliente['numero'] ?? 'No definido'}",
                 ),
@@ -112,13 +112,19 @@ class _TabResumenState extends State<TabResumen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Montaje Seleccionado",
+                  "Salón y Montaje",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 SizedBox(height: 8),
-                Text(
-                  widget.montajeSeleccionado ?? "Ningún montaje seleccionado",
-                ),
+                if (widget.salonSeleccionado == null)
+                  Text("Ningún salón seleccionado")
+                else ...[
+                  Text("Salón: ${widget.salonSeleccionado!['nombre']}"),
+                  Text("Precio: \$${widget.salonSeleccionado!['precio']}"),
+                  Text(
+                    "Montaje: ${widget.montajesPorSalon[widget.salonSeleccionado!['id']] ?? 'No seleccionado'}",
+                  ),
+                ],
               ],
             ),
           ),

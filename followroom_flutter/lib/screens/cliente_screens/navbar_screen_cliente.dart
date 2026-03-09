@@ -4,7 +4,6 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/inicio_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
-import 'package:followroom_flutter/screens/cliente_screens/reservacion_estado.dart';
 import 'package:followroom_flutter/screens/cliente_screens/solicitudes_screen.dart';
 
 class FollowRoom extends StatefulWidget {
@@ -19,10 +18,16 @@ class _FollowRoomState extends State<FollowRoom> {
 
   final List<Widget> _pantallas = [
     Reservacion(),
-    ReservacionEstado(),
     HistorialScreen(),
     SolicitudesScreen(),
     ManualScreen(),
+  ];
+
+  final List<String> _titulos = [
+    "Bienvenido",
+    "Historial",
+    "Solicitudes",
+    "Manual",
   ];
 
   void _alPresionar(int indice) {
@@ -35,11 +40,13 @@ class _FollowRoomState extends State<FollowRoom> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Reservacion", style: TextEstilos.encabezados),
-        backgroundColor: AppColores.primary,
+        title: Text(
+          _titulos[_indiceSeleccionado],
+          style: TextEstilos.encabezados,
+        ),
       ),
       body: _pantallas[_indiceSeleccionado],
-      
+
       bottomNavigationBar: ClipRRect(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -62,14 +69,11 @@ class _FollowRoomState extends State<FollowRoom> {
               label: "Reservacion",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.watch_later),
-              label: "Estado",
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.sms), label: "Solicitar"),
-            BottomNavigationBarItem(
               icon: Icon(Icons.history),
               label: "Historial",
             ),
+            BottomNavigationBarItem(icon: Icon(Icons.sms), label: "Solicitar"),
+
             BottomNavigationBarItem(
               icon: Icon(Icons.edit_document),
               label: "Manual",
