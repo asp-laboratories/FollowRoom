@@ -39,42 +39,51 @@ class _FollowRoomState extends State<FollowRoom> {
         backgroundColor: AppColores.primary,
       ),
       body: _pantallas[_indiceSeleccionado],
-      
-      bottomNavigationBar: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
 
-        child: BottomNavigationBar(
-          backgroundColor: AppColores.primary,
-          selectedItemColor: Colors.white,
-          //selectedFontSize: 16,
-          //unselectedFontSize: 14,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _indiceSeleccionado,
-          onTap: _alPresionar,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month),
-              label: "Reservacion",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.watch_later),
-              label: "Estado",
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.sms), label: "Solicitar"),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: "Historial",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.edit_document),
-              label: "Manual",
-            ),
-          ],
+      bottomNavigationBar: Theme(
+        data: ThemeData(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+
+          child: BottomNavigationBar(
+            backgroundColor: AppColores.primary,
+            selectedItemColor: Colors.white,
+            //selectedFontSize: 16,
+            //unselectedFontSize: 14,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            type: BottomNavigationBarType.fixed,
+            currentIndex: _indiceSeleccionado,
+            onTap: _alPresionar,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_month),
+                label: "Reservacion",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.watch_later),
+                label: "Estado",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.sms),
+                label: "Solicitar",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.history),
+                label: "Historial",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.edit_document),
+                label: "Manual",
+              ),
+            ],
+          ),
         ),
       ),
     );

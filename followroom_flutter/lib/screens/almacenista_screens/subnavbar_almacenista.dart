@@ -6,24 +6,21 @@ class Textos extends StatelessWidget {
   final Function(int) alSeleccionar;
 
   const Textos({
-    super.key, 
+    super.key,
     required this.texts,
     required this.seleccionActual,
     required this.alSeleccionar,
-    });
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-
-      padding: const EdgeInsets.symmetric(horizontal: 16.0,),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
 
       child: Wrap(
-
         spacing: 10.0,
 
         children: texts.asMap().entries.map((teexto) {
-
           int indice = teexto.key;
           String texto = teexto.value;
 
@@ -34,27 +31,26 @@ class Textos extends StatelessWidget {
 
             labelStyle: TextStyle(
               color: estaSeleccionado ? Colors.white : Colors.black,
-              fontWeight: estaSeleccionado ? FontWeight.bold : FontWeight.normal,
-              fontSize: estaSeleccionado ?16 :12,
-
+              fontWeight: estaSeleccionado
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              fontSize: estaSeleccionado ? 16 : 12,
             ),
 
             backgroundColor: Colors.grey,
             selectedColor: Color.fromARGB(255, 155, 88, 43),
             showCheckmark: false,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             selected: estaSeleccionado,
-          
+
             onSelected: (bool seleccionado) {
               alSeleccionar(indice);
             },
-        
           );
-
         }).toList(),
-
       ),
     );
   }
-
 }

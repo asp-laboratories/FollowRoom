@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/estado_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/inicio_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/solicitudes_almacenista.dart';
-
 
 class Almacen extends StatefulWidget {
   const Almacen({super.key});
@@ -13,26 +13,29 @@ class Almacen extends StatefulWidget {
 
 class _AlmacenState extends State<Almacen> {
   int _indiceSeleccionado = 0;
+  bool _navegacionBarra = false;
 
   final PageController _controladorPagina = PageController();
 
   final List<Widget> _pantallas = [
     InicioAlmacenista(),
     AlmacenistaEstadoScreen(),
-    AlmacenistaSolicitudesScreen()
+    AlmacenistaSolicitudesScreen(),
   ];
 
-  void _alPresionar(int indice){
+  void _alPresionar(int indice) async {
     setState(() {
       _indiceSeleccionado = indice;
-
-      _controladorPagina.animateToPage(
-        indice, duration: 
-        const Duration(milliseconds: 300), 
-        curve: Curves.easeInOut,
-      );
-
+      _navegacionBarra = true;
     });
+
+    await _controladorPagina.animateToPage(
+      indice,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
+    _navegacionBarra = false;
   }
 
   @override
@@ -43,70 +46,92 @@ class _AlmacenState extends State<Almacen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      
-      appBar: AppBar(title: Text("Almacen"), scrolledUnderElevation: 0, backgroundColor: const Color.fromARGB(255, 255, 255, 255),),
-
-      body: PageView(
-        controller: _controladorPagina,
-
-        physics: const FisicasFriccion(),
-
-        onPageChanged: (int indice) {
-          setState(() {
-            _indiceSeleccionado = indice;
-          });
-
-        },
-
-        children: _pantallas,
-      ),
-      
-      bottomNavigationBar: Theme(
-
-        data: ThemeData(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Almacen"),
+          scrolledUnderElevation: 0,
+          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         ),
-
-        child: BottomNavigationBar(
-
-          type: BottomNavigationBarType.shifting,
-          currentIndex: _indiceSeleccionado,
-          onTap: _alPresionar,
-
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey,
-        
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today_outlined, size: 24),
-              label: "Eventos",
-              activeIcon: Icon(Icons.calendar_month, size: 32),
-              tooltip: ("Ir a la seccion de eventos"),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.check_box_outline_blank, size: 24),
-              label: "Estados",
-              activeIcon: Icon(Icons.check_box, size: 32),
-              tooltip: ("Ir a la seccion de estados"),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.send_outlined, size: 24),
-              label: "Solicitudes",
-              activeIcon: Icon(Icons.send, size: 32),
-              tooltip: ("Ir a la seccion de solicitudes de eventos"),
-            ),
-          ],
+      
+        body: Container(
+          color: Color.fromARGB(255, 255, 255, 255),
+      
+          child: PageView(
+            controller: _controladorPagina,
+      
+            physics: const FisicasFriccion(),
+      
+            onPageChanged: (int indice) {
+              if (!_navegacionBarra) {
+                setState(() {
+                  _indiceSeleccionado = indice;
+                });
+              }
+            },
+      
+            children: _pantallas,
+          ),
         ),
-
+      
+        bottomNavigationBar: Theme(
+          data: ThemeData(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+      
+          child: BottomNavigationBar(
+            type: BottomNavigationBarType.shifting,
+            currentIndex: _indiceSeleccionado,
+            onTap: _alPresionar,
+      
+            selectedItemColor: Color.fromARGB(255, 255, 255, 255),
+            unselectedItemColor: Colors.grey,
+      
+            items: const [
+              BottomNavigationBarItem(
+                backgroundColor: AppColores.primary,
+                icon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                label: "Eventos",
+                activeIcon: Icon(
+                  Icons.calendar_month,
+                  size: 32,
+                  color: Colors.white,
+                ),
+                tooltip: ("Ir a la seccion de eventos"),
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: AppColores.primary,
+                icon: Icon(
+                  Icons.check_box_outline_blank,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                label: "Estados",
+                activeIcon: Icon(Icons.check_box, size: 32, color: Colors.white),
+                tooltip: ("Ir a la seccion de estados"),
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: AppColores.primary,
+                icon: Icon(Icons.send_outlined, size: 24, color: Colors.white),
+                label: "Solicitudes",
+                activeIcon: Icon(Icons.send, size: 32, color: Colors.white),
+                tooltip: ("Ir a la seccion de solicitudes de eventos"),
+              ),
+            ],
+          ),
+        ),
       ),
     );
-  
   }
-
 }
-
 
 class FisicasFriccion extends ScrollPhysics {
   const FisicasFriccion({super.parent});
@@ -117,8 +142,7 @@ class FisicasFriccion extends ScrollPhysics {
   }
 
   @override
-  double applyPhysicsToUserOffset(ScrollMetrics posicion, double offset){
+  double applyPhysicsToUserOffset(ScrollMetrics posicion, double offset) {
     return super.applyPhysicsToUserOffset(posicion, offset * 0.5);
   }
-
 }
