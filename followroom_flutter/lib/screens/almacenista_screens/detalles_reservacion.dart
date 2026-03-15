@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'dart:async';
+import 'detalles_montaje.dart';
 
 class PantallaDetalles extends StatefulWidget {
   final String idReservacion;
@@ -214,29 +215,53 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
 
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(12),
-                      decoration: ContainerStyles.sombreado,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Salón y Montaje",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Detalles(
+                              numeroReservacion: widget.idReservacion,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            "Salón: ${_datosCompletos?['nombreSalon'] ?? 'Ningún salón seleccionado'}",
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Tipo de montaje: ${_datosCompletos?['tipoMontaje'] ?? 'No seleccionado'}",
-                          ),
-                        ],
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12),
+                        decoration: ContainerStyles.sombreado,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  "Salón y Montaje",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Spacer(),
+                                Text(
+                                  "Detalles >",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColores.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "Salón: ${_datosCompletos?['nombreSalon'] ?? 'Ningún salón seleccionado'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Tipo de montaje: ${_datosCompletos?['tipoMontaje'] ?? 'No seleccionado'}",
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
