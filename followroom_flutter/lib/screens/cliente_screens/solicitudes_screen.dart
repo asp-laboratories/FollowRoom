@@ -53,6 +53,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               fontWeight: FontWeight.bold,
             ),
             radius: 50,
+            contentPadding: EdgeInsets.symmetric(horizontal: 20),
             tabs: const [
               Tab(text: "Mobiliario"),
               Tab(text: "Equipamiento"),

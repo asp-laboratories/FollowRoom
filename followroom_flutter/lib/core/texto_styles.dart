@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class TextEstilos {
   static const encabezados = TextStyle(
@@ -24,8 +25,33 @@ class TextEstilos {
     fontWeight: FontWeight.bold,
   );
 
+  static final encabezadosBlancos = TextStyle(
+    color: Colors.white,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    shadows: [
+      Shadow(
+        color: AppColores.primary.withValues(alpha: 0.9),
+        offset: const Offset(2, 2.5),
+        blurRadius: 9,
+      ),
+    ],
+  );
+
   static const indicador = TextStyle(
     color: Colors.black,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+  );
+
+  static const labelCard = TextStyle(
+    color: AppColores.foreground,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const valorCard = TextStyle(
+    color: AppColores.foreground,
     fontSize: 14,
     fontWeight: FontWeight.bold,
   );

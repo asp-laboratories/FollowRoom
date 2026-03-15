@@ -2,13 +2,86 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 
 class ContainerStyles {
+  // Widget reutilizable para secciones de información
+  static Widget seccionInformativa({
+    required String titulo,
+    required List<Widget> contenido,
+    Widget? childAdicional,
+    double paddingExterior = 16.0,
+    double paddingInterno = 12.0,
+    double fontSizeTitulo = 16,
+    bool mostrarLabel = true,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(paddingExterior),
+      child: Container(
+        width: double.infinity,
+        decoration: ContainerStyles.sombreado,
+        padding: EdgeInsets.all(paddingInterno),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titulo,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: fontSizeTitulo,
+              ),
+            ),
+            SizedBox(height: 8),
+            ...contenido,
+            if (childAdicional != null) ...[
+              SizedBox(height: 8),
+              childAdicional,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget reutilizable para filas de información (label: valor)
+  static Widget filaInformacion(
+    String label,
+    String valor, {
+    bool mostrarLabel = true,
+  }) {
+    if (mostrarLabel) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Text("$label: $valor"),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Text(valor),
+    );
+  }
+
+  // Card para pantallas de almacenista
+  static BoxDecoration get cardAlmacenista => BoxDecoration(
+    color: AppColores.backgroundComponent,
+    borderRadius: BorderRadius.circular(25),
+    border: Border.all(
+      color: AppColores.primary.withOpacity(0.3),
+      style: BorderStyle.solid,
+      width: 2,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: AppColores.primary.withOpacity(0.5),
+        blurRadius: 15,
+        offset: const Offset(0, 6),
+      ),
+    ],
+  );
+
   // Decoraciones básicas
   static final decoracionNormal = BoxDecoration(
     color: AppColores.primary.withValues(alpha: 0.1),
     borderRadius: BorderRadius.circular(12),
     border: Border.all(color: AppColores.primary),
   );
-
 
   // Card de reservación
   static BoxDecoration get cardReservacion => BoxDecoration(
@@ -23,7 +96,7 @@ class ContainerStyles {
     ],
   );
 
-    static BoxDecoration get sombreado => BoxDecoration(
+  static BoxDecoration get sombreado => BoxDecoration(
     borderRadius: BorderRadius.circular(12),
     color: AppColores.backgroundComponentSelected,
     boxShadow: [

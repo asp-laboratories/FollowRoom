@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class AlmacenistaSolicitudesScreen extends StatelessWidget {
   AlmacenistaSolicitudesScreen({super.key});
@@ -27,8 +28,15 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
           padding: EdgeInsets.all(15),
           sliver: DecoratedSliver(
             decoration: BoxDecoration(
-              color: Colors.grey,
+              color: AppColores.backgroundComponent,
               borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColores.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             sliver: SliverToBoxAdapter(
               child: Column(
@@ -47,8 +55,15 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
           padding: EdgeInsets.all(15),
           sliver: DecoratedSliver(
             decoration: BoxDecoration(
-              color: Colors.grey,
+              color: AppColores.backgroundComponent,
               borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColores.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             sliver: SliverToBoxAdapter(
               child: Column(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 import 'dart:async';
-import 'detalles_montaje.dart';
 
 class PantallaDetalles extends StatefulWidget {
   final String idReservacion;
@@ -105,232 +105,404 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
               ),
             )
           : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Colors.grey,
-                      ),
-
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: ContainerStyles.sombreado,
                       width: double.infinity,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Evento"),
-                              const SizedBox(height: 5),
-                              Text(
-                                "Descripcion: ${_datosCompletos?['descripcionEvento']}",
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                "Total de asistentes: ${_datosCompletos?['invitados']}",
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      "Fecha: ${_datosCompletos?['fechaEvento']}",
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      "Hora de Inicio: ${_datosCompletos?['horainicio']}",
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                      padding: EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Datos de la Reservación",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
+                          SizedBox(height: 8),
+                          Text(
+                            "Nombre del evento: ${_datosCompletos?['descripcionEvento'] ?? 'No definido'}",
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Fecha: ${_datosCompletos?['fechaEvento'] ?? 'No definida'}",
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Hora: ${_datosCompletos?['horainicio'] ?? 'No definida'}",
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Tipo de evento: ${_datosCompletos?['tipoMontaje'] ?? 'No seleccionado'}",
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Asistentes: ${_datosCompletos?['invitados'] ?? '0'}",
+                          ),
+                          SizedBox(height: 5),
+                        ],
                       ),
                     ),
+                  ),
+                  SizedBox(height: 10),
 
-                    const SizedBox(height: 10),
-
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Colors.grey,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
                       width: double.infinity,
+                      decoration: ContainerStyles.sombreado,
                       child: Padding(
-                        padding: const EdgeInsets.all(15),
+                        padding: const EdgeInsets.all(8.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Cliente"),
-                            const SizedBox(height: 5),
-                            Text("Nombre: ${_datosCompletos?['cliente']}"),
-                            const SizedBox(height: 5),
                             Text(
-                              "Tipo de Cliente: ${_datosCompletos?['tipoCliente']}",
+                              "Datos del cliente",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    "Telefono: ${_datosCompletos?['telefono']}",
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    "Correo: ${_datosCompletos?['email']}",
-                                  ),
-                                ),
-                              ],
+                            SizedBox(height: 8),
+                            Text(
+                              "Nombre del contacto: ${_datosCompletos?['cliente'] ?? 'No definido'}",
                             ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Tipo de cliente: ${_datosCompletos?['tipoCliente'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Telefono del contacto: ${_datosCompletos?['telefono'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Correo electronico del contacto: ${_datosCompletos?['email'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "RFC: ${_datosCompletos?['rfc'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Nombre fiscal: ${_datosCompletos?['nombreFiscal'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Colonia: ${_datosCompletos?['colonia'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Calle: ${_datosCompletos?['calle'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Numero: ${_datosCompletos?['numero'] ?? 'No definido'}",
+                            ),
+                            SizedBox(height: 5),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Detalles(
-                              numeroReservacion: widget.idReservacion,
+                  ),
+
+                  SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: ContainerStyles.sombreado,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Salón y Montaje",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.grey,
-                        ),
-                        width: double.infinity,
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
+                          SizedBox(height: 8),
+                          Text(
+                            "Salón: ${_datosCompletos?['nombreSalon'] ?? 'Ningún salón seleccionado'}",
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Tipo de montaje: ${_datosCompletos?['tipoMontaje'] ?? 'No seleccionado'}",
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  SizedBox(height: 10),
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool esPantallaChica = constraints.maxWidth < 400;
+
+                      if (esPantallaChica) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
                           child: Column(
+                            children: [
+                              _buildServiciosContainer(),
+                              SizedBox(height: 10),
+                              _buildEquipamientosContainer(),
+                            ],
+                          ),
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Montaje del salon"),
-                              SizedBox(height: 5),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tipo de Montaje: ${_datosCompletos?['tipoMontaje']}",
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Salon: ${_datosCompletos?['nombreSalon']}",
-                                      ),
-                                      Spacer(),
-                                      Text(
-                                        "Detalles >",
-                                        style: TextStyle(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            209,
-                                            208,
-                                            208,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                              Expanded(child: _buildServiciosContainer()),
+                              SizedBox(width: 8),
+                              Expanded(child: _buildEquipamientosContainer()),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: ContainerStyles.sombreado,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Total de la Reservación",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Subtotal:"),
+                              Text("\$${_calcularSubtotal()}"),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("IVA (16%):"),
+                              Text("\$${_calcularIVA()}"),
+                            ],
+                          ),
+                          Divider(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Total:",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "\$${_calcularTotal()}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColores.primary,
+                                ),
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
 
-                    const SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                children: [
-                                  Text('Servicios'),
-                                  SizedBox(height: 5),
-
-                                  ..._datosCompletos?['servicios'].map((
-                                    servicio,
-                                  ) {
-                                    return Row(
-                                      children: [
-                                        Icon(
-                                          Icons.arrow_right,
-                                          color: AppColores.foreground,
-                                        ),
-                                        Expanded(
-                                          child: Text(servicio['nombre']),
-                                        ),
-                                      ],
-                                    );
-                                  }),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 20),
-
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                children: [
-                                  Text('equipamietos'),
-                                  SizedBox(height: 15),
-                                  ..._datosCompletos?['equipos'].map((
-                                    servicio,
-                                  ) {
-                                    return Row(
-                                      children: [
-                                        Icon(
-                                          Icons.arrow_right,
-                                          color: AppColores.foreground,
-                                        ),
-                                        Expanded(
-                                          child: Text(servicio['nombre']),
-                                        ),
-                                      ],
-                                    );
-                                  }),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+  Widget _buildServiciosContainer() {
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Servicios",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (_datosCompletos?['servicios'] == null ||
+              (_datosCompletos?['servicios'] as List).isEmpty)
+            Text("Sin servicios", style: TextStyle(fontSize: 12))
+          else
+            ...(_datosCompletos?['servicios'] as List).map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- ${s['nombre'] ?? 'Sin nombre'}",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "\$${s['precio'] ?? 0}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
+          if (_datosCompletos?['servicios'] != null &&
+              (_datosCompletos?['servicios'] as List).isNotEmpty) ...[
+            Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Total:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  "\$${(_datosCompletos?['servicios'] as List).fold<int>(0, (sum, s) => sum + ((s['precio'] ?? 0) as int))}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColores.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
+  }
+
+  Widget _buildEquipamientosContainer() {
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Equipamientos",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (_datosCompletos?['equipos'] == null ||
+              (_datosCompletos?['equipos'] as List).isEmpty)
+            Text("Sin equipos", style: TextStyle(fontSize: 12))
+          else
+            ...(_datosCompletos?['equipos'] as List).map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- ${e['nombre'] ?? 'Sin nombre'} (x${e['cantidad'] ?? 1})",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "\$${((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (_datosCompletos?['equipos'] != null &&
+              (_datosCompletos?['equipos'] as List).isNotEmpty) ...[
+            Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Total:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  "\$${(_datosCompletos?['equipos'] as List).fold<int>(0, (sum, e) => sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColores.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  int _calcularSubtotal() {
+    int serviciosTotal = 0;
+    int equiposTotal = 0;
+
+    if (_datosCompletos?['servicios'] != null) {
+      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<int>(
+        0,
+        (sum, s) => sum + ((s['precio'] ?? 0) as int),
+      );
+    }
+
+    if (_datosCompletos?['equipos'] != null) {
+      equiposTotal = (_datosCompletos?['equipos'] as List).fold<int>(
+        0,
+        (sum, e) =>
+            sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+      );
+    }
+
+    return serviciosTotal + equiposTotal;
+  }
+
+  int _calcularIVA() {
+    return (_calcularSubtotal() * 0.16).round();
+  }
+
+  int _calcularTotal() {
+    return _calcularSubtotal() + _calcularIVA();
   }
 }

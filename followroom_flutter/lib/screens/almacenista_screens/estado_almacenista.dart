@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/subnavbar_almacenista.dart';
 
 class AlmacenistaEstadoScreen extends StatefulWidget {
@@ -122,29 +125,47 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
+                const SizedBox(width: 24),
+
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey,
+                    color: AppColores.backgroundComponent,
                     border: Border.all(
-                      color: const Color.fromARGB(255, 54, 54, 54),
+                      color: AppColores.primary.withValues(alpha: 0.5),
                       width: 2,
                     ),
-                    borderRadius: BorderRadius.circular(15)
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColores.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
+                      
                       children: [
+                  const SizedBox(width: 24),
+
                         Text(
                           "Filtro: $_filtroAplicado",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          style: TextEstilos.labelCard.copyWith(
+                            color: AppColores.foreground,
+                          ),
                         ),
-                        Icon(Icons.arrow_drop_down, size: 27,),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          size: 27,
+                          color: AppColores.foreground,
+                        ),
                       ],
                     ),
                   ),
                 ),
-                Spacer()
+                Spacer(),
               ],
             ),
           ),
@@ -196,16 +217,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                         child: Container(
                           height: 100,
                           width: double.infinity,
-
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: Colors.black,
-                              style: BorderStyle.solid,
-                              width: 3,
-                            ),
-                          ),
+                          decoration: ContainerStyles.cardAlmacenista,
 
                           child: Padding(
                             padding: EdgeInsets.symmetric(
@@ -218,7 +230,10 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
 
                               children: [
-                                Text(itemActual['cosa']),
+                                Text(
+                                  itemActual['cosa'],
+                                  style: TextEstilos.labelCard,
+                                ),
 
                                 SizedBox(height: 10),
 
@@ -226,9 +241,13 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                   children: [
                                     Text(
                                       "Disponibles: ${itemActual['cantidadDisponible'].toString()}",
+                                      style: TextEstilos.labelCard,
                                     ),
                                     Spacer(),
-                                    Text("Inspeccionar >"),
+                                    Text(
+                                      "Inspeccionar >",
+                                      style: TextEstilos.valorCard,
+                                    ),
                                   ],
                                 ),
                               ],
@@ -268,159 +287,151 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+      elevation: 4,
+      shadowColor: AppColores.primary.withValues(alpha: 0.3),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: AppColores.backgroundComponent,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const SizedBox(width: 24),
 
-                  child: Image.network(
-                    urlImage,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "${equipamientoMobiliario ? 'Mobiliario' : 'Equipamiento'}: $nombre",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      urlImage,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 10),
-
-            Text(
-              "Estados:",
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Cambair datos para q coincidan con la logica obtenida de la base ded atos
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-
-              itemCount: estaos.length,
-
-              itemBuilder: (context, index) {
-                final itemActual = estaos[index];
-
-                return _buildEstadoRow(
-                  context,
-                  itemActual['nombreEstado'],
-                  itemActual['cantidad'].toString(),
-                  index == 0
-                      ? Colors.green
-                      : index == (estaos.length - 1)
-                      ? Colors.red
-                      : Colors.orange,
-                );
-              },
-            ),
-
-            const Divider(),
-
-            Text(
-              "Registrar Movimiento:",
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSmallInput(
-                    context,
-                    "De (estado)",
-                    Icons.output_rounded,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Icon(Icons.arrow_forward, color: Colors.grey),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildSmallInput(
-                    context,
-                    "A (estado)",
-                    Icons.input_rounded,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 15),
-
-            Row(
-              children: [
-                SizedBox(
-                  width: 110,
-                  child: _buildSmallInput(
-                    context,
-                    "Total",
-                    Icons.numbers,
-                    isNumber: true,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Envio de datos para cambio de estado
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 2,
-                    ),
-                    icon: const Icon(Icons.swap_horiz_rounded),
-                    label: const Text(
-                      "Cambiar Estado",
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "${equipamientoMobiliario ? 'Mobiliario' : 'Equipamiento'}: $nombre",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: AppColores.foreground,
                       ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Divider(color: AppColores.primary.withValues(alpha: 0.3)),
+              const SizedBox(height: 10),
+              Text(
+                "Estados:",
+                style: TextStyle(
+                  color: AppColores.foreground,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 8),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: estaos.length,
+                itemBuilder: (context, index) {
+                  final itemActual = estaos[index];
+                  return _buildEstadoRow(
+                    context,
+                    itemActual['nombreEstado'],
+                    itemActual['cantidad'].toString(),
+                    index == 0
+                        ? Colors.green
+                        : index == (estaos.length - 1)
+                        ? Colors.red
+                        : Colors.orange,
+                  );
+                },
+              ),
+              Divider(color: AppColores.primary.withValues(alpha: 0.3)),
+              const SizedBox(height: 10),
+              Text(
+                "Registrar Movimiento:",
+                style: TextStyle(
+                  color: AppColores.foreground,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSmallInput(
+                      context,
+                      "De (estado)",
+                      Icons.output_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.arrow_forward, color: Colors.grey),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildSmallInput(
+                      context,
+                      "A (estado)",
+                      Icons.input_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 110,
+                    child: _buildSmallInput(
+                      context,
+                      "Total",
+                      Icons.numbers,
+                      isNumber: true,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColores.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.swap_horiz_rounded),
+                      label: const Text(
+                        "Cambiar Estado",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -443,13 +454,13 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 10),
-          Text("$label: ", style: TextStyle(color: Colors.grey.shade700)),
+          Text("$label: ", style: TextStyle(color: AppColores.foreground)),
           const Spacer(),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: AppColores.foreground,
             ),
           ),
         ],
@@ -469,7 +480,8 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
 
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade400),
+        labelStyle: TextStyle(color: AppColores.foreground),
+        prefixIcon: Icon(icon, size: 20, color: AppColores.primary),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           vertical: 12,
@@ -477,12 +489,16 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(
+            color: AppColores.primary.withValues(alpha: 0.3),
+          ),
         ),
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(
+            color: AppColores.primary.withValues(alpha: 0.3),
+          ),
         ),
 
         filled: true,

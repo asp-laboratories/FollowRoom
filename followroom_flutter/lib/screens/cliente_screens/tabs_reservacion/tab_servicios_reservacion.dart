@@ -59,7 +59,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
     return serviciosDB
         .where((s) => s['tipo'] == tiposServicioSeleccionado)
         .toList();
-  } 
+  }
 
   void toggleServicio(Map<String, dynamic> servicio) {
     final List<Map<String, dynamic>> nuevaLista = List.from(
@@ -81,102 +81,105 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Filtrar por tipo:",
+    return Container(
+      color: AppColores.background2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Filtrar por tipo:",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                DropdownMenu<String>(
+                  initialSelection: tiposServicioSeleccionado,
+                  dropdownMenuEntries: [
+                    DropdownMenuEntry(value: 'todos', label: 'Todos'),
+                    ...tiposServicios.map(
+                      (value) => DropdownMenuEntry(value: value, label: value),
+                    ),
+                  ],
+                  onSelected: (String? nuevoValor) {
+                    setState(() {
+                      tiposServicioSeleccionado = nuevoValor;
+                    });
+                  },
+                  label: const Text('Tipo de servicio'),
+                ),
+              ],
+            ),
+          ),
+
+          if (widget.serviciosSeleccionados.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Servicios seleccionados (${widget.serviciosSeleccionados.length}):",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
-              DropdownMenu<String>(
-                initialSelection: tiposServicioSeleccionado,
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(value: 'todos', label: 'Todos'),
-                  ...tiposServicios.map(
-                    (value) => DropdownMenuEntry(value: value, label: value),
-                  ),
-                ],
-                onSelected: (String? nuevoValor) {
-                  setState(() {
-                    tiposServicioSeleccionado = nuevoValor;
-                  });
-                },
-                label: const Text('Tipo de servicio'),
+            ),
+            SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Wrap(
+                spacing: 8,
+                children: widget.serviciosSeleccionados.map((s) {
+                  return Chip(
+                    label: Text(s['nombre']),
+                    deleteIcon: Icon(Icons.close, size: 16),
+                    onDeleted: () => toggleServicio(s),
+                  );
+                }).toList(),
               ),
-            ],
-          ),
-        ),
-
-        if (widget.serviciosSeleccionados.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              "Servicios seleccionados (${widget.serviciosSeleccionados.length}):",
-              style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            SizedBox(height: 16),
+          ],
+
+          Text(
+            "Disponibles:",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Wrap(
-              spacing: 8,
-              children: widget.serviciosSeleccionados.map((s) {
-                return Chip(
-                  label: Text(s['nombre']),
-                  deleteIcon: Icon(Icons.close, size: 16),
-                  onDeleted: () => toggleServicio(s),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: serviciosFiltrados.length,
+              itemBuilder: (context, index) {
+                final servicio = serviciosFiltrados[index];
+                final seleccionado = isSelected(servicio);
+
+                return Card(
+                  margin: EdgeInsets.only(bottom: 12),
+                  color: seleccionado
+                      ? AppColores.primary.withValues(alpha: 0.1)
+                      : null,
+                  child: ListTile(
+                    leading: Checkbox(
+                      value: seleccionado,
+                      onChanged: (_) => toggleServicio(servicio),
+                    ),
+                    title: Text(
+                      servicio['nombre'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "${servicio['descripcion']} - \$${servicio['precio']}",
+                    ),
+                    trailing: Text(
+                      servicio['tipo'],
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ),
                 );
-              }).toList(),
+              },
             ),
           ),
-          SizedBox(height: 16),
         ],
-
-        Text(
-          "Disponibles:",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.all(16),
-            itemCount: serviciosFiltrados.length,
-            itemBuilder: (context, index) {
-              final servicio = serviciosFiltrados[index];
-              final seleccionado = isSelected(servicio);
-
-              return Card(
-                margin: EdgeInsets.only(bottom: 12),
-                color: seleccionado
-                    ? AppColores.primary.withValues(alpha: 0.1)
-                    : null,
-                child: ListTile(
-                  leading: Checkbox(
-                    value: seleccionado,
-                    onChanged: (_) => toggleServicio(servicio),
-                  ),
-                  title: Text(
-                    servicio['nombre'],
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    "${servicio['descripcion']} - \$${servicio['precio']}",
-                  ),
-                  trailing: Text(
-                    servicio['tipo'],
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

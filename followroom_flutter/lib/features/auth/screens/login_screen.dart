@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             "Bienvenido a FollowRoom",
-                            style: TextEstilos.encabezados1,
+                            style: TextEstilos.encabezadosBlancos,
                             textAlign: TextAlign.center,
                           ),
 

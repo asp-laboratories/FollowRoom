@@ -89,7 +89,7 @@ class _AlmacenState extends State<Almacen> {
             onTap: _alPresionar,
       
             selectedItemColor: Color.fromARGB(255, 255, 255, 255),
-            unselectedItemColor: Colors.grey,
+            unselectedItemColor: const Color.fromARGB(255, 255, 255, 255),
       
             items: const [
               BottomNavigationBarItem(

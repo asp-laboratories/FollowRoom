@@ -84,6 +84,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               fontWeight: FontWeight.bold,
             ),
             radius: 70,
+            contentPadding: EdgeInsets.symmetric(horizontal: 20),
             tabs: [
               Tab(text: "Reservacion"),
               Tab(text: "Datos cliente"),

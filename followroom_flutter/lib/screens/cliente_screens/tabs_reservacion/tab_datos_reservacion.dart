@@ -187,92 +187,81 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(23.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Nombre del evento",
-              style: TextEstilos.indicador,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nombreController,
-              decoration: createAppDecoration(
-                hintText: "Ej. Lanzamiento de Producto",
+    return Container(
+      color: AppColores.background2,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(23.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Nombre del evento", style: TextEstilos.indicador),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nombreController,
+                decoration: createAppDecoration(
+                  hintText: "Ej. Lanzamiento de Producto",
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
-            const Text(
-              "Fecha del evento",
-              style: TextEstilos.indicador,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _fechaController,
-              readOnly: true,
-              onTap: _selectDate,
-              decoration: createAppDecoration(
-                hintText: "Selecciona una fecha",
-                prefixIcon: const Icon(Icons.calendar_today_outlined),
+              const SizedBox(height: 16),
+              const Text("Fecha del evento", style: TextEstilos.indicador),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _fechaController,
+                readOnly: true,
+                onTap: _selectDate,
+                decoration: createAppDecoration(
+                  hintText: "Selecciona una fecha",
+                  prefixIcon: const Icon(Icons.calendar_today_outlined),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
-            const Text(
-              "Horario del evento",
-              style: TextEstilos.indicador,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _timeController,
-              readOnly: true,
-              onTap: showLightTimePicker,
-              decoration: createAppDecoration(
-                hintText: "Selecciona el rango de horas",
-                prefixIcon: const Icon(Icons.access_time_outlined),
+              const SizedBox(height: 16),
+              const Text("Horario del evento", style: TextEstilos.indicador),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _timeController,
+                readOnly: true,
+                onTap: showLightTimePicker,
+                decoration: createAppDecoration(
+                  hintText: "Selecciona el rango de horas",
+                  prefixIcon: const Icon(Icons.access_time_outlined),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
-            const Text(
-              "Tipo de evento",
-              style: TextEstilos.indicador,
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: tipoEventoSelccionado,
-              items: tiposEvento
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (val) {
-                setState(() => tipoEventoSelccionado = val);
-                _autoSave();
-              },
-              decoration: createAppDecoration(hintText: "Selecciona tipo"),
-            ),
-
-            const SizedBox(height: 16),
-            const Text(
-              "Cantidad de asistentes",
-              style: TextEstilos.indicador,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _asistentesController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: createAppDecoration(
-                hintText: "Número de personas",
-                prefixIcon: const Icon(Icons.people_outline),
+              const SizedBox(height: 16),
+              const Text("Tipo de evento", style: TextEstilos.indicador),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: tipoEventoSelccionado,
+                items: tiposEvento
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() => tipoEventoSelccionado = val);
+                  _autoSave();
+                },
+                decoration: createAppDecoration(hintText: "Selecciona tipo"),
               ),
-            ),
 
-        
-          ],
+              const SizedBox(height: 16),
+              const Text(
+                "Cantidad de asistentes",
+                style: TextEstilos.indicador,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _asistentesController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: createAppDecoration(
+                  hintText: "Número de personas",
+                  prefixIcon: const Icon(Icons.people_outline),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

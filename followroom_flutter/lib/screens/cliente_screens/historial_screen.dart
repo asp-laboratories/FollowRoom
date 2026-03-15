@@ -26,6 +26,7 @@ class HistorialScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
             radius: 70,
+            contentPadding: EdgeInsets.symmetric(horizontal: 20),
             tabs: [
               Tab(text: "Aceptados"),
               Tab(text: "En proceso"),

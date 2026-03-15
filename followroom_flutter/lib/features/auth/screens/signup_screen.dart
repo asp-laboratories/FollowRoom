@@ -13,10 +13,16 @@ class Registro extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text("Regresar", style: TextEstilos.encabezados),
+        title: Text("¿Tienes cuenta?", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [
+          Shadow(
+            offset: Offset(0, 3),
+            blurRadius: 5,
+            color: AppColores.primary.withValues(alpha: 1),
+          ),
+        ]),),
         backgroundColor: AppColores.secundary,
       ),
-      backgroundColor: AppColores.primary,
+      backgroundColor: AppColores.secundary,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -39,6 +45,13 @@ class Registro extends StatelessWidget {
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 3),
+                              blurRadius: 5,
+                              color: AppColores.primary.withValues(alpha: 1),
+                            ),
+                          ],
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -96,9 +109,12 @@ class Registro extends StatelessWidget {
                   ),
                 ),
               ).blurry(
-                blur: 10,
+                blur: 5,
                 borderRadius: BorderRadius.circular(16),
-                color: AppColores.backgroundComponent.withValues(alpha: 0.5),
+                color: AppColores.backgroundComponent.withValues(alpha: 0.9),
+                shadowColor: AppColores.primary.withValues(alpha: 0.5),
+                
+
               ),
         ),
       ),

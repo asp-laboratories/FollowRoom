@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/detalles_reservacion.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/subnavbar_almacenista.dart';
 
@@ -120,6 +123,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
             });
           },
         ),
+        const SizedBox(width: 24),
 
         // seccion de cambio de acuerdo al indice actual
         // La presentacion en cuanto a distribucion se hace desde aca
@@ -148,16 +152,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                   child: Container(
                     height: 200,
                     width: double.infinity,
-
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(
-                        color: Colors.black,
-                        style: BorderStyle.solid,
-                        width: 3,
-                      ),
-                    ),
+                    decoration: ContainerStyles.cardAlmacenista,
 
                     child: Padding(
                       padding: EdgeInsets.symmetric(
@@ -170,21 +165,36 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                         crossAxisAlignment: CrossAxisAlignment.start,
 
                         children: [
-                          Text("Titulo ${itemActual.titulo}"),
+                          Text(
+                            "Titulo ${itemActual.titulo}",
+                            style: TextEstilos.labelCard.copyWith(fontSize: 16),
+                          ),
 
                           Row(
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.calendar_month_outlined),
-                                  Text(" Fecha: ${itemActual.fecha}"),
+                                  Icon(
+                                    Icons.calendar_month_outlined,
+                                    color: AppColores.foreground,
+                                  ),
+                                  Text(
+                                    " Fecha: ${itemActual.fecha}",
+                                    style: TextEstilos.labelCard,
+                                  ),
                                 ],
                               ),
                               const SizedBox(width: 50),
                               Row(
                                 children: [
-                                  Icon(Icons.alarm),
-                                  Text(" Hora: ${itemActual.hora}"),
+                                  Icon(
+                                    Icons.alarm,
+                                    color: AppColores.foreground,
+                                  ),
+                                  Text(
+                                    " Hora: ${itemActual.hora}",
+                                    style: TextEstilos.labelCard,
+                                  ),
                                 ],
                               ),
                             ],
@@ -192,15 +202,24 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
 
                           Row(
                             children: [
-                              Text("Salon: ${itemActual.salon}"),
+                              Text(
+                                "Salon: ${itemActual.salon}",
+                                style: TextEstilos.labelCard,
+                              ),
                               const SizedBox(width: 50),
-                              Text("Montaje: ${itemActual.montaje}"),
+                              Text(
+                                "Montaje: ${itemActual.montaje}",
+                                style: TextEstilos.labelCard,
+                              ),
                             ],
                           ),
 
                           Row(
                             children: [
-                              Text("Equipamientos:"),
+                              Text(
+                                "Equipamientos:",
+                                style: TextEstilos.labelCard,
+                              ),
                               itemActual.equipos
                                   ? const Icon(Icons.check, color: Colors.green)
                                   : const Icon(Icons.close, color: Colors.red),
@@ -211,7 +230,10 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                             children: [
                               Row(
                                 children: [
-                                  Text("Servicios:"),
+                                  Text(
+                                    "Servicios:",
+                                    style: TextEstilos.labelCard,
+                                  ),
                                   itemActual.servicos
                                       ? const Icon(
                                           Icons.check,
@@ -224,7 +246,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                 ],
                               ),
                               Spacer(),
-                              Text("Detalles >"),
+                              Text("Detalles >", style: TextEstilos.valorCard),
                             ],
                           ),
                         ],

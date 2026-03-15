@@ -37,7 +37,7 @@ class Textos extends StatelessWidget {
               fontSize: estaSeleccionado ? 16 : 12,
             ),
 
-            backgroundColor: Colors.grey,
+            backgroundColor: const Color.fromARGB(255, 255, 255, 255),
             selectedColor: Color.fromARGB(255, 155, 88, 43),
             showCheckmark: false,
             shape: RoundedRectangleBorder(
