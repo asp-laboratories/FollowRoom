@@ -29,6 +29,13 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
     });
   }
 
+  void _goToNextTab() {
+    final tabController = DefaultTabController.of(context);
+    if (tabController.index < tabController.length - 1) {
+      tabController.animateTo(tabController.index + 1);
+    }
+  }
+
   void actualizarDatosCliente(Map<String, String> nuevosDatos) {
     setState(() {
       datosCliente.addAll(nuevosDatos);
@@ -92,8 +99,14 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
         ),
         body: TabBarView(
           children: [
-            TabDatosReservacion(onDatosChanged: actualizarDatos),
-            TabClienteReservacion(onDatosChanged: actualizarDatosCliente),
+            TabDatosReservacion(
+              onDatosChanged: actualizarDatos,
+              onSaveAndNext: _goToNextTab,
+            ),
+            TabClienteReservacion(
+              onDatosChanged: actualizarDatosCliente,
+              onSaveAndNext: _goToNextTab,
+            ),
             TabSalon(
               montajesPorSalon: montajesPorSalon,
               salonSeleccionado: salonSeleccionado,

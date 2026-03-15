@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -70,21 +71,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           SizedBox(height: 24),
 
+                          Text(
+                            "Correo electronico",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+
                           TextField(
                             controller: email,
                             decoration: createAppDecoration(
-                              labelText: 'Correo electronico',
-                              prefixIcon: Icon(Icons.email, color: AppColores.primary,),
+                              prefixIcon: Icon(
+                                Icons.email,
+                                color: AppColores.primary,
+                              ),
+                              hintText: 'Ingresa tu correo',
                             ),
                           ),
 
                           SizedBox(height: 24),
 
+                          Text(
+                            "Contraseña",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+
                           TextField(
                             controller: password,
                             decoration: createAppDecoration(
-                              labelText: 'Contraseña',
-                              prefixIcon: Icon(Icons.password, color: AppColores.primary,),
+                              prefixIcon: Icon(
+                                Icons.password,
+                                color: AppColores.primary,
+                              ),
+                              hintText: 'Ingresa tu contraseña',
                             ),
                           ),
 
@@ -118,11 +135,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                     builder: (context) => NavegacionBarra(),
                                   ),
                                 );
-                                } else {
-                                  setState(() {
-                                    mensajeError = "Campos incorrectos";
-                                  });
-                                }},
+                              } else {
+                                setState(() {
+                                  mensajeError = "Campos incorrectos";
+                                });
+                              }
+                            },
 
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.white,

@@ -4,46 +4,97 @@ import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 
 class TabClienteReservacion extends StatefulWidget {
+  final Function(Map<String, String>) onDatosChanged;
+  final VoidCallback? onSaveAndNext;
 
-    final Function(Map<String, String>) onDatosChanged;
-
-  const TabClienteReservacion({super.key, required this.onDatosChanged});
+  const TabClienteReservacion({
+    super.key,
+    required this.onDatosChanged,
+    this.onSaveAndNext,
+  });
 
   @override
   State<TabClienteReservacion> createState() => _TabClienteReservacionState();
 }
 
 class _TabClienteReservacionState extends State<TabClienteReservacion> {
+  final TextEditingController nombre = TextEditingController();
+  final TextEditingController apellidoPaterno = TextEditingController();
+  final TextEditingController apellidoMaterno = TextEditingController();
+  final TextEditingController rfc = TextEditingController();
+  final TextEditingController nombreFiscal = TextEditingController();
+  final TextEditingController telefono = TextEditingController();
+  final TextEditingController correoElectronico = TextEditingController();
+  final TextEditingController colonia = TextEditingController();
+  final TextEditingController calle = TextEditingController();
+  final TextEditingController numero = TextEditingController();
 
-final TextEditingController nombre = TextEditingController();
-final TextEditingController apellidoPaterno= TextEditingController();
-final TextEditingController apellidoMaterno = TextEditingController();
-final TextEditingController rfc = TextEditingController();
-final TextEditingController nombreFiscal = TextEditingController();
-final TextEditingController telefono = TextEditingController();
-final TextEditingController correoElectronico = TextEditingController();
-final TextEditingController colonia = TextEditingController();
-final TextEditingController calle = TextEditingController();
-final TextEditingController numero = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    nombre.addListener(_autoSave);
+    apellidoPaterno.addListener(_autoSave);
+    apellidoMaterno.addListener(_autoSave);
+    rfc.addListener(_autoSave);
+    nombreFiscal.addListener(_autoSave);
+    telefono.addListener(_autoSave);
+    correoElectronico.addListener(_autoSave);
+    colonia.addListener(_autoSave);
+    calle.addListener(_autoSave);
+    numero.addListener(_autoSave);
+  }
 
+  @override
+  void dispose() {
+    nombre.removeListener(_autoSave);
+    apellidoPaterno.removeListener(_autoSave);
+    apellidoMaterno.removeListener(_autoSave);
+    rfc.removeListener(_autoSave);
+    nombreFiscal.removeListener(_autoSave);
+    telefono.removeListener(_autoSave);
+    correoElectronico.removeListener(_autoSave);
+    colonia.removeListener(_autoSave);
+    calle.removeListener(_autoSave);
+    numero.removeListener(_autoSave);
+    nombre.dispose();
+    apellidoPaterno.dispose();
+    apellidoMaterno.dispose();
+    rfc.dispose();
+    nombreFiscal.dispose();
+    telefono.dispose();
+    correoElectronico.dispose();
+    colonia.dispose();
+    calle.dispose();
+    numero.dispose();
+    super.dispose();
+  }
 
-
-
-
-
-
+  void _autoSave() {
+    widget.onDatosChanged({
+      'nombre': nombre.text,
+      'apellidoPaterno': apellidoPaterno.text,
+      'apellidoMaterno': apellidoMaterno.text,
+      'rfc': rfc.text,
+      'nombreFiscal': nombreFiscal.text,
+      'telefono': telefono.text,
+      'correoElectronico': correoElectronico.text,
+      'colonia': colonia.text,
+      'calle': calle.text,
+      'numero': numero.text,
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              Text("Datos personales", style: TextEstilos.subtitulos,),
+              Text("Datos personales", style: TextEstilos.subtitulos),
               Container(
                 width: double.infinity,
                 // decoration: BoxDecoration(color: AppColores.primary),
@@ -52,48 +103,54 @@ final TextEditingController numero = TextEditingController();
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10,),
+                      const SizedBox(height: 10),
+
+                      Text("Nombre"),
                       TextField(
                         controller: nombre,
                         decoration: createAppDecoration(
-                          labelText: 'Ingresar nombre',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu nombre',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-                      
+                      const SizedBox(height: 10),
+
+                      Text("Apellidos"),
                       TextField(
                         controller: apellidoPaterno,
                         decoration: createAppDecoration(
-                          labelText: 'Apellido paterno',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu apellido paterno',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-                      
+                      const SizedBox(height: 10),
+
+                      Text("Apellido materno"),
                       TextField(
                         controller: apellidoMaterno,
                         decoration: createAppDecoration(
-                          labelText: 'Apellido materno',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu apellido materno',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-                      
+                      const SizedBox(height: 10),
+                      Text("RFC"),
+
                       TextField(
                         controller: rfc,
                         decoration: createAppDecoration(
-                          labelText: 'RFC',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu RFC',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-                    
+                      const SizedBox(height: 10),
+
+                      Text("Nombre fiscal"),
                       TextField(
                         controller: nombreFiscal,
                         decoration: createAppDecoration(
-                          labelText: 'Nombre fiscal',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu nombre fiscal',
                         ),
                       ),
                     ],
@@ -111,21 +168,25 @@ final TextEditingController numero = TextEditingController();
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10,),
+                      const SizedBox(height: 10),
+
+                      Text("Telefono"),
                       TextField(
                         controller: telefono,
                         decoration: createAppDecoration(
-                          labelText: 'Telefono',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu telefono',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-                      
+                      const SizedBox(height: 10),
+
+                      Text("Correo electronico"),
+
                       TextField(
                         controller: correoElectronico,
                         decoration: createAppDecoration(
-                          labelText: 'Correo electronico',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu correo electronico',
                         ),
                       ),
                     ],
@@ -138,37 +199,39 @@ final TextEditingController numero = TextEditingController();
 
               Container(
                 width: double.infinity,
-                // decoration: BoxDecoration(color: AppColores.primary), 
+                // decoration: BoxDecoration(color: AppColores.primary),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10,),
+                      const SizedBox(height: 10),
 
+                      Text("Colonia"),
                       TextField(
                         controller: colonia,
                         decoration: createAppDecoration(
-                          labelText: 'Colonia',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu colonia',
                         ),
                       ),
-                      const SizedBox(height: 10,),
+                      const SizedBox(height: 10),
 
+                      Text("Calle"),
                       TextField(
                         controller: calle,
                         decoration: createAppDecoration(
-                          labelText: 'Calle',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu calle',
                         ),
                       ),
-                      const SizedBox(height: 10,),
-
+                      const SizedBox(height: 10),
+                      Text("Numero"),
                       TextField(
                         controller: numero,
                         decoration: createAppDecoration(
-                          labelText: 'Numero',
                           prefixIcon: Icon(Icons.perm_identity),
+                          hintText: 'Ingresa tu numero',
                         ),
                       ),
                     ],
@@ -176,24 +239,7 @@ final TextEditingController numero = TextEditingController();
                 ),
               ),
 
-              ElevatedButton(
-              onPressed: () {
-                widget.onDatosChanged({
-                  'nombre' : nombre.text,
-                  'apellidoPaterno' : apellidoPaterno.text,
-                  'apellidoMaterno' : apellidoMaterno.text,
-                  'rfc' : rfc.text,
-                  'nombreFiscal' : nombreFiscal.text,
-                  'telefono' : telefono.text,
-                  'correoElectronico' : correoElectronico.text,
-                  'colonia' : colonia.text,
-                  'calle' : calle.text,
-                  'numero' : numero.text,
-
-                });
-              },
-              child: Text("Guardar datos"),
-              ),
+              
             ],
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:blurrycontainer/blurrycontainer.dart';
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
@@ -10,6 +11,7 @@ class Registro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text("Regresar", style: TextEstilos.encabezados),
         backgroundColor: AppColores.secundary,
@@ -18,70 +20,86 @@ class Registro extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColores.backgroundComponent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    "Registrate",
-                    style: TextEstilos.encabezados,
-                    textAlign: TextAlign.center,
+          child:
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        "Registrate",
+                        //style: TextEstilos.encabezados,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      SizedBox(height: 24),
+
+                      Text("Nombre de usuario"),
+
+                      TextField(
+                        decoration: createAppDecoration(
+                          prefixIcon: Icon(Icons.person),
+                          hintText: "Ingresa tu nombre de usuario",
+                        ),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      Text("Correo electronico"),
+                      TextField(
+                        decoration: createAppDecoration(
+                          prefixIcon: Icon(Icons.email),
+                          hintText: "Ingresa tu correo electronico",
+                        ),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      Text("Contraseña"),
+
+                      TextField(
+                        decoration: createAppDecoration(
+                          prefixIcon: Icon(Icons.password_sharp),
+                          hintText: "Ingresa tu contraseña",
+                        ),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      Text("Confirmar contraseña"),
+                      TextField(
+                        decoration: createAppDecoration(
+                          prefixIcon: Icon(Icons.password_outlined),
+                          hintText: "Confirma tu contraseña",
+                        ),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: BotonStyles.botonEstilos,
+                        child: Text("Registrarse"),
+                      ),
+                    ],
                   ),
-
-                  SizedBox(height: 24),
-
-                  TextField(
-                    decoration: createAppDecoration(
-                      labelText: 'Nombre de usuario',
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                  ),
-
-                  SizedBox(height: 12),
-
-                  TextField(
-                    decoration: createAppDecoration(
-                      labelText: 'Correo electronico',
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                  ),
-
-                  SizedBox(height: 12),
-
-                  TextField(
-                    decoration: createAppDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: Icon(Icons.password_sharp),
-                    ),
-                  ),
-
-                  SizedBox(height: 12),
-
-                  TextField(
-                    decoration: createAppDecoration(
-                      labelText: 'Confirmar contraseña',
-                      prefixIcon: Icon(Icons.password_outlined),
-                    ),
-                  ),
-
-                  SizedBox(height: 12),
-
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: Text("Registrarse"),
-                    style: BotonStyles.botonEstilos,
-                  ),
-                ],
+                ),
+              ).blurry(
+                blur: 10,
+                borderRadius: BorderRadius.circular(16),
+                color: AppColores.backgroundComponent.withValues(alpha: 0.5),
               ),
-            ),
-          ),
         ),
       ),
     );

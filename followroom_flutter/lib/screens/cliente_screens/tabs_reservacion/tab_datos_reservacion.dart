@@ -1,21 +1,29 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
-import 'package:from_to_time_picker/from_to_time_picker.dart';
-import 'package:flutter/services.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 
 class TabDatosReservacion extends StatefulWidget {
   final Function(Map<String, String>) onDatosChanged;
+  final VoidCallback? onSaveAndNext;
 
-  const TabDatosReservacion({super.key, required this.onDatosChanged});
+  const TabDatosReservacion({
+    super.key,
+    required this.onDatosChanged,
+    this.onSaveAndNext,
+  });
 
   @override
   State<TabDatosReservacion> createState() => _TabDatosReservacionState();
 }
 
 class _TabDatosReservacionState extends State<TabDatosReservacion> {
-  final List<String> tiposEvento = ['1', '2', '3'];
+  final List<String> tiposEvento = [
+    'Conferencia',
+    'Boda',
+    'Reunión Corporativa',
+  ];
   String? tipoEventoSelccionado;
 
   final TextEditingController _nombreController = TextEditingController();
@@ -23,157 +31,247 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _asistentesController = TextEditingController();
 
-  void showLightTimePicker() {
-    showDialog(
-      context: context,
-      builder: (_) => FromToTimePicker(
-        maxWidth: 600,
-        onTab: (from, to) {
-          if (kDebugMode) {
-            print('from $from to $to');
-          }
-          setState(() {
-            if (from.hour > to.hour) {
-              _timeController.text = "Error";
-            } else {
-              _timeController.text =
-                  "Inicio ${from.hour.toString()} - Cierre ${to.hour.toString()}";
-            }
-          });
-          Navigator.pop(context);
-        },
-        dialogBackgroundColor: const Color(0xFF121212),
-        fromHeadlineColor: Colors.white,
-        toHeadlineColor: Colors.white,
-        upIconColor: Colors.white,
-        downIconColor: Colors.white,
-        timeBoxColor: const Color(0xFF1E1E1E),
-        timeHintColor: Colors.grey,
-        timeTextColor: Colors.white,
-        dividerColor: const Color(0xFF121212),
-        doneTextColor: Colors.white,
-        dismissTextColor: Colors.white,
-        defaultDayNightColor: const Color(0xFF1E1E1E),
-        defaultDayNightTextColor: Colors.white,
-        colonColor: Colors.white,
-        showHeaderBullet: true,
-        headerText: 'Time available from 01:00 AM to 11:00 PM',
+  TimeOfDay? _horaInicio;
+  TimeOfDay? _horaFin;
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreController.addListener(_autoSave);
+    _fechaController.addListener(_autoSave);
+    _timeController.addListener(_autoSave);
+    _asistentesController.addListener(_autoSave);
+  }
+
+  @override
+  void dispose() {
+    _nombreController.removeListener(_autoSave);
+    _fechaController.removeListener(_autoSave);
+    _timeController.removeListener(_autoSave);
+    _asistentesController.removeListener(_autoSave);
+    _nombreController.dispose();
+    _fechaController.dispose();
+    _timeController.dispose();
+    _asistentesController.dispose();
+    super.dispose();
+  }
+
+  void _autoSave() {
+    widget.onDatosChanged({
+      'nombre': _nombreController.text,
+      'fecha': _fechaController.text,
+      'horario': _timeController.text,
+      'tipo': tipoEventoSelccionado ?? '',
+      'asistentes': _asistentesController.text,
+    });
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  /// Genera el tema visual basado en la imagen de referencia
+  ThemeData _getCustomTimePickerTheme(BuildContext context) {
+    final Color colorPrincipal = AppColores.primary;
+    final Color fondoMoradoClaro = colorPrincipal.withOpacity(0.12);
+    final Color fondoGris = Colors.grey.shade200;
+
+    return Theme.of(context).copyWith(
+      colorScheme: Theme.of(
+        context,
+      ).colorScheme.copyWith(primary: colorPrincipal, onSurface: Colors.black),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+
+        hourMinuteColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? fondoMoradoClaro
+              : fondoGris,
+        ),
+        hourMinuteTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colorPrincipal
+              : Colors.black87,
+        ),
+        hourMinuteTextStyle: const TextStyle(
+          fontSize: 45,
+          fontWeight: FontWeight.w400,
+        ),
+
+        dayPeriodColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? fondoMoradoClaro
+              : Colors.white,
+        ),
+        dayPeriodTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colorPrincipal
+              : Colors.grey.shade600,
+        ),
+        dayPeriodBorderSide: BorderSide(color: Colors.grey.shade300),
+        dayPeriodShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+
+        dialBackgroundColor: fondoGris,
+        dialHandColor: colorPrincipal,
+        dialTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white
+              : Colors.black87,
+        ),
+
+        entryModeIconColor: Colors.grey.shade700,
+        helpTextStyle: TextStyle(
+          color: Colors.grey.shade600,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      // Estilo para el modo de entrada de teclado (Imagen 2)
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: colorPrincipal, width: 2),
+        ),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.transparent),
+        ),
+        fillColor: fondoGris,
+        filled: true,
       ),
     );
   }
 
+  Future<void> showLightTimePicker() async {
+    // 1. Seleccionar Hora de Inicio
+    TimeOfDay? selectedInicio = await showTimePicker(
+      context: context,
+      initialTime: _horaInicio ?? TimeOfDay.now(),
+      helpText: 'Seleccina la hora de inicio',
+      builder: (context, child) {
+        return Theme(data: _getCustomTimePickerTheme(context), child: child!);
+      },
+    );
+
+    if (selectedInicio == null) return;
+
+    TimeOfDay? selectedFin = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: (selectedInicio.hour + 2) % 24,
+        minute: selectedInicio.minute,
+      ),
+      helpText: 'Seleccina la hora de fin',
+      builder: (context, child) {
+        return Theme(data: _getCustomTimePickerTheme(context), child: child!);
+      },
+    );
+
+    if (selectedFin == null) return;
+
+    setState(() {
+      _horaInicio = selectedInicio;
+      _horaFin = selectedFin;
+      _timeController.text =
+          "${_formatTimeOfDay(selectedInicio)} - ${_formatTimeOfDay(selectedFin)}";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(23.0),
-      child: Container(
-        decoration: BoxDecoration(color: AppColores.background),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(23.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 12),
-
-            Text("Nombre del evento", textAlign: TextAlign.start),
+            const Text(
+              "Nombre del evento",
+              style: TextEstilos.indicador,
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _nombreController,
               decoration: createAppDecoration(
-                labelText: 'Ingrese nombre del evento',
+                hintText: "Ej. Lanzamiento de Producto",
               ),
             ),
 
-            SizedBox(height: 12),
-
-            Text("Fecha del evento"),
-
+            const SizedBox(height: 16),
+            const Text(
+              "Fecha del evento",
+              style: TextEstilos.indicador,
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _fechaController,
-              decoration: InputDecoration(
-                labelText: 'Fecha',
-                filled: true,
-                prefixIcon: Icon(Icons.calendar_today),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
               readOnly: true,
-              onTap: () {
-                _selectDate();
-              },
+              onTap: _selectDate,
+              decoration: createAppDecoration(
+                hintText: "Selecciona una fecha",
+                prefixIcon: const Icon(Icons.calendar_today_outlined),
+              ),
             ),
-            const SizedBox(height: 10),
 
-            Text("Horario del evento"),
+            const SizedBox(height: 16),
+            const Text(
+              "Horario del evento",
+              style: TextEstilos.indicador,
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _timeController,
-              decoration: InputDecoration(
-                labelText: 'Horario',
-                filled: true,
-                prefixIcon: Icon(Icons.punch_clock_rounded),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
               readOnly: true,
-              onTap: () => showLightTimePicker(),
-            ),
-
-            const SizedBox(height: 20),
-
-            Text("Tipo de evento"),
-            Flexible(
-              child: DropdownMenu<String>(
-                dropdownMenuEntries: tiposEvento.map<DropdownMenuEntry<String>>(
-                  (String value) {
-                    return DropdownMenuEntry<String>(
-                      value: value,
-                      label: value,
-                    );
-                  },
-                ).toList(),
-                onSelected: (String? nuevoValor) {
-                  setState(() {
-                    tipoEventoSelccionado = nuevoValor;
-                  });
-                },
-
-                label: const Text('Selecciona un tipo de evento'),
+              onTap: showLightTimePicker,
+              decoration: createAppDecoration(
+                hintText: "Selecciona el rango de horas",
+                prefixIcon: const Icon(Icons.access_time_outlined),
               ),
             ),
 
-            Text("Cantidad de asistentes"),
+            const SizedBox(height: 16),
+            const Text(
+              "Tipo de evento",
+              style: TextEstilos.indicador,
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: tipoEventoSelccionado,
+              items: tiposEvento
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (val) {
+                setState(() => tipoEventoSelccionado = val);
+                _autoSave();
+              },
+              decoration: createAppDecoration(hintText: "Selecciona tipo"),
+            ),
+
+            const SizedBox(height: 16),
+            const Text(
+              "Cantidad de asistentes",
+              style: TextEstilos.indicador,
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _asistentesController,
-              decoration: InputDecoration(
-                labelText: 'Asistentes',
-                filled: true,
-                prefixIcon: Icon(Icons.people),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
               keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly, // Only allow digits 0-9
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: createAppDecoration(
+                hintText: "Número de personas",
+                prefixIcon: const Icon(Icons.people_outline),
+              ),
             ),
 
-            SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                widget.onDatosChanged({
-                  'nombre': _nombreController.text,
-                  'fecha': _fechaController.text,
-                  'horario': _timeController.text,
-                  'tipo': tipoEventoSelccionado ?? '',
-                  'asistentes': _asistentesController.text,
-                });
-              },
-              child: Text("Guardar datos"),
-            ),
+        
           ],
         ),
       ),
@@ -181,38 +279,18 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
   }
 
   Future<void> _selectDate() async {
-    DateTime? _seleccionada = await showDatePicker(
+    DateTime? seleccionada = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
 
-    if (_seleccionada != null) {
+    if (seleccionada != null) {
       setState(() {
-        _fechaController.text = _seleccionada.toString().split(" ")[0];
+        _fechaController.text =
+            "${seleccionada.day}/${seleccionada.month}/${seleccionada.year}";
       });
     }
   }
 }
-
-//Container(
-//          decoration: BoxDecoration(
-//            color: Colors.black,
-//            borderRadius: BorderRadius.circular(5),
-//          ),
-//          height: 50,
-//        ),
-//
-//        SizedBox(height: 12),
-//
-//        Padding(
-//          padding: const EdgeInsets.all(8.0),
-//          child: Container(
-//            decoration: BoxDecoration(
-//              color: Colors.black,
-//              borderRadius: BorderRadius.circular(5),
-//            ),
-//            height: 120,
-//          ),
-//        ),

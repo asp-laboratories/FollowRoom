@@ -158,163 +158,178 @@ class _NavigatorEventosReservacionState
         title: Text("Disponibilidad de Salones"),
         backgroundColor: AppColores.primary,
       ),
-      body: Column(
-        children: [
-          // Filtros
-          Container(
-            padding: EdgeInsets.all(16),
-            color: Colors.grey.shade100,
-            child: Column(
-              children: [
-                // Buscar
-                TextField(
-                  controller: _busquedaController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por evento o cliente...',
-                    prefixIcon: Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              color: Colors.grey.shade100,
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _busquedaController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar...',
+                      prefixIcon: Icon(Icons.search, size: 20),
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
+                    onChanged: (value) => setState(() {}),
                   ),
-                  onChanged: (value) => setState(() {}),
-                ),
-                SizedBox(height: 12),
-                // Filtros fecha y salón
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _selectDate(context),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 20,
-                                color: AppColores.primary,
-                              ),
-                              SizedBox(width: 8),
-                              Text(_formatearFecha(fechaSeleccionada)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: salonSeleccionado,
-                        hint: Text("Todos los salones"),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'todos',
-                            child: Text("Todos"),
-                          ),
-                          ...salonesDB.map(
-                            (s) => DropdownMenuItem(
-                              value: s['nombre'],
-                              child: Text(
-                                s['nombre'],
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _selectDate(context),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
                             ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            salonSeleccionado = value;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Lista de reservaciones
-          Expanded(
-            child: fechas.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.event_available,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          "No hay reservaciones",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        Text(
-                          "para la fecha seleccionada",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: fechas.length,
-                    itemBuilder: (context, index) {
-                      final fecha = fechas[index];
-                      final reservaciones = _getReservacionesDelDia(fecha);
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.event,
-                                  size: 20,
+                                  Icons.calendar_today,
+                                  size: 16,
                                   color: AppColores.primary,
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  _formatearFecha(fecha),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    _formatearFecha(fechaSeleccionada),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          ...reservaciones.map((r) => _buildCardReservacion(r)),
-                          SizedBox(height: 16),
-                        ],
-                      );
-                    },
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: salonSeleccionado,
+                          hint: Text("Todos", style: TextStyle(fontSize: 13)),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: 'todos',
+                              child: Text(
+                                "Todos",
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            ...salonesDB.map(
+                              (s) => DropdownMenuItem(
+                                value: s['nombre'],
+                                child: Text(
+                                  s['nombre'],
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) =>
+                              setState(() => salonSeleccionado = value),
+                        ),
+                      ),
+                    ],
                   ),
-          ),
-        ],
+                ],
+              ),
+            ),
+
+            // Lista de reservaciones
+            Expanded(
+              child: fechas.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_available,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "No hay reservaciones",
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          Text(
+                            "para la fecha seleccionada",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.all(16),
+                      itemCount: fechas.length,
+                      itemBuilder: (context, index) {
+                        final fecha = fechas[index];
+                        final reservaciones = _getReservacionesDelDia(fecha);
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.event,
+                                    size: 20,
+                                    color: AppColores.primary,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    _formatearFecha(fecha),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ...reservaciones.map(
+                              (r) => _buildCardReservacion(r),
+                            ),
+                            SizedBox(height: 16),
+                          ],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

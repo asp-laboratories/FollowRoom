@@ -39,13 +39,14 @@ dependencies:
   
   buttons_tabbar: ^1.3.14
 
-  from_to_time_picker: ^1.2.2
-
   blurrycontainer: ^2.1.0
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +57,13 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/follow_room_icon.png"
+  min_sdk_android: 21
+
 
 # The following section is specific to Flutter packages.
 flutter:

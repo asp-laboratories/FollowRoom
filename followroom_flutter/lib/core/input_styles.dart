@@ -7,10 +7,10 @@ class InputStyles {
     hintText: 'predeterminado',
     prefixIcon: Icon(Icons.person),
 
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0     ), borderSide: BorderSide(color: AppColores.primary, width: 1.0)),
 
     focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.black),
+      borderSide: BorderSide(color: AppColores.primary, width: 1.0),
       borderRadius: BorderRadius.circular(10),
     ),
 
@@ -45,7 +45,7 @@ InputDecoration createAppDecoration({
     errorText: errorText,
 
     // Estilos fijos que quieres reutilizar
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: AppColores.primary, width: 1.0)),
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: AppColores.primary, width: 2.0),
       borderRadius: BorderRadius.circular(10.0),
