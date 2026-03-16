@@ -65,10 +65,10 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
             style: TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColores.backgroundComponent,
         ),
         body: Container(
-          color: Colors.white,
+          color: AppColores.background2,
           child: PageView(
             controller: _controladorPagina,
             physics: const FisicasFriccion(),

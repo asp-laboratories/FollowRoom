@@ -96,6 +96,31 @@ class ContainerStyles {
     ],
   );
 
+  // Card para selección (salón, servicios, equipamiento)
+  static BoxDecoration cardSeleccion({required bool isSelected}) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isSelected
+          ? AppColores.backgroundComponentSelected
+          : AppColores.backgroundComponent,
+      boxShadow: [
+        BoxShadow(
+          color: isSelected
+              ? AppColores.primary.withValues(alpha: 0.3)
+              : Colors.black.withValues(alpha: 0.1),
+          blurRadius: isSelected ? 8 : 4,
+          offset: Offset(0, isSelected ? 4 : 2),
+        ),
+      ],
+      border: Border.all(
+        color: isSelected
+            ? AppColores.primary
+            : AppColores.primary.withValues(alpha: 0.2),
+        width: isSelected ? 2 : 1,
+      ),
+    );
+  }
+
   static BoxDecoration get sombreado => BoxDecoration(
     borderRadius: BorderRadius.circular(12),
     color: AppColores.backgroundComponentSelected,

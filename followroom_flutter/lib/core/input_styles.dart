@@ -7,7 +7,10 @@ class InputStyles {
     hintText: 'predeterminado',
     prefixIcon: Icon(Icons.person),
 
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0     ), borderSide: BorderSide(color: AppColores.primary, width: 1.0)),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: BorderSide(color: AppColores.primary, width: 1.0),
+    ),
 
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: AppColores.primary, width: 1.0),
@@ -36,6 +39,7 @@ InputDecoration createAppDecoration({
   Widget? prefixIcon,
   Widget? suffixIcon,
   String? errorText,
+  bool enabled = true,
 }) {
   return InputDecoration(
     labelText: labelText,
@@ -44,8 +48,24 @@ InputDecoration createAppDecoration({
     suffixIcon: suffixIcon,
     errorText: errorText,
 
-    // Estilos fijos que quieres reutilizar
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: AppColores.primary, width: 1.0)),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: BorderSide(
+        color: AppColores.primary.withValues(alpha: 0.5),
+        width: 1.0,
+      ),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: BorderSide(
+        color: Colors.grey.withValues(alpha: 0.3),
+        width: 1.0,
+      ),
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: BorderSide(color: AppColores.primary, width: 1.0),
+    ),
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: AppColores.primary, width: 2.0),
       borderRadius: BorderRadius.circular(10.0),
@@ -59,14 +79,12 @@ InputDecoration createAppDecoration({
       borderRadius: BorderRadius.circular(10.0),
     ),
     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-    labelStyle: const TextStyle(color: AppColores.primary),
-    // Color cuando el usuario hace clic (Focus)
-    floatingLabelStyle: const TextStyle(
+    labelStyle: TextStyle(color: enabled ? AppColores.primary : Colors.grey),
+    floatingLabelStyle: TextStyle(
       color: AppColores.primary,
       fontWeight: FontWeight.bold,
     ),
     filled: true,
-    fillColor: const Color.fromARGB(255, 255, 255, 255),
-    // contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    fillColor: enabled ? Colors.white : Colors.grey.shade100,
   );
 }

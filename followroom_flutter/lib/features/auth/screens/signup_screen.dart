@@ -13,13 +13,21 @@ class Registro extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text("¿Tienes cuenta?", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [
-          Shadow(
-            offset: Offset(0, 3),
-            blurRadius: 5,
-            color: AppColores.primary.withValues(alpha: 1),
+        title: Text(
+          "¿Tienes cuenta?",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 3),
+                blurRadius: 5,
+                color: AppColores.primary.withValues(alpha: 1),
+              ),
+            ],
           ),
-        ]),),
+        ),
         backgroundColor: AppColores.secundary,
       ),
       backgroundColor: AppColores.secundary,
@@ -58,7 +66,8 @@ class Registro extends StatelessWidget {
 
                       SizedBox(height: 24),
 
-                      Text("Nombre de usuario"),
+                      Text("Nombre de usuario", style: TextEstilos.simpleTexto),
+                      SizedBox(height: 5),
 
                       TextField(
                         decoration: createAppDecoration(
@@ -69,7 +78,12 @@ class Registro extends StatelessWidget {
 
                       SizedBox(height: 12),
 
-                      Text("Correo electronico"),
+                      Text(
+                        "Correo electronico",
+                        style: TextEstilos.simpleTexto,
+                      ),
+                      SizedBox(height: 5),
+
                       TextField(
                         decoration: createAppDecoration(
                           prefixIcon: Icon(Icons.email),
@@ -79,23 +93,31 @@ class Registro extends StatelessWidget {
 
                       SizedBox(height: 12),
 
-                      Text("Contraseña"),
+                      Text("Contraseña", style: TextEstilos.simpleTexto),
+                      SizedBox(height: 5),
 
                       TextField(
                         decoration: createAppDecoration(
-                          prefixIcon: Icon(Icons.password_sharp),
+                          prefixIcon: Icon(Icons.password),
                           hintText: "Ingresa tu contraseña",
                         ),
+                        obscureText: true,
                       ),
 
                       SizedBox(height: 12),
 
-                      Text("Confirmar contraseña"),
+                      Text(
+                        "Confirmar contraseña",
+                        style: TextEstilos.simpleTexto,
+                      ),
+                      SizedBox(height: 5),
+
                       TextField(
                         decoration: createAppDecoration(
-                          prefixIcon: Icon(Icons.password_outlined),
+                          prefixIcon: Icon(Icons.password),
                           hintText: "Confirma tu contraseña",
                         ),
+                        obscureText: true,
                       ),
 
                       SizedBox(height: 12),
@@ -111,10 +133,8 @@ class Registro extends StatelessWidget {
               ).blurry(
                 blur: 5,
                 borderRadius: BorderRadius.circular(16),
-                color: AppColores.backgroundComponent.withValues(alpha: 0.9),
+                color: AppColores.secundary.withValues(alpha: 0.9),
                 shadowColor: AppColores.primary.withValues(alpha: 0.5),
-                
-
               ),
         ),
       ),

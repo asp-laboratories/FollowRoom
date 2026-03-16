@@ -54,17 +54,18 @@ class _AlmacenState extends State<Almacen> {
         appBar: AppBar(
           title: Text("Almacen"),
           scrolledUnderElevation: 0,
-          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+          backgroundColor: AppColores.backgroundComponent,
+          foregroundColor: AppColores.foreground,
         ),
-      
+
         body: Container(
-          color: Color.fromARGB(255, 255, 255, 255),
-      
+          color: AppColores.background2,
+
           child: PageView(
             controller: _controladorPagina,
-      
+
             physics: const FisicasFriccion(),
-      
+
             onPageChanged: (int indice) {
               if (!_navegacionBarra) {
                 setState(() {
@@ -72,25 +73,25 @@ class _AlmacenState extends State<Almacen> {
                 });
               }
             },
-      
+
             children: _pantallas,
           ),
         ),
-      
+
         bottomNavigationBar: Theme(
           data: ThemeData(
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
           ),
-      
+
           child: BottomNavigationBar(
             type: BottomNavigationBarType.shifting,
             currentIndex: _indiceSeleccionado,
             onTap: _alPresionar,
-      
+
             selectedItemColor: Color.fromARGB(255, 255, 255, 255),
             unselectedItemColor: const Color.fromARGB(255, 255, 255, 255),
-      
+
             items: const [
               BottomNavigationBarItem(
                 backgroundColor: AppColores.primary,
@@ -115,7 +116,11 @@ class _AlmacenState extends State<Almacen> {
                   color: Colors.white,
                 ),
                 label: "Estados",
-                activeIcon: Icon(Icons.check_box, size: 32, color: Colors.white),
+                activeIcon: Icon(
+                  Icons.check_box,
+                  size: 32,
+                  color: Colors.white,
+                ),
                 tooltip: ("Ir a la seccion de estados"),
               ),
               BottomNavigationBarItem(

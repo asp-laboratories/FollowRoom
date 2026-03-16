@@ -156,23 +156,29 @@ class _NavigatorEventosReservacionState
     return Scaffold(
       appBar: AppBar(
         title: Text("Disponibilidad de Salones"),
-        backgroundColor: AppColores.primary,
+        backgroundColor: AppColores.backgroundComponent,
+        foregroundColor: AppColores.foreground,
       ),
+      backgroundColor: AppColores.background2,
       body: SafeArea(
         child: Column(
           children: [
             Container(
               padding: EdgeInsets.all(12),
-              color: Colors.grey.shade100,
+              color: AppColores.backgroundComponent,
               child: Column(
                 children: [
                   TextField(
                     controller: _busquedaController,
                     decoration: InputDecoration(
                       hintText: 'Buscar...',
-                      prefixIcon: Icon(Icons.search, size: 20),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 20,
+                        color: AppColores.foreground,
+                      ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColores.backgroundComponent,
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 12,

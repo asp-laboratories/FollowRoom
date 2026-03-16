@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class Textos extends StatelessWidget {
   final List<String> texts;
@@ -37,8 +38,8 @@ class Textos extends StatelessWidget {
               fontSize: estaSeleccionado ? 16 : 12,
             ),
 
-            backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-            selectedColor: Color.fromARGB(255, 155, 88, 43),
+            backgroundColor: AppColores.backgroundComponent,
+            selectedColor: AppColores.primary,
             showCheckmark: false,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),

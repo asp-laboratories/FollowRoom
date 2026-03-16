@@ -7,18 +7,27 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 class TabDatosReservacion extends StatefulWidget {
   final Function(Map<String, String>) onDatosChanged;
   final VoidCallback? onSaveAndNext;
+  final TextEditingController? nombreController;
+  final TextEditingController? fechaController;
+  final TextEditingController? horaController;
+  final TextEditingController? asistentesController;
 
   const TabDatosReservacion({
     super.key,
     required this.onDatosChanged,
     this.onSaveAndNext,
+    this.nombreController,
+    this.fechaController,
+    this.horaController,
+    this.asistentesController,
   });
 
   @override
   State<TabDatosReservacion> createState() => _TabDatosReservacionState();
 }
 
-class _TabDatosReservacionState extends State<TabDatosReservacion> {
+class _TabDatosReservacionState extends State<TabDatosReservacion>
+    with AutomaticKeepAliveClientMixin {
   final List<String> tiposEvento = [
     'Conferencia',
     'Boda',
@@ -26,17 +35,26 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
   ];
   String? tipoEventoSelccionado;
 
-  final TextEditingController _nombreController = TextEditingController();
-  final TextEditingController _fechaController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _asistentesController = TextEditingController();
-
   TimeOfDay? _horaInicio;
   TimeOfDay? _horaFin;
 
   @override
+  bool get wantKeepAlive => true;
+
+  late final TextEditingController _nombreController;
+  late final TextEditingController _fechaController;
+  late final TextEditingController _timeController;
+  late final TextEditingController _asistentesController;
+
+  @override
   void initState() {
     super.initState();
+    _nombreController = widget.nombreController ?? TextEditingController();
+    _fechaController = widget.fechaController ?? TextEditingController();
+    _timeController = widget.horaController ?? TextEditingController();
+    _asistentesController =
+        widget.asistentesController ?? TextEditingController();
+
     _nombreController.addListener(_autoSave);
     _fechaController.addListener(_autoSave);
     _timeController.addListener(_autoSave);
@@ -49,10 +67,10 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
     _fechaController.removeListener(_autoSave);
     _timeController.removeListener(_autoSave);
     _asistentesController.removeListener(_autoSave);
-    _nombreController.dispose();
-    _fechaController.dispose();
-    _timeController.dispose();
-    _asistentesController.dispose();
+    if (widget.nombreController == null) _nombreController.dispose();
+    if (widget.fechaController == null) _fechaController.dispose();
+    if (widget.horaController == null) _timeController.dispose();
+    if (widget.asistentesController == null) _asistentesController.dispose();
     super.dispose();
   }
 
@@ -84,7 +102,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
         context,
       ).colorScheme.copyWith(primary: colorPrincipal, onSurface: Colors.black),
       timePickerTheme: TimePickerThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColores.background2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 
         hourMinuteColor: WidgetStateColor.resolveWith(
@@ -105,7 +123,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
         dayPeriodColor: WidgetStateColor.resolveWith(
           (states) => states.contains(WidgetState.selected)
               ? fondoMoradoClaro
-              : Colors.white,
+              : AppColores.background2,
         ),
         dayPeriodTextColor: WidgetStateColor.resolveWith(
           (states) => states.contains(WidgetState.selected)
@@ -121,7 +139,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
         dialHandColor: colorPrincipal,
         dialTextColor: WidgetStateColor.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? Colors.white
+              ? AppColores.foreground
               : Colors.black87,
         ),
 
@@ -187,6 +205,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Container(
       color: AppColores.background2,
       child: SingleChildScrollView(

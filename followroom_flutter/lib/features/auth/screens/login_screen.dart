@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           Text(
                             "Correo electronico",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            style: TextEstilos.simpleTexto,
                           ),
 
                           TextField(
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           Text(
                             "Contraseña",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            style: TextEstilos.simpleTexto,
                           ),
 
                           TextField(
@@ -103,6 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               hintText: 'Ingresa tu contraseña',
                             ),
+                            obscureText: true,
                           ),
 
                           SizedBox(height: 24),

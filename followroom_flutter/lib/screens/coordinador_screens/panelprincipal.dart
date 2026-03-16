@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/core/colores.dart';
 import 'navegacion_barra.dart';
 
 class PanelCoordinador extends StatelessWidget {
@@ -9,17 +10,14 @@ class PanelCoordinador extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Panel Coordinador"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColores.backgroundComponent,
+        foregroundColor: AppColores.foreground,
         elevation: 0,
       ),
-
+      backgroundColor: AppColores.background2,
       body: const Padding(
         padding: EdgeInsets.all(16),
-        child: Text(
-          "Bienvenido, NombreRandom",
-          style: TextStyle(fontSize: 16),
-        ),
+        child: Text("Bienvenido, NombreRandom", style: TextStyle(fontSize: 16)),
       ),
 
       bottomNavigationBar: const NavegacionBarra(),

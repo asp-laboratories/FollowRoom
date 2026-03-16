@@ -6,32 +6,66 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 class TabClienteReservacion extends StatefulWidget {
   final Function(Map<String, String>) onDatosChanged;
   final VoidCallback? onSaveAndNext;
+  final TextEditingController? nombreController;
+  final TextEditingController? apellidoPaternoController;
+  final TextEditingController? apellidoMaternoController;
+  final TextEditingController? rfcController;
+  final TextEditingController? nombreFiscalController;
+  final TextEditingController? telefonoController;
+  final TextEditingController? correoController;
+  final TextEditingController? coloniaController;
+  final TextEditingController? calleController;
+  final TextEditingController? numeroController;
 
   const TabClienteReservacion({
     super.key,
     required this.onDatosChanged,
     this.onSaveAndNext,
+    this.nombreController,
+    this.apellidoPaternoController,
+    this.apellidoMaternoController,
+    this.rfcController,
+    this.nombreFiscalController,
+    this.telefonoController,
+    this.correoController,
+    this.coloniaController,
+    this.calleController,
+    this.numeroController,
   });
 
   @override
   State<TabClienteReservacion> createState() => _TabClienteReservacionState();
 }
 
-class _TabClienteReservacionState extends State<TabClienteReservacion> {
-  final TextEditingController nombre = TextEditingController();
-  final TextEditingController apellidoPaterno = TextEditingController();
-  final TextEditingController apellidoMaterno = TextEditingController();
-  final TextEditingController rfc = TextEditingController();
-  final TextEditingController nombreFiscal = TextEditingController();
-  final TextEditingController telefono = TextEditingController();
-  final TextEditingController correoElectronico = TextEditingController();
-  final TextEditingController colonia = TextEditingController();
-  final TextEditingController calle = TextEditingController();
-  final TextEditingController numero = TextEditingController();
+class _TabClienteReservacionState extends State<TabClienteReservacion>
+    with AutomaticKeepAliveClientMixin {
+  late final TextEditingController nombre;
+  late final TextEditingController apellidoPaterno;
+  late final TextEditingController apellidoMaterno;
+  late final TextEditingController rfc;
+  late final TextEditingController nombreFiscal;
+  late final TextEditingController telefono;
+  late final TextEditingController correoElectronico;
+  late final TextEditingController colonia;
+  late final TextEditingController calle;
+  late final TextEditingController numero;
 
   @override
   void initState() {
     super.initState();
+    nombre = widget.nombreController ?? TextEditingController();
+    apellidoPaterno =
+        widget.apellidoPaternoController ?? TextEditingController();
+    apellidoMaterno =
+        widget.apellidoMaternoController ?? TextEditingController();
+    rfc = widget.rfcController ?? TextEditingController();
+    nombreFiscal = widget.nombreFiscalController ?? TextEditingController();
+    telefono = widget.telefonoController ?? TextEditingController();
+    correoElectronico = widget.correoController ?? TextEditingController();
+    colonia = widget.coloniaController ?? TextEditingController();
+    calle = widget.calleController ?? TextEditingController();
+    numero = widget.numeroController ?? TextEditingController();
+
     nombre.addListener(_autoSave);
     apellidoPaterno.addListener(_autoSave);
     apellidoMaterno.addListener(_autoSave);
@@ -45,6 +79,9 @@ class _TabClienteReservacionState extends State<TabClienteReservacion> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void dispose() {
     nombre.removeListener(_autoSave);
     apellidoPaterno.removeListener(_autoSave);
@@ -56,16 +93,16 @@ class _TabClienteReservacionState extends State<TabClienteReservacion> {
     colonia.removeListener(_autoSave);
     calle.removeListener(_autoSave);
     numero.removeListener(_autoSave);
-    nombre.dispose();
-    apellidoPaterno.dispose();
-    apellidoMaterno.dispose();
-    rfc.dispose();
-    nombreFiscal.dispose();
-    telefono.dispose();
-    correoElectronico.dispose();
-    colonia.dispose();
-    calle.dispose();
-    numero.dispose();
+    if (widget.nombreController == null) nombre.dispose();
+    if (widget.apellidoPaternoController == null) apellidoPaterno.dispose();
+    if (widget.apellidoMaternoController == null) apellidoMaterno.dispose();
+    if (widget.rfcController == null) rfc.dispose();
+    if (widget.nombreFiscalController == null) nombreFiscal.dispose();
+    if (widget.telefonoController == null) telefono.dispose();
+    if (widget.correoController == null) correoElectronico.dispose();
+    if (widget.coloniaController == null) colonia.dispose();
+    if (widget.calleController == null) calle.dispose();
+    if (widget.numeroController == null) numero.dispose();
     super.dispose();
   }
 
@@ -86,6 +123,7 @@ class _TabClienteReservacionState extends State<TabClienteReservacion> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Container(
       color: AppColores.background2,
       child: SingleChildScrollView(

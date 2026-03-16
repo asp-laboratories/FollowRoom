@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:followroom_flutter/core/colores.dart';
 
 class Detalles extends StatelessWidget {
@@ -7,7 +6,6 @@ class Detalles extends StatelessWidget {
 
   const Detalles({super.key, required this.numeroReservacion});
 
-  // Logica pa jalar info de los mobiliarios y ese pedo q nos retorna una lista de mapas o parecidos
   Future<List<dynamic>> _jalarMobiliarios() async {
     await Future.delayed(const Duration(seconds: 2));
     return [
@@ -46,140 +44,216 @@ class Detalles extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Inventario Requerido"),
+        title: Text(
+          "Inventario Requerido",
+          style: TextStyle(color: AppColores.foreground),
+        ),
         scrolledUnderElevation: 0,
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: AppColores.backgroundComponent,
+        foregroundColor: AppColores.foreground,
       ),
+      backgroundColor: AppColores.background,
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: FutureBuilder<List<dynamic>>(
           future: _jalarMobiliarios(),
-
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: AppColores.primary),
+              );
             }
 
             if (snapshot.hasError) {
-              return Center(child: Text("Error ${snapshot.error}"));
+              return Center(
+                child: Text(
+                  "Error ${snapshot.error}",
+                  style: TextStyle(color: AppColores.foreground),
+                ),
+              );
             }
 
             if (snapshot.hasData) {
               final mobiliarios = snapshot.data!;
 
               return mobiliarios.isEmpty
-                  ? Text("No hay mobiliarios")
+                  ? Center(
+                      child: Text(
+                        "No hay mobiliarios",
+                        style: TextStyle(color: AppColores.foreground),
+                      ),
+                    )
                   : CustomScrollView(
                       slivers: [
                         SliverPadding(
                           padding: const EdgeInsets.all(15),
-
                           sliver: DecoratedSliver(
                             decoration: BoxDecoration(
-                              color: Colors.grey,
+                              color: AppColores.backgroundComponent,
                               borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColores.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             sliver: SliverPadding(
                               padding: const EdgeInsets.all(15),
-
                               sliver: SliverList.separated(
                                 itemCount: mobiliarios.length,
-
                                 itemBuilder: (context, index) {
                                   final mobiliarioActual = mobiliarios[index];
-
-                                  // Modificaciones aca para determinar como es que se va a ver l atarjetita donde se ponen los detalles del montajde e la reservacion
                                   return Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.blueGrey,
+                                      color: AppColores
+                                          .backgroundComponentSelected,
                                       borderRadius: BorderRadius.circular(15),
+                                      border: Border.all(
+                                        color: AppColores.primary.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        width: 1,
+                                      ),
                                     ),
                                     child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Row(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            flex: 1,
-                                            child: Text(
-                                              mobiliarioActual['nomre'],
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                mobiliarioActual['completado']
+                                                    ? Icons.check_circle
+                                                    : Icons.circle_outlined,
+                                                color:
+                                                    mobiliarioActual['completado']
+                                                    ? Colors.green
+                                                    : AppColores.foreground,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  mobiliarioActual['nomre']
+                                                          ?.toString()
+                                                          .toUpperCase() ??
+                                                      '',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color:
+                                                        AppColores.foreground,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Divider(
+                                            color: AppColores.primary
+                                                .withValues(alpha: 0.3),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: _buildInfoChip(
+                                                  "Tipo",
+                                                  mobiliarioActual['tipoMobiliario']
+                                                          ?.toString() ??
+                                                      '',
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: _buildInfoChip(
+                                                  "Descripción",
+                                                  mobiliarioActual['descripcion']
+                                                          ?.toString() ??
+                                                      '',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            "Características",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColores.foreground,
+                                              fontSize: 14,
                                             ),
                                           ),
-                                          Expanded(
-                                            flex: 4,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Center(
-                                                        child: Text(
-                                                          "Tipo: ${mobiliarioActual['tipoMobiliario']}",
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Expanded(
-                                                      child: Center(
-                                                        child: Text(
-                                                          "Descripcion: ${mobiliarioActual['descripcion']}",
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-
-                                                Divider(),
-
-                                                Text("Caracteristicass"),
-
-                                                ...(mobiliarioActual['caracteristicas']
-                                                        as List)
-                                                    .map((caracteristica) {
-                                                      return Row(
+                                          const SizedBox(height: 8),
+                                          ...(mobiliarioActual['caracteristicas']
+                                                      as List?)
+                                                  ?.map((caracteristica) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            bottom: 4,
+                                                          ),
+                                                      child: Row(
                                                         children: [
                                                           Icon(
                                                             Icons.arrow_right,
                                                             color: AppColores
-                                                                .foreground,
+                                                                .primary,
+                                                            size: 18,
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 4,
                                                           ),
                                                           Expanded(
                                                             child: Text(
                                                               caracteristica
                                                                   .toString(),
+                                                              style: TextStyle(
+                                                                color: AppColores
+                                                                    .foreground,
+                                                              ),
                                                             ),
                                                           ),
                                                         ],
-                                                      );
-                                                    }),
-                                              ],
-                                            ),
-                                          ),
+                                                      ),
+                                                    );
+                                                  }) ??
+                                              [],
                                         ],
                                       ),
                                     ),
                                   );
                                 },
-
-                                separatorBuilder: (context, index) {
-                                  return const SizedBox(height: 15);
-                                },
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 15),
                               ),
                             ),
                           ),
                         ),
-
                         SliverPadding(
                           padding: const EdgeInsets.all(15),
-
                           sliver: DecoratedSliver(
                             decoration: BoxDecoration(
-                              color: Colors.grey,
+                              color: AppColores.backgroundComponent,
                               borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColores.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             sliver: SliverPadding(
                               padding: const EdgeInsets.all(15),
-
                               sliver: SliverToBoxAdapter(
                                 child: GeneradorChecklists(
                                   mobiliarios: mobiliarios,
@@ -192,9 +266,42 @@ class Detalles extends StatelessWidget {
                     );
             }
 
-            return const Text("No encontre mobiliarios");
+            return Center(
+              child: Text(
+                "No encontré mobiliarios",
+                style: TextStyle(color: AppColores.foreground),
+              ),
+            );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColores.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColores.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColores.primary,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 12, color: AppColores.foreground),
+          ),
+        ],
       ),
     );
   }
@@ -214,17 +321,27 @@ class _GeneradorChecklistsState extends State<GeneradorChecklists> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(10),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
-          Text("Mobiliarios a Montar:"),
-
+          Text(
+            "Mobiliarios a Montar:",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColores.foreground,
+            ),
+          ),
+          const SizedBox(height: 8),
           ...widget.mobiliarios.map((mobiliarioActual) {
             return CheckboxListTile(
-              title: Text(mobiliarioActual['nomre']),
+              title: Text(
+                mobiliarioActual['nomre'] ?? '',
+                style: TextStyle(color: AppColores.foreground),
+              ),
               value: mobiliarioActual['completado'],
+              activeColor: AppColores.primary,
+              checkColor: Colors.white,
               onChanged: (bool? actualizacion) {
                 setState(() {
                   mobiliarioActual['completado'] = actualizacion ?? false;

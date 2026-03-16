@@ -28,192 +28,196 @@ class _TabResumenState extends State<TabResumen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              decoration: ContainerStyles.sombreado,
-              width: double.infinity,
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Datos de la Reservación",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "Nombre del evento: ${widget.datosReservacion['nombre'] ?? 'No definido'}",
-                  ),
-                  SizedBox(height: 5),
-
-                  Text(
-                    "Fecha: ${widget.datosReservacion['fecha'] ?? 'No definida'}",
-                  ),
-                  SizedBox(height: 5),
-
-                  Text(
-                    "Horario: ${widget.datosReservacion['horario'] ?? 'No definido'}",
-                  ),
-                  SizedBox(height: 5),
-
-                  Text(
-                    "Tipo de evento: ${widget.datosReservacion['tipo'] ?? 'No seleccionado'}",
-                  ),
-                  SizedBox(height: 5),
-
-                  Text(
-                    "Asistentes: ${widget.datosReservacion['asistentes'] ?? '0'}",
-                  ),
-                  SizedBox(height: 5),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 10),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              width: double.infinity,
-              decoration: ContainerStyles.sombreado,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColores.background2,
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: ContainerStyles.sombreado,
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Datos del cliente",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      "Datos de la Reservación",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      "Nombre del contacto: ${widget.datosCliente['nombre'] ?? 'No definido'}",
+                      "Nombre del evento: ${widget.datosReservacion['nombre'] ?? 'No definido'}",
                     ),
                     SizedBox(height: 5),
-
+        
                     Text(
-                      "Apellido del contacto: ${widget.datosCliente['apellidoPaterno'] ?? 'No definido'}",
+                      "Fecha: ${widget.datosReservacion['fecha'] ?? 'No definida'}",
                     ),
                     SizedBox(height: 5),
-
+        
                     Text(
-                      "Apellido materno del contacto: ${widget.datosCliente['apellidoMaterno'] ?? 'No definido'}",
+                      "Horario: ${widget.datosReservacion['horario'] ?? 'No definido'}",
                     ),
                     SizedBox(height: 5),
-
+        
                     Text(
-                      "RFC: ${widget.datosReservacion['rfc'] ?? 'No definido'}",
+                      "Tipo de evento: ${widget.datosReservacion['tipo'] ?? 'No seleccionado'}",
                     ),
                     SizedBox(height: 5),
-
+        
                     Text(
-                      "Nombre fiscal: ${widget.datosCliente['nombreFiscal'] ?? 'No definido'}",
-                    ),
-                    SizedBox(height: 5),
-
-                    Text(
-                      "Telefono del contacto: ${widget.datosCliente['telefono'] ?? 'No definido'}",
-                    ),
-                    SizedBox(height: 5),
-
-                    Text(
-                      "Correo electronico del contacto: ${widget.datosCliente['correoElectronico'] ?? 'No definido'}",
-                    ),
-                    SizedBox(height: 5),
-
-                    Text(
-                      "Colonia: ${widget.datosCliente['colonia'] ?? 'No definido'}",
-                    ),
-                    SizedBox(height: 5),
-
-                    Text(
-                      "Calle: ${widget.datosCliente['calle'] ?? 'No definido'}",
-                    ),
-                    SizedBox(height: 5),
-
-                    Text(
-                      "Numero: ${widget.datosCliente['numero'] ?? 'No definido'}",
+                      "Asistentes: ${widget.datosReservacion['asistentes'] ?? '0'}",
                     ),
                     SizedBox(height: 5),
                   ],
                 ),
               ),
             ),
-          ),
-
-          SizedBox(height: 10),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12),
-              decoration: ContainerStyles.sombreado,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Salón y Montaje",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            SizedBox(height: 10),
+        
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: double.infinity,
+                decoration: ContainerStyles.sombreado,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Datos del cliente",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Nombre del contacto: ${widget.datosCliente['nombre'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Apellido del contacto: ${widget.datosCliente['apellidoPaterno'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Apellido materno del contacto: ${widget.datosCliente['apellidoMaterno'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "RFC: ${widget.datosReservacion['rfc'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Nombre fiscal: ${widget.datosCliente['nombreFiscal'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Telefono del contacto: ${widget.datosCliente['telefono'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Correo electronico del contacto: ${widget.datosCliente['correoElectronico'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Colonia: ${widget.datosCliente['colonia'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Calle: ${widget.datosCliente['calle'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+        
+                      Text(
+                        "Numero: ${widget.datosCliente['numero'] ?? 'No definido'}",
+                      ),
+                      SizedBox(height: 5),
+                    ],
                   ),
-                  SizedBox(height: 8),
-                  if (widget.salonSeleccionado == null)
-                    Text("Ningún salón seleccionado")
-                  else ...[
-                    Text("Salón: ${widget.salonSeleccionado!['nombre']}"),
-                    Text("Precio: \$${widget.salonSeleccionado!['precio']}"),
-                    Text(
-                      "Montaje: ${widget.montajesPorSalon[widget.salonSeleccionado!['id']] ?? 'No seleccionado'}",
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-          ),
-
-          SizedBox(height: 10),
-
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final bool esPantallaChica = constraints.maxWidth < 400;
-
-              if (esPantallaChica) {
+        
+            SizedBox(height: 10),
+        
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                decoration: ContainerStyles.sombreado,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Salón y Montaje",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    if (widget.salonSeleccionado == null)
+                      Text("Ningún salón seleccionado")
+                    else ...[
+                      Text("Salón: ${widget.salonSeleccionado!['nombre']}"),
+                      Text("Precio: \$${widget.salonSeleccionado!['precio']}"),
+                      Text(
+                        "Montaje: ${widget.montajesPorSalon[widget.salonSeleccionado!['id']] ?? 'No seleccionado'}",
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+        
+            SizedBox(height: 10),
+        
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final bool esPantallaChica = constraints.maxWidth < 400;
+        
+                if (esPantallaChica) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        _buildServiciosContainer(),
+                        SizedBox(height: 10),
+                        _buildEquipamientosContainer(),
+                      ],
+                    ),
+                  );
+                }
+        
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildServiciosContainer(),
-                      SizedBox(height: 10),
-                      _buildEquipamientosContainer(),
+                      Expanded(child: _buildServiciosContainer()),
+                      SizedBox(width: 8),
+                      Expanded(child: _buildEquipamientosContainer()),
                     ],
                   ),
                 );
-              }
-
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildServiciosContainer()),
-                    SizedBox(width: 8),
-                    Expanded(child: _buildEquipamientosContainer()),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          SizedBox(height: 10),
-
-          ElevatedButton(onPressed: () {}, child: Text("Enviar solicitud")),
-        ],
+              },
+            ),
+        
+            SizedBox(height: 10),
+        
+          ],
+        ),
       ),
     );
   }

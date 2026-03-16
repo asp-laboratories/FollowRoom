@@ -7,6 +7,7 @@ import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_resumen_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_salon_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_servicios_reservacion.dart';
+import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_total_reservacion.dart';
 
 class ReservacionProceso extends StatefulWidget {
   const ReservacionProceso({super.key});
@@ -22,6 +23,42 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
   Map<String, dynamic>? salonSeleccionado;
   List<Map<String, dynamic>> serviciosSeleccionados = [];
   List<Map<String, dynamic>> equipamientosSeleccionados = [];
+
+  final TextEditingController _nombreEventoController = TextEditingController();
+  final TextEditingController _fechaController = TextEditingController();
+  final TextEditingController _horaController = TextEditingController();
+  final TextEditingController _asistentesController = TextEditingController();
+  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _apellidoPaternoController =
+      TextEditingController();
+  final TextEditingController _apellidoMaternoController =
+      TextEditingController();
+  final TextEditingController _rfcController = TextEditingController();
+  final TextEditingController _nombreFiscalController = TextEditingController();
+  final TextEditingController _telefonoController = TextEditingController();
+  final TextEditingController _correoController = TextEditingController();
+  final TextEditingController _coloniaController = TextEditingController();
+  final TextEditingController _calleController = TextEditingController();
+  final TextEditingController _numeroController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nombreEventoController.dispose();
+    _fechaController.dispose();
+    _horaController.dispose();
+    _asistentesController.dispose();
+    _nombreController.dispose();
+    _apellidoPaternoController.dispose();
+    _apellidoMaternoController.dispose();
+    _rfcController.dispose();
+    _nombreFiscalController.dispose();
+    _telefonoController.dispose();
+    _correoController.dispose();
+    _coloniaController.dispose();
+    _calleController.dispose();
+    _numeroController.dispose();
+    super.dispose();
+  }
 
   void actualizarDatos(Map<String, String> nuevosDatos) {
     setState(() {
@@ -72,6 +109,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
       length: 7,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: AppColores.background2,
           bottom: ButtonsTabBar(
             backgroundColor: AppColores.primary,
             unselectedBackgroundColor: Colors.white,
@@ -103,10 +141,24 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
             TabDatosReservacion(
               onDatosChanged: actualizarDatos,
               onSaveAndNext: _goToNextTab,
+              nombreController: _nombreEventoController,
+              fechaController: _fechaController,
+              horaController: _horaController,
+              asistentesController: _asistentesController,
             ),
             TabClienteReservacion(
               onDatosChanged: actualizarDatosCliente,
               onSaveAndNext: _goToNextTab,
+              nombreController: _nombreController,
+              apellidoPaternoController: _apellidoPaternoController,
+              apellidoMaternoController: _apellidoMaternoController,
+              rfcController: _rfcController,
+              nombreFiscalController: _nombreFiscalController,
+              telefonoController: _telefonoController,
+              correoController: _correoController,
+              coloniaController: _coloniaController,
+              calleController: _calleController,
+              numeroController: _numeroController,
             ),
             TabSalon(
               montajesPorSalon: montajesPorSalon,
@@ -130,8 +182,12 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
             ),
-            TabEquipamientosReservacion(
-              onEquipamientosChanged: actualizarEquipamientos,
+            TabTotalReservacion(
+              datosReservacion: datosReservacion,
+              datosCliente: datosCliente,
+              salonSeleccionado: salonSeleccionado,
+              montajesPorSalon: montajesPorSalon,
+              serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 
 class TabServiciosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onServiciosChanged;
@@ -152,26 +153,52 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                 final servicio = serviciosFiltrados[index];
                 final seleccionado = isSelected(servicio);
 
-                return Card(
+                return Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  color: seleccionado
-                      ? AppColores.primary.withValues(alpha: 0.1)
-                      : null,
-                  child: ListTile(
-                    leading: Checkbox(
-                      value: seleccionado,
-                      onChanged: (_) => toggleServicio(servicio),
-                    ),
-                    title: Text(
-                      servicio['nombre'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      "${servicio['descripcion']} - \$${servicio['precio']}",
-                    ),
-                    trailing: Text(
-                      servicio['tipo'],
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                  decoration: ContainerStyles.cardSeleccion(
+                    isSelected: seleccionado,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => toggleServicio(servicio),
+                      child: ListTile(
+                        leading: Checkbox(
+                          value: seleccionado,
+                          onChanged: (_) => toggleServicio(servicio),
+                          activeColor: AppColores.primary,
+                        ),
+                        title: Text(
+                          servicio['nombre'],
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColores.foreground,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "${servicio['descripcion']} - \$${servicio['precio']}",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColores.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            servicio['tipo'],
+                            style: TextStyle(
+                              color: AppColores.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 );

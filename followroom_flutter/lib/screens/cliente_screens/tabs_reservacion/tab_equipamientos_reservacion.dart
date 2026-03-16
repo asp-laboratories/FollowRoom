@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 
 class TabEquipamientosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onEquipamientosChanged;
@@ -185,79 +186,91 @@ class _TabEquipamientosReservacionState
                 final equipamiento = equipamientosFiltrados[index];
                 final cantidad = getCantidad(equipamiento);
 
-                return Card(
+                return Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                equipamiento['nombre'],
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Text(
-                                equipamiento['descripcion'],
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              Text(
-                                "\$${equipamiento['precio']} c/u - Stock: ${equipamiento['stock']}",
-                                style: TextStyle(
-                                  color: AppColores.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                  decoration: ContainerStyles.cardSeleccion(
+                    isSelected: cantidad > 0,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {},
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Row(
                           children: [
-                            IconButton(
-                              onPressed: cantidad > 0
-                                  ? () => actualizarCantidad(
-                                      equipamiento,
-                                      cantidad - 1,
-                                    )
-                                  : null,
-                              icon: Icon(Icons.remove_circle_outline),
-                              color: cantidad > 0
-                                  ? AppColores.primary
-                                  : Colors.grey,
-                            ),
-                            Container(
-                              width: 40,
-                              alignment: Alignment.center,
-                              child: Text(
-                                "$cantidad",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    equipamiento['nombre'],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: AppColores.foreground,
+                                    ),
+                                  ),
+                                  Text(
+                                    equipamiento['descripcion'],
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  Text(
+                                    "\$${equipamiento['precio']} c/u - Stock: ${equipamiento['stock']}",
+                                    style: TextStyle(
+                                      color: AppColores.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            IconButton(
-                              onPressed:
-                                  cantidad < (equipamiento['stock'] as int)
-                                  ? () => actualizarCantidad(
-                                      equipamiento,
-                                      cantidad + 1,
-                                    )
-                                  : null,
-                              icon: Icon(Icons.add_circle_outline),
-                              color: cantidad < (equipamiento['stock'] as int)
-                                  ? AppColores.primary
-                                  : Colors.grey,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: cantidad > 0
+                                      ? () => actualizarCantidad(
+                                          equipamiento,
+                                          cantidad - 1,
+                                        )
+                                      : null,
+                                  icon: Icon(Icons.remove_circle_outline),
+                                  color: cantidad > 0
+                                      ? AppColores.primary
+                                      : Colors.grey,
+                                ),
+                                Container(
+                                  width: 40,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    "$cantidad",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed:
+                                      cantidad < (equipamiento['stock'] as int)
+                                      ? () => actualizarCantidad(
+                                          equipamiento,
+                                          cantidad + 1,
+                                        )
+                                      : null,
+                                  icon: Icon(Icons.add_circle_outline),
+                                  color:
+                                      cantidad < (equipamiento['stock'] as int)
+                                      ? AppColores.primary
+                                      : Colors.grey,
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 );

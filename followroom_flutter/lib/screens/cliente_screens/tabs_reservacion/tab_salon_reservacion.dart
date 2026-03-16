@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_montaje_reservacion.dart';
 
 class TabSalon extends StatefulWidget {
@@ -80,9 +81,23 @@ class _TabSalonState extends State<TabSalon> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "Salón seleccionado:",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColores.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "SALÓN SELECCIONADO",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
                       ),
                       IconButton(
                         icon: Icon(Icons.close),
@@ -92,6 +107,7 @@ class _TabSalonState extends State<TabSalon> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 8),
                   Text(
                     widget.salonSeleccionado!['nombre'],
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -156,94 +172,102 @@ class _TabSalonState extends State<TabSalon> {
                     widget.salonSeleccionado?['id'] == salonId;
                 final String? montaje = getMontajeDelSalon(salonId);
 
-                return Card(
+                return Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  color: isSelected
-                      ? AppColores.primary.withValues(alpha: 0.1)
-                      : null,
-                  child: InkWell(
-                    onTap: () {
-                      widget.onSalonSelected(salon);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  salon['nombre'],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                  decoration: ContainerStyles.cardSeleccion(
+                    isSelected: isSelected,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        widget.onSalonSelected(salon);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    salon['nombre'],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (isSelected)
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppColores.primary,
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                _getEstadoIcon(salon['estado']),
+                                SizedBox(width: 4),
+                                Text(
+                                  salon['estado'],
+                                  style: TextStyle(
+                                    color: _getEstadoColor(salon['estado']),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
                                 Icon(
-                                  Icons.check_circle,
-                                  color: AppColores.primary,
+                                  Icons.people,
+                                  size: 16,
+                                  color: Colors.grey,
                                 ),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Row(
-                            children: [
-                              _getEstadoIcon(salon['estado']),
-                              SizedBox(width: 4),
-                              Text(
-                                salon['estado'],
-                                style: TextStyle(
-                                  color: _getEstadoColor(salon['estado']),
+                                SizedBox(width: 4),
+                                Text(
+                                  "${salon['capacidad']} personas",
+                                  style: TextStyle(color: Colors.grey),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.people, size: 16, color: Colors.grey),
-                              SizedBox(width: 4),
-                              Text(
-                                "${salon['capacidad']} personas",
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              SizedBox(width: 16),
-                              Icon(
-                                Icons.attach_money,
-                                size: 16,
-                                color: Colors.grey,
-                              ),
-                              Text(
-                                "\$${salon['precio']}",
-                                style: TextStyle(
-                                  color: AppColores.primary,
-                                  fontWeight: FontWeight.bold,
+                                SizedBox(width: 16),
+                                Icon(
+                                  Icons.attach_money,
+                                  size: 16,
+                                  color: Colors.grey,
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              final resultado = await Navigator.push<String>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      NavigatorMontajeReservacion(),
+                                Text(
+                                  "\$${salon['precio']}",
+                                  style: TextStyle(
+                                    color: AppColores.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              );
-                              if (resultado != null) {
-                                widget.onMontajeSelected(salonId, resultado);
-                              }
-                            },
-                            icon: Icon(Icons.grid_view),
-                            label: Text(montaje ?? "Seleccionar montaje"),
-                          ),
-                        ],
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                final resultado = await Navigator.push<String>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        NavigatorMontajeReservacion(),
+                                  ),
+                                );
+                                if (resultado != null) {
+                                  widget.onMontajeSelected(salonId, resultado);
+                                }
+                              },
+                              icon: Icon(Icons.grid_view),
+                              label: Text(montaje ?? "Seleccionar montaje"),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

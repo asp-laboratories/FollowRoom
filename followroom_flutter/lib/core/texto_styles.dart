@@ -55,4 +55,17 @@ class TextEstilos {
     fontSize: 14,
     fontWeight: FontWeight.bold,
   );
+
+  static final simpleTexto = TextStyle(
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    shadows: [
+      Shadow(
+        color: AppColores.primary.withValues(alpha: 0.7),
+        offset: const Offset(2, 2.5),
+        blurRadius: 9,
+      ),
+    ],
+  );
 }
