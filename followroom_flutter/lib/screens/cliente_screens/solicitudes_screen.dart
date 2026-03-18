@@ -92,6 +92,10 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: AppColores.primary, 
+                ),
                 onPressed: () {
                   Navigator.pop(context);
                 },
@@ -144,6 +148,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColores.primary,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 onPressed: mostrarResumen,
