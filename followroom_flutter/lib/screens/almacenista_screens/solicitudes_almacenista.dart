@@ -14,8 +14,8 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
         {'nomre': "Television", 'cantidad': 2, 'completado': false},
       ],
       'solicitudesMobiles': [
-        {'nomre': "Silla chida", 'cantidad': 2, 'completado': false},
-        {'nomre': "mesa no tan chida", 'cantidad': 1, 'completado': false},
+        {'nomre': "Silla metalica", 'cantidad': 2, 'completado': false},
+        {'nomre': "Mesa circular", 'cantidad': 1, 'completado': false},
         {'nomre': "Taburete", 'cantidad': 3, 'completado': false},
       ],
     },
@@ -27,8 +27,8 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
       ],
       'solicitudesMobiles': [
         {'nomre': "Silla", 'cantidad': 1, 'completado': false},
-        {'nomre': "mesa no", 'cantidad': 1, 'completado': false},
-        {'nomre': "caca", 'cantidad': 3, 'completado': false},
+        {'nomre': "Mesa comun", 'cantidad': 1, 'completado': false},
+        {'nomre': "Sila de madera", 'cantidad': 3, 'completado': false},
       ],
     },
   ];
@@ -54,6 +54,7 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
               ),
               sliver: SliverToBoxAdapter(
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -64,9 +65,13 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
                   },
                   child: Container(
                     padding: EdgeInsets.all(15),
-                    child: Text(
-                      index['nombre'],
-                      style: TextStyle(fontSize: 25),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(index['nombre'], style: TextStyle(fontSize: 25)),
+                        Row(children: [Spacer(), Text("Detalles >")]),
+                      ],
                     ),
                   ),
                 ),
@@ -96,6 +101,7 @@ class _GenerarChecklistsState extends State<GenerarChecklists> {
       padding: const EdgeInsets.all(10),
 
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
 
         children: [
@@ -135,88 +141,114 @@ class Solicitudes extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Solicitudes"),
-        backgroundColor: AppColores.background2,
+        backgroundColor: AppColores.backgroundComponent,
+        foregroundColor: AppColores.foreground,
       ),
-      backgroundColor: AppColores.background2,
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.all(15),
-            sliver: SliverToBoxAdapter(
-              child: Text(evento['nombre'], style: TextStyle(fontSize: 30)),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(child: SizedBox(height: 15)),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(
-              child: Text("Mobiliarios", style: TextStyle(fontSize: 30)),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  GenerarChecklists(objetos: evento['solicitudesMobiles']),
-                ],
+      body: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.all(15),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: AppColores.primary,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColores.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(evento['nombre'], style: TextStyle(fontSize: 30)),
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(child: SizedBox(height: 15)),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(
-              child: Text("Equipamientos", style: TextStyle(fontSize: 30)),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  GenerarChecklists(objetos: evento['solicitudesEquipos']),
-                ],
+
+            SliverToBoxAdapter(child: SizedBox(height: 15)),
+            SliverPadding(
+              padding: EdgeInsets.all(10),
+              sliver: DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: AppColores.secundary,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColores.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Mobiliarios", style: TextStyle(fontSize: 30)),
+                        GenerarChecklists(
+                          objetos: evento['solicitudesMobiles'],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(child: SizedBox(height: 30)),
-          SliverPadding(
-            padding: EdgeInsets.all(10),
-            sliver: SliverToBoxAdapter(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text("q hongo presionae"),
+
+            SliverToBoxAdapter(child: SizedBox(height: 15)),
+            SliverPadding(
+              padding: EdgeInsets.all(10),
+              sliver: DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: AppColores.secundary,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColores.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Equipamientos", style: TextStyle(fontSize: 30)),
+                        GenerarChecklists(
+                          objetos: evento['solicitudesEquipos'],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+
+            SliverToBoxAdapter(child: SizedBox(height: 30)),
+            SliverPadding(
+              padding: EdgeInsets.all(10),
+              sliver: SliverToBoxAdapter(
+                child: ElevatedButton(
+                  // Aca funcion pa registrar q una u otra seccion se ha completado
+                  onPressed: () {},
+                  child: Text("Completar Registro"),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      // Padding(
-      //   padding: const EdgeInsets.all(8.0),
-      //   child: Column(
-      //     children: [
-      //       Text(evento['nombre'], style: TextStyle(fontSize: 25)),
-      //       Text("Mobiliarios:", style: TextStyle(fontSize: 25)),
-      //       GenerarChecklists(objetos: evento['solicitudesMobiles']),
-      //       SizedBox(height: 15),
-
-      //       Text("Equipamientos:", style: TextStyle(fontSize: 25)),
-      //       GenerarChecklists(objetos: evento['solicitudesEquipos']),
-
-      //       SizedBox(height: 40,),
-
-      //       ElevatedButton(
-      //         // Logica para hcer el guardado logico en la base ded atos
-      //         onPressed: () {},
-      //         child: Text("Q hongo"),
-      //       ),
-      //     ],
-      //   ),
-      // ),
     );
   }
 }
