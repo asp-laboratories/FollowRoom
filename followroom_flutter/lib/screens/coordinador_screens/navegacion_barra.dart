@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinador.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -16,7 +17,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
   final PageController _controladorPagina = PageController();
 
   final List<Widget> _pantallas = [
-    const Center(child: Text("Panel Coordinador - Bienvenido, Juan")),
+    const InicioCoordinador(),
     const Center(child: Text("Notificaciones")),
     const Center(child: Text("Mensajes")),
     const Center(child: Text("Pagos")),
