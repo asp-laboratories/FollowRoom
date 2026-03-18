@@ -3,6 +3,7 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/estado_salones.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinador.dart';
+import 'package:followroom_flutter/screens/coordinador_screens/solicitudes_cliente.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -19,7 +20,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
 
   final List<Widget> _pantallas = [
     const InicioCoordinador(),
-    const Center(child: Text("Notificaciones")),
+    const ReservacionesVisualScreen(),
     const PantallaEstadoSalones(),
     const Center(child: Text("Pagos")),
     const Center(child: Text("Perfil")),
@@ -27,7 +28,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
 
   final List<String> _titulos = [
     "Panel Coordinador",
-    "Notificaciones",
+    "Solicitudes",
     "Salones",
     "Manual de garantias",
     "Perfil",
@@ -112,13 +113,13 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
                     size: 24,
                     color: Colors.white,
                   ),
-                  label: "Notificaciones",
+                  label: "Solicitudes",
                   activeIcon: Icon(
                     Icons.notifications,
                     size: 32,
                     color: Colors.white,
                   ),
-                  tooltip: ("Ir a notificaciones"),
+                  tooltip: ("Ir a solicitudes"),
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
