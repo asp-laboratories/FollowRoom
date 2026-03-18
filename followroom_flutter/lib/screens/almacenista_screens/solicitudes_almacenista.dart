@@ -3,9 +3,7 @@ import 'package:followroom_flutter/core/colores.dart';
 
 class AlmacenistaSolicitudesScreen extends StatelessWidget {
   AlmacenistaSolicitudesScreen({super.key});
-
-  // Logica para jalar la info cada q se acceda
-
+  
   List reservaciones = [
     {
       'nombre': "Reservacion 1",
@@ -19,69 +17,61 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
         {'nomre': "Taburete", 'cantidad': 3, 'completado': false},
       ],
     },
-    {
-      'nombre': "Reservacion 2",
-      'solicitudesEquipos': [
-        {'nomre': "Microfono", 'cantidad': 1, 'completado': false},
-        {'nomre': "Television", 'cantidad': 2, 'completado': false},
-      ],
-      'solicitudesMobiles': [
-        {'nomre': "Silla", 'cantidad': 1, 'completado': false},
-        {'nomre': "Mesa comun", 'cantidad': 1, 'completado': false},
-        {'nomre': "Sila de madera", 'cantidad': 3, 'completado': false},
-      ],
-    },
+
   ];
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        ...(reservaciones).map((index) {
-          return SliverPadding(
-            padding: EdgeInsets.all(15),
-            sliver: DecoratedSliver(
+    return Container(
+      color: AppColores.background2,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: reservaciones.length,
+        itemBuilder: (context, index) {
+          final item = reservaciones[index];
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Solicitudes(evento: item),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColores.backgroundComponent,
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColores.primary.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              sliver: SliverToBoxAdapter(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Solicitudes(evento: index),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item['nombre'],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColores.foreground,
                       ),
-                    );
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(15),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(index['nombre'], style: TextStyle(fontSize: 25)),
-                        Row(children: [Spacer(), Text("Detalles >")]),
-                      ],
                     ),
                   ),
-                ),
+                  const Icon(Icons.arrow_forward_ios, size: 16)
+                ],
               ),
             ),
           );
-        }),
-
-        SliverToBoxAdapter(child: SizedBox(height: 15)),
-      ],
+        },
+      ),
     );
   }
 }
@@ -97,36 +87,40 @@ class GenerarChecklists extends StatefulWidget {
 class _GenerarChecklistsState extends State<GenerarChecklists> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-
-        children: [
-          Divider(),
-
-          ...widget.objetos.map((mobiliarioActual) {
-            return CheckboxListTile(
-              title: Column(
-                children: [
-                  Text(
-                    "${mobiliarioActual['nomre']}: ${mobiliarioActual['cantidad']}",
+    return Column(
+      children: widget.objetos.map((item) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.grey.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: CheckboxListTile(
+            value: item['completado'],
+            activeColor: AppColores.primary,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(item['nomre']),
+                Text(
+                  "x${item['cantidad']}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColores.primary,
                   ),
-                  Divider(),
-                ],
-              ),
-              value: mobiliarioActual['completado'],
-              onChanged: (bool? actualizacion) {
-                setState(() {
-                  mobiliarioActual['completado'] = actualizacion ?? false;
-                });
-              },
-            );
-          }),
-        ],
-      ),
+                ),
+              ],
+            ),
+            onChanged: (bool? value) {
+              setState(() {
+                item['completado'] = value ?? false;
+              });
+            },
+          ),
+        );
+      }).toList(),
     );
   }
 }
@@ -139,115 +133,104 @@ class Solicitudes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColores.background2,
       appBar: AppBar(
-        title: Text("Solicitudes"),
-        backgroundColor: AppColores.backgroundComponent,
-        foregroundColor: AppColores.foreground,
+        title: const Text("Solicitudes"),
+        backgroundColor: AppColores.primary,
       ),
-      body: Container(
-        decoration: BoxDecoration(color: AppColores.background2),
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.all(15),
-              sliver: SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: AppColores.primary,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColores.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Text(evento['nombre'], style: TextStyle(fontSize: 30)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColores.backgroundComponent,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
+              ],
+            ),
+            child: Text(
+              evento['nombre'],
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 15)),
-            SliverPadding(
-              padding: EdgeInsets.all(10),
-              sliver: DecoratedSliver(
-                decoration: BoxDecoration(
-                  color: AppColores.secundary,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColores.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Mobiliarios", style: TextStyle(fontSize: 30)),
-                        GenerarChecklists(
-                          objetos: evento['solicitudesMobiles'],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+          const SizedBox(height: 16),
+          _seccion(
+            titulo: "Mobiliario",
+            icono: Icons.chair,
+            child: GenerarChecklists(
+              objetos: evento['solicitudesMobiles'],
             ),
+          ),
+          const SizedBox(height: 16),
+          _seccion(
+            titulo: "Equipamiento",
+            icono: Icons.devices,
+            child: GenerarChecklists(
+              objetos: evento['solicitudesEquipos'],
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColores.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+            onPressed: () {},
+            child: const Text("Completar Registro"),
+          ),
+        ],
+      ),
+    );
+  }
 
-            SliverToBoxAdapter(child: SizedBox(height: 15)),
-            SliverPadding(
-              padding: EdgeInsets.all(10),
-              sliver: DecoratedSliver(
-                decoration: BoxDecoration(
-                  color: AppColores.secundary,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColores.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Equipamientos", style: TextStyle(fontSize: 30)),
-                        GenerarChecklists(
-                          objetos: evento['solicitudesEquipos'],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            SliverToBoxAdapter(child: SizedBox(height: 30)),
-            SliverPadding(
-              padding: EdgeInsets.all(10),
-              sliver: SliverToBoxAdapter(
-                child: ElevatedButton(
-                  // Aca funcion pa registrar q una u otra seccion se ha completado
-                  onPressed: () {},
-                  child: Text("Completar Registro"),
+  Widget _seccion({
+    required String titulo,
+    required IconData icono,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColores.backgroundComponent,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icono, color: AppColores.primary),
+              const SizedBox(width: 8),
+              Text(
+                titulo,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
       ),
     );
   }
