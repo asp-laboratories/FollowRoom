@@ -21,7 +21,7 @@ class NavigatorMontajeReservacion extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Seleccionar Montaje"),
-        backgroundColor: AppColores.backgroundComponent,
+        backgroundColor: AppColores.background2,
         foregroundColor: AppColores.foreground,
       ),
       backgroundColor: AppColores.background2,

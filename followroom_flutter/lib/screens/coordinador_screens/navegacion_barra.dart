@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
-import 'package:followroom_flutter/screens/coordinador_screens/estado_salones.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -17,10 +16,10 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
   final PageController _controladorPagina = PageController();
 
   final List<Widget> _pantallas = [
-    const Center(child: Text("Panel Coordinador - Bienvenido, Juan")),
+    const InicioCoordinador(),
     const Center(child: Text("Notificaciones")),
-    const PantallaEstadoSalones(),
-    const Center(child: Text("Manual de garantias")),
+    const Center(child: Text("Mensajes")),
+    const Center(child: Text("Pagos")),
     const Center(child: Text("Perfil")),
   ];
 
@@ -66,7 +65,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
             style: TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.backgroundComponent,
+          backgroundColor: AppColores.background2,
         ),
         body: Container(
           color: AppColores.background2,

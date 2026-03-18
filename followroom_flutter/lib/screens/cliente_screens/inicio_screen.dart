@@ -5,6 +5,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/reservacion_proceso.dart';
+import 'package:followroom_flutter/screens/cliente_screens/detalles_reservacion_actual.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -94,7 +95,7 @@ class _ReservacionState extends State<Reservacion> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      NavigatorEventosReservacion(),
+                                      DetallesReservacionActual(),
                                 ),
                               );
                             },

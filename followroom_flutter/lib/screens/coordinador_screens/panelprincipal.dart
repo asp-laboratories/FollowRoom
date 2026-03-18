@@ -10,7 +10,7 @@ class PanelCoordinador extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Panel Coordinador"),
-        backgroundColor: AppColores.backgroundComponent,
+        backgroundColor: AppColores.background2,
         foregroundColor: AppColores.foreground,
         elevation: 0,
       ),

@@ -120,7 +120,7 @@ class Registro extends StatelessWidget {
                         obscureText: true,
                       ),
 
-                      SizedBox(height: 12),
+                      SizedBox(height: 18),
 
                       ElevatedButton(
                         onPressed: () {},

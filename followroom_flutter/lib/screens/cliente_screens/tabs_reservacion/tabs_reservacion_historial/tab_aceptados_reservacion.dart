@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
 
 class TabAceptadosReservacion extends StatelessWidget {
   const TabAceptadosReservacion({super.key});
@@ -8,18 +9,21 @@ class TabAceptadosReservacion extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> reservaciones = [
       {
+        'id': '1',
         'nombre': 'Cumpleaños de María',
         'salon': 'Salón Imperial',
         'fecha': '15 de Marzo 2026',
         'hora': '14:00 - 18:00',
       },
       {
+        'id': '2',
         'nombre': 'Reunión Corporate',
         'salon': 'Salón Ejecutivo',
         'fecha': '18 de Marzo 2026',
         'hora': '09:00 - 12:00',
       },
       {
+        'id': '3',
         'nombre': 'Conferencia Tech',
         'salon': 'Salón Universal',
         'fecha': '20 de Marzo 2026',
@@ -40,6 +44,15 @@ class TabAceptadosReservacion extends StatelessWidget {
           estado: 'Aceptado',
           estadoColor: Colors.green,
           estadoIcono: Icons.check_circle,
+          idReservacion: r['id'],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetallesHistorial(idReservacion: r['id']),
+              ),
+            );
+          },
         );
       },
     );
