@@ -54,7 +54,7 @@ class _AlmacenState extends State<Almacen> {
         appBar: AppBar(
           title: Text("Almacen"),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.backgroundComponent,
+          backgroundColor: AppColores.background2,
           foregroundColor: AppColores.foreground,
         ),
 

@@ -156,7 +156,7 @@ class _NavigatorEventosReservacionState
     return Scaffold(
       appBar: AppBar(
         title: Text("Disponibilidad de Salones"),
-        backgroundColor: AppColores.backgroundComponent,
+        backgroundColor: AppColores.background2,
         foregroundColor: AppColores.foreground,
       ),
       backgroundColor: AppColores.background2,

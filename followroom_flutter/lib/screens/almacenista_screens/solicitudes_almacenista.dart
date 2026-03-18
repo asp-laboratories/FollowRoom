@@ -133,7 +133,11 @@ class Solicitudes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Solicitudes")),
+      appBar: AppBar(
+        title: Text("Solicitudes"),
+        backgroundColor: AppColores.background2,
+      ),
+      backgroundColor: AppColores.background2,
       body: CustomScrollView(
         slivers: [
           SliverPadding(

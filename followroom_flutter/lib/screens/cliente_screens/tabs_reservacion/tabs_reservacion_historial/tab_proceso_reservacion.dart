@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
 
 class TabProcesoReservacion extends StatelessWidget {
   const TabProcesoReservacion({super.key});
@@ -8,12 +9,14 @@ class TabProcesoReservacion extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> reservaciones = [
       {
+        'id': '4',
         'nombre': 'Boda Rodríguez',
         'salon': 'Salón Premium',
         'fecha': '25 de Marzo 2026',
         'hora': '16:00 - 22:00',
       },
       {
+        'id': '5',
         'nombre': 'Exposición Arte',
         'salon': 'Salón Imperial',
         'fecha': '28 de Marzo 2026',
@@ -34,6 +37,15 @@ class TabProcesoReservacion extends StatelessWidget {
           estado: 'En Proceso',
           estadoColor: Colors.orange,
           estadoIcono: Icons.hourglass_top,
+          idReservacion: r['id'],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetallesHistorial(idReservacion: r['id']),
+              ),
+            );
+          },
         );
       },
     );

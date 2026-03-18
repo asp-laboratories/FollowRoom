@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
 
 class TabCanceladosReservacion extends StatelessWidget {
   const TabCanceladosReservacion({super.key});
@@ -8,18 +9,21 @@ class TabCanceladosReservacion extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> reservaciones = [
       {
+        'id': '6',
         'nombre': 'Fiesta Privada',
         'salon': 'Salón Ejecutivo',
         'fecha': '10 de Marzo 2026',
         'hora': '20:00 - 00:00',
       },
       {
+        'id': '7',
         'nombre': 'Taller de Cocina',
         'salon': 'Salón Universal',
         'fecha': '12 de Marzo 2026',
         'hora': '11:00 - 14:00',
       },
       {
+        'id': '8',
         'nombre': 'Seminario',
         'salon': 'Salón Imperial',
         'fecha': '14 de Marzo 2026',
@@ -40,6 +44,15 @@ class TabCanceladosReservacion extends StatelessWidget {
           estado: 'Cancelado',
           estadoColor: Colors.red,
           estadoIcono: Icons.cancel,
+          idReservacion: r['id'],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetallesHistorial(idReservacion: r['id']),
+              ),
+            );
+          },
         );
       },
     );

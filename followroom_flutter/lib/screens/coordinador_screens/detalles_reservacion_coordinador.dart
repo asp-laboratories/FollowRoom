@@ -133,7 +133,9 @@ class _PantallaDetallesCoordinadorState
     return Scaffold(
       appBar: AppBar(
         title: Text('Detalles de Reserva ${widget.idReservacion}'),
+        backgroundColor: AppColores.background2,
       ),
+      backgroundColor: AppColores.background2,
       body: _cargando
           ? Center(
               child: Text(
@@ -149,7 +151,7 @@ class _PantallaDetallesCoordinadorState
               controller: _scrollController,
               child: Column(
                 children: [
-                                    Padding(
+                  Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinador.dart';
 
 class NavegacionBarra extends StatefulWidget {
@@ -20,7 +21,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     const InicioCoordinador(),
     const Center(child: Text("Notificaciones")),
     const Center(child: Text("Mensajes")),
-    const Center(child: Text("Pagos")),
+    const ManualScreen(),
     const Center(child: Text("Perfil")),
   ];
 
@@ -66,7 +67,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
             style: TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.backgroundComponent,
+          backgroundColor: AppColores.background2,
         ),
         body: Container(
           color: AppColores.background2,
