@@ -52,7 +52,7 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
       'cliente': 'Mi papa',
       'tipoCliente': "Persona fisica",
       'telefono': "666 6666 66 66",
-      'email': "mimamamemima@tucola.com",
+      'email': "mimamamemima@hotmail.com",
       'tipoMontaje': "Herradura",
       'nombreSalon': "paquito",
       'servicios': [

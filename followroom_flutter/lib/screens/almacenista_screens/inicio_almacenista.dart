@@ -42,7 +42,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
   List<Reservacion> reservaciones = [
     Reservacion(
       idReservacion: 1,
-      titulo: "REservacion 2",
+      titulo: "Reservacion 2",
       fecha: "ayer",
       hora: "12:00",
       salon: "Federico",
@@ -53,7 +53,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
     ),
     Reservacion(
       idReservacion: 2,
-      titulo: "REservacon 1",
+      titulo: "Reservacon 1",
       fecha: "antier",
       hora: "13:00",
       salon: "peluche",

@@ -10,16 +10,16 @@ class Detalles extends StatelessWidget {
     await Future.delayed(const Duration(seconds: 2));
     return [
       {
-        'nomre': "mesa",
+        'nomre': "Mesa",
         'caracteristicas': ["rojo", 'madera'],
         'descripcion': "Mesa para banquetes",
         'tipoMobiliario': "Mesa",
         'completado': false,
       },
       {
-        'nomre': "sillka",
+        'nomre': "Silla",
         'caracteristicas': ["azul", 'madera'],
-        'descripcion': "silla para banquetes",
+        'descripcion': "Silla para banquetes",
         'tipoMobiliario': "silla",
         'completado': true,
       },

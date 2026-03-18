@@ -33,12 +33,12 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
 
     _actualIndice == 0
         ? datosObtenidos = [
-            {'cosa': 'Sila fea', 'cantidadDisponible': 20, 'tipo': "Silla"},
-            {'cosa': 'Sila bonita', 'cantidadDisponible': 10, 'tipo': "Mesa"},
+            {'cosa': 'Sila Blanca', 'cantidadDisponible': 20, 'tipo': "Silla"},
+            {'cosa': 'Sila Negra', 'cantidadDisponible': 10, 'tipo': "Mesa"},
           ]
         : datosObtenidos = [
             {
-              'cosa': 'laptop vieja',
+              'cosa': 'laptop',
               'cantidadDisponible': 10,
               'tipo': "Ejecutivo",
             },
@@ -146,9 +146,8 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
-                      
                       children: [
-                  const SizedBox(width: 24),
+                        const SizedBox(width: 24),
 
                         Text(
                           "Filtro: $_filtroAplicado",
@@ -279,8 +278,16 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
   final String nombre = "silla fea";
   final String urlImage =
       "https://thumbs.dreamstime.com/z/silla-fea-maciza-aislada-en-el-fondo-blanco-101306793.jpg";
-  final List<Map> estaos = [
-    {'nombreEstado': "q onda", 'cantidad': 12},
+  final List<Map<String, dynamic>> estaos = [
+    {'nombreEstado': "Disponible", 'cantidad': 12},
+    {'nombreEstado': "No disponible", 'cantidad': 12},
+    {'nombreEstado': "En reparacion", 'cantidad': 12},
+  ];
+  final List<Map<String, dynamic>> tipos = [
+    {'nombreEstado': "Diponible"},
+    {'nombreEstado': "En reparacion"},
+    {'nombreEstado': "No disponible"},
+    {'nombreEstado': "Descompuesta"},
   ];
 
   @override
@@ -376,20 +383,23 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildSmallInput(
+                    child: _selectInput(
                       context,
                       "De (estado)",
                       Icons.output_rounded,
+                      estaos,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  const Icon(Icons.arrow_forward, color: Colors.grey),
-                  const SizedBox(width: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: const Icon(Icons.arrow_forward, color: Colors.grey),
+                  ),
                   Expanded(
-                    child: _buildSmallInput(
+                    child: _selectInput(
                       context,
                       "A (estado)",
                       Icons.input_rounded,
+                      tipos,
                     ),
                   ),
                 ],
@@ -465,6 +475,54 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _selectInput(
+    BuildContext contex,
+    String label,
+    IconData icon,
+    List<Map<String, dynamic>> tipos,
+  ) {
+    return DropdownButtonFormField(
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: AppColores.foreground),
+        prefixIcon: Icon(icon, size: 20, color: AppColores.primary),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 10,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: AppColores.primary.withValues(alpha: 0.3),
+          ),
+        ),
+
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: AppColores.primary.withValues(alpha: 0.3),
+          ),
+        ),
+
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+      items: tipos.map((Map<String, dynamic> mapa) {
+        return DropdownMenuItem<dynamic>(
+          value: 4,
+          child: Text(
+            mapa['nombreEstado'].toString(),
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }).toList(),
+      // ignore: non_constant_identifier_names
+      onChanged: (None) {},
     );
   }
 
