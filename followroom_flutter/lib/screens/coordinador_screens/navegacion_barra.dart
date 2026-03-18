@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/screens/coordinador_screens/estado_salones.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -18,16 +19,16 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
   final List<Widget> _pantallas = [
     const Center(child: Text("Panel Coordinador - Bienvenido, Juan")),
     const Center(child: Text("Notificaciones")),
-    const Center(child: Text("Mensajes")),
-    const Center(child: Text("Pagos")),
+    const PantallaEstadoSalones(),
+    const Center(child: Text("Manual de garantias")),
     const Center(child: Text("Perfil")),
   ];
 
   final List<String> _titulos = [
     "Panel Coordinador",
     "Notificaciones",
-    "Mensajes",
-    "Pagos",
+    "Salones",
+    "Manual de garantias",
     "Perfil",
   ];
 
@@ -121,28 +122,32 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
                   icon: Icon(
-                    Icons.chat_outlined,
+                    Icons.meeting_room_outlined,
                     size: 24,
                     color: Colors.white,
                   ),
-                  label: "Mensajes",
-                  activeIcon: Icon(Icons.chat, size: 32, color: Colors.white),
-                  tooltip: ("Ir a mensajes"),
+                  activeIcon: Icon(
+                    Icons.meeting_room,
+                    size: 32,
+                    color: Colors.white,
+                  ),
+                  label: "Salones",
+                  tooltip: ("Ir a salones"),
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
                   icon: Icon(
-                    Icons.attach_money_outlined,
+                    Icons.description_outlined,
                     size: 24,
                     color: Colors.white,
                   ),
-                  label: "Pagos",
+                  label: "Manual de garantias",
                   activeIcon: Icon(
-                    Icons.attach_money,
+                    Icons.description,
                     size: 32,
                     color: Colors.white,
                   ),
-                  tooltip: ("Ir a pagos"),
+                  tooltip: ("Ir a Manual de Garantias"),
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
