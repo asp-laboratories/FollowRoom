@@ -4,6 +4,10 @@ import 'package:followroom_flutter/screens/almacenista_screens/estado_almacenist
 import 'package:followroom_flutter/screens/almacenista_screens/inicio_almacenista.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/solicitudes_almacenista.dart';
+import 'package:ambient_light/ambient_light.dart';
+import 'dart:async';
+
+import 'package:torch_light/torch_light.dart';
 
 class Almacen extends StatefulWidget {
   const Almacen({super.key});
@@ -40,10 +44,83 @@ class _AlmacenState extends State<Almacen> {
     _navegacionBarra = false;
   }
 
+  Timer? _tempora;
+  bool _taAbiertoDialogo = false;
+
+  void _iniciarEscaneo() {
+    _tempora = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checaLuz();
+    });
+  }
+
+  final AmbientLight _cantidadLuz = AmbientLight();
+  void _checaLuz() async {
+    double? nivelLuz = await _cantidadLuz.currentAmbientLight();
+    print("hay un total de: $nivelLuz");
+    if (nivelLuz! < 5 && !_taAbiertoDialogo) {
+      _mostrarAlerata();
+    }
+  }
+
+  void _mostrarAlerata() {
+    _taAbiertoDialogo = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("E we no hay luz"),
+        content: const Text(
+          "E we si q hay poca luz, deberias prender la linterna.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Ta bien"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Ta bien"),
+          ),
+          TextButton(
+            onPressed: _prenderLinterna,
+            child: const Text("Ta bien"),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _taAbiertoDialogo = false;
+    });
+  }
+
+  bool _linternaPrendida = false;
+  Future<void> _prenderLinterna() async {
+    try {
+      bool litnera = await TorchLight.isTorchAvailable();
+      if (litnera && !_linternaPrendida) {
+        await TorchLight.enableTorch();
+        _linternaPrendida = true;
+      } else if (_linternaPrendida) {
+        await TorchLight.disableTorch();
+        _linternaPrendida = false;
+      } else {
+        print("Literna no disponible");
+      }
+    } catch (e) {
+      print("Hubo un error $e");
+    }
+  }
+
   @override
   void dispose() {
     _controladorPagina.dispose();
+    _tempora?.cancel();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _iniciarEscaneo();
   }
 
   @override

@@ -43,7 +43,9 @@ dependencies:
 
   percent_indicator: ^4.2.3
 
-  ambient_light: ^0.0.5
+  ambient_light: ^0.1.4
+  
+  torch_light: ^1.1.0
 
 
 dev_dependencies:
