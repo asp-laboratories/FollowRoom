@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class TabAceptadosReservacion extends StatelessWidget {
   const TabAceptadosReservacion({super.key});
@@ -44,7 +45,7 @@ class TabAceptadosReservacion extends StatelessWidget {
           estado: 'Aceptado',
           estadoColor: Colors.green,
           estadoIcono: Icons.check_circle,
-          idReservacion: r['id'],
+          cardColor: AppColores.backgroundComponent,
           onTap: () {
             Navigator.push(
               context,

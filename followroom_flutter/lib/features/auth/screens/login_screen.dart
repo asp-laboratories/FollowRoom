@@ -5,7 +5,7 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart';
-import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart';
+import 'package:followroom_flutter/screens/cliente_screens/bottom_navbar_screen_cliente.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/navegacion_barra.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/panelprincipal.dart';
 import 'package:followroom_flutter/features/auth/screens/signup_screen.dart';

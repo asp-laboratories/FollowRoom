@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/estado_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/inicio_almacenista.dart';
+import 'package:followroom_flutter/screens/almacenista_screens/perfil_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/solicitudes_almacenista.dart';
 
 class Almacen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _AlmacenState extends State<Almacen> {
     InicioAlmacenista(),
     AlmacenistaEstadoScreen(),
     AlmacenistaSolicitudesScreen(),
+    Perfil()
   ];
 
   void _alPresionar(int indice) async {

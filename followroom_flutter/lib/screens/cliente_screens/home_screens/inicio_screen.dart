@@ -4,8 +4,8 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
-import 'package:followroom_flutter/screens/cliente_screens/reservacion_proceso.dart';
-import 'package:followroom_flutter/screens/cliente_screens/detalles_reservacion_actual.dart';
+import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
+import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -69,42 +69,49 @@ class _ReservacionState extends State<Reservacion> {
             child: Column(
               children: [
                 if (tieneReservacion)
-                  Container(
-                    width: double.infinity,
-                    height: 120,
-                    padding: EdgeInsets.all(16),
-                    margin: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColores.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColores.primary),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Tienes una reservación pendiente",
-                            style: TextEstilos.subtitulos,
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 120,
+                        padding: EdgeInsets.all(16),
+                        margin: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColores.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColores.primary),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Tienes una reservación pendiente",
+                                style: TextEstilos.subtitulos,
+                              ),
+                              SizedBox(height: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          DetallesReservacionActual(),
+                                    ),
+                                  );
+                                },
+                                style: BotonStyles.botonesAccion,
+                                child: Text("Ver detalles"),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      DetallesReservacionActual(),
-                                ),
-                              );
-                            },
-                            style: BotonStyles.botonesAccion,
-                            child: Text("Ver detalles"),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   )
                 else
                   Container(

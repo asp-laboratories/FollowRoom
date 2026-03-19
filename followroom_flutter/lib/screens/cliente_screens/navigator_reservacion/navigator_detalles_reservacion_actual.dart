@@ -15,7 +15,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
   final bool _cargando = false;
 
   final Map<String, dynamic> _datosReservacion = {
-    'nombre': 'Cumpleaños de María',
+    'nombre': 'Cumpleaños de jorge',
     'fecha': '15 de Marzo 2026',
     'horario': '14:00 - 18:00',
     'tipo': 'Cumpleaños',

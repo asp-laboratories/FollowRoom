@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
-import 'package:followroom_flutter/screens/cliente_screens/historial_screen.dart';
-import 'package:followroom_flutter/screens/cliente_screens/inicio_screen.dart';
-import 'package:followroom_flutter/screens/cliente_screens/manual_screen.dart';
-import 'package:followroom_flutter/screens/cliente_screens/solicitudes_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/home_screens/historial_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/home_screens/inicio_screen.dart';
+import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/home_screens/solicitudes_screen.dart';
 
 class FollowRoom extends StatefulWidget {
   const FollowRoom({super.key});

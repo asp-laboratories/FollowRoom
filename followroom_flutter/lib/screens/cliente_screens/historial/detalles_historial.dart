@@ -218,6 +218,61 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                     },
                   ),
 
+                   Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: ContainerStyles.sombreado,
+                      padding: EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Total de la Reservación",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Subtotal:"),
+                              Text("\$${_calcularSubtotal()}"),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("IVA (16%):"),
+                              Text("\$${_calcularIVA()}"),
+                            ],
+                          ),
+                          Divider(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Total:",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "\$${_calcularTotal()}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColores.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   SizedBox(height: 20),
                 ],
               ),
@@ -357,5 +412,37 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
         ],
       ),
     );
+  
+  
   }
+int _calcularSubtotal() {
+  return 1;
+    // int serviciosTotal = 0;
+    // int equiposTotal = 0;
+    // int salonPrecio = _datosReservacion?['precioSalon'] as int? ?? 0;
+
+    // if (_datosReservacion?['servicios'] != null) {
+    //   serviciosTotal = (_datosReservacion?['servicios'] as List).fold(
+    //     0,
+    //     (sum, s) => sum + (s['precio'] as int),
+    //   );
+    // }
+
+    // if (_datosReservacion?['equipos'] != null) {
+    //   equiposTotal = (_datosReservacion?['equipos'] as List).fold(
+    //     0,
+    //     (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)),
+    //   );
+    // }
+
+    // return serviciosTotal + equiposTotal + salonPrecio;
+  }
+
+  int _calcularIVA() {
+    return (_calcularSubtotal() * 0.16).round();
+  }
+
+  int _calcularTotal() {
+    return _calcularSubtotal() + _calcularIVA();
+  }  
 }

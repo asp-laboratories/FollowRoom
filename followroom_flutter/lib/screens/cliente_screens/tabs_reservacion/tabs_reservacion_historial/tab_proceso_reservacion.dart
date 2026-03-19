@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class TabProcesoReservacion extends StatelessWidget {
   const TabProcesoReservacion({super.key});
@@ -14,6 +15,7 @@ class TabProcesoReservacion extends StatelessWidget {
         'salon': 'Salón Premium',
         'fecha': '25 de Marzo 2026',
         'hora': '16:00 - 22:00',
+        'precio': 25000,
       },
       {
         'id': '5',
@@ -21,6 +23,7 @@ class TabProcesoReservacion extends StatelessWidget {
         'salon': 'Salón Imperial',
         'fecha': '28 de Marzo 2026',
         'hora': '08:00 - 17:00',
+        'precio': 18000,
       },
     ];
 
@@ -37,7 +40,8 @@ class TabProcesoReservacion extends StatelessWidget {
           estado: 'En Proceso',
           estadoColor: Colors.orange,
           estadoIcono: Icons.hourglass_top,
-          idReservacion: r['id'],
+          precio: r['precio'],
+          cardColor: AppColores.backgroundComponent,
           onTap: () {
             Navigator.push(
               context,

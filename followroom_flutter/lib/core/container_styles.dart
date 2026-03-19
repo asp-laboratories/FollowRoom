@@ -63,13 +63,13 @@ class ContainerStyles {
     color: AppColores.backgroundComponent,
     borderRadius: BorderRadius.circular(25),
     border: Border.all(
-      color: AppColores.primary.withOpacity(0.3),
+      color: AppColores.primary.withValues(alpha: 0.3),
       style: BorderStyle.solid,
       width: 2,
     ),
     boxShadow: [
       BoxShadow(
-        color: AppColores.primary.withOpacity(0.5),
+        color: AppColores.primary.withValues(alpha: 0.5),
         blurRadius: 15,
         offset: const Offset(0, 6),
       ),

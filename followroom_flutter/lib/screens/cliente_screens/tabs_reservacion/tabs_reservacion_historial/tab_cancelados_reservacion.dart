@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/components/card_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class TabCanceladosReservacion extends StatelessWidget {
   const TabCanceladosReservacion({super.key});
@@ -44,7 +45,7 @@ class TabCanceladosReservacion extends StatelessWidget {
           estado: 'Cancelado',
           estadoColor: Colors.red,
           estadoIcono: Icons.cancel,
-          idReservacion: r['id'],
+          cardColor: AppColores.backgroundComponent,
           onTap: () {
             Navigator.push(
               context,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/core/colores.dart';
 
 class CardReservacion extends StatelessWidget {
   final String nombreEvento;
@@ -11,6 +12,8 @@ class CardReservacion extends StatelessWidget {
   final IconData estadoIcono;
   final VoidCallback? onTap;
   final String? idReservacion;
+  final int? precio;
+  final Color? cardColor;
 
   const CardReservacion({
     super.key,
@@ -23,6 +26,8 @@ class CardReservacion extends StatelessWidget {
     required this.estadoIcono,
     this.onTap,
     this.idReservacion,
+    this.precio,
+    this.cardColor,
   });
 
   @override
@@ -30,10 +35,19 @@ class CardReservacion extends StatelessWidget {
     return Card(
       margin: ContainerStyles.marginCardBottom,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: cardColor ?? AppColores.backgroundComponent,
+      elevation: 2,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColores.primary.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
           padding: ContainerStyles.paddingCard,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,6 +109,23 @@ class CardReservacion extends StatelessWidget {
                   Text(hora, style: ContainerStyles.subtituloCard),
                 ],
               ),
+              if (precio != null) ...[
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    ContainerStyles.iconCard(Icons.attach_money),
+                    SizedBox(width: 6),
+                    Text(
+                      '\$$precio',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColores.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

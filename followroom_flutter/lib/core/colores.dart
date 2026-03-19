@@ -6,7 +6,7 @@ class AppColores {
   //static const Color bold = Color(0xf5ddb2);
 
   static const Color background = Color(0xFFFAF9F6);
-  static const Color background2 = Color(0xFFFAF1D5);
+  static const Color background2 = Color.fromARGB(255, 252, 250, 244);
   //static const Color background = Color(0xf2f8fc);
   //static const Color background = Color(0xf4f1f8);
   //static const Color background = Color(0xfcfcf7);

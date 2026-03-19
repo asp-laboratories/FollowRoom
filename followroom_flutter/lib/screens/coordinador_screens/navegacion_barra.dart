@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/estado_salones.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinador.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/solicitudes_cliente.dart';
+import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -22,7 +23,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     const InicioCoordinador(),
     const ReservacionesVisualScreen(),
     const PantallaEstadoSalones(),
-    const Center(child: Text("Pagos")),
+    const ManualScreen(),
     const Center(child: Text("Perfil")),
   ];
 
