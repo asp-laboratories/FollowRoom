@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/estado_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/inicio_almacenista.dart';
-import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_almacenista.dart';
+import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/solicitudes_almacenista.dart';
 import 'package:ambient_light/ambient_light.dart';
 import 'dart:async';
@@ -26,8 +26,10 @@ class _AlmacenState extends State<Almacen> {
     InicioAlmacenista(),
     AlmacenistaEstadoScreen(),
     AlmacenistaSolicitudesScreen(),
-    Perfil()
+    Perfil(),
   ];
+
+  bool get _esPerfil => _indiceSeleccionado == 3;
 
   void _alPresionar(int indice) async {
     setState(() {
@@ -131,10 +133,12 @@ class _AlmacenState extends State<Almacen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Almacen"),
+          title: Text(_esPerfil ? "Perfil" : "Almacen"),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.background2,
-          foregroundColor: AppColores.foreground,
+          backgroundColor: _esPerfil
+              ? AppColores.primary
+              : AppColores.background2,
+          foregroundColor: _esPerfil ? Colors.white : AppColores.foreground,
         ),
 
         body: Container(
@@ -208,6 +212,13 @@ class _AlmacenState extends State<Almacen> {
                 label: "Solicitudes",
                 activeIcon: Icon(Icons.send, size: 32, color: Colors.white),
                 tooltip: ("Ir a la seccion de solicitudes de eventos"),
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: AppColores.primary,
+                icon: Icon(Icons.person_outline, size: 24, color: Colors.white),
+                label: "Perfil",
+                activeIcon: Icon(Icons.person, size: 32, color: Colors.white),
+                tooltip: ("Ir al perfil"),
               ),
             ],
           ),

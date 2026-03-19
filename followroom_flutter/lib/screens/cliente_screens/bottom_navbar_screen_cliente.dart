@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/home_screens/historial_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/home_screens/inicio_screen.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
+import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/home_screens/solicitudes_screen.dart';
 
 class FollowRoom extends StatefulWidget {
@@ -24,6 +25,7 @@ class _FollowRoomState extends State<FollowRoom> {
     HistorialScreen(),
     SolicitudesScreen(),
     ManualScreen(),
+    Perfil(),
   ];
 
   final List<String> _titulos = [
@@ -31,7 +33,10 @@ class _FollowRoomState extends State<FollowRoom> {
     "Historial",
     "Solicitudes extra",
     "Manual",
+    "Perfil",
   ];
+
+  bool get _esPerfil => _indiceSeleccionado == 4;
 
   void _alPresionar(int indice) async {
     setState(() {
@@ -64,10 +69,15 @@ class _FollowRoomState extends State<FollowRoom> {
         appBar: AppBar(
           title: Text(
             _titulos[_indiceSeleccionado],
-            style: TextEstilos.encabezados,
+            style: _esPerfil
+                ? TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                : TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.background2,
+          backgroundColor: _esPerfil
+              ? AppColores.primary
+              : AppColores.background2,
+          foregroundColor: _esPerfil ? Colors.white : AppColores.foreground,
         ),
         body: Container(
           color: AppColores.background2,
@@ -149,6 +159,17 @@ class _FollowRoomState extends State<FollowRoom> {
                     color: Colors.white,
                   ),
                   tooltip: ("Ir al manual"),
+                ),
+                BottomNavigationBarItem(
+                  backgroundColor: AppColores.primary,
+                  icon: Icon(
+                    Icons.person_outline,
+                    size: 24,
+                    color: Colors.white,
+                  ),
+                  label: "Perfil",
+                  activeIcon: Icon(Icons.person, size: 32, color: Colors.white),
+                  tooltip: ("Ir al perfil"),
                 ),
               ],
             ),

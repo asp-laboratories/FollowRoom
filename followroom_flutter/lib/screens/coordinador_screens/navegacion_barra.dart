@@ -5,6 +5,7 @@ import 'package:followroom_flutter/screens/coordinador_screens/estado_salones.da
 import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinador.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/solicitudes_cliente.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
+import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -24,7 +25,7 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     const ReservacionesVisualScreen(),
     const PantallaEstadoSalones(),
     const ManualScreen(),
-    const Center(child: Text("Perfil")),
+    const Perfil(),
   ];
 
   final List<String> _titulos = [
@@ -34,6 +35,8 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     "Manual de garantias",
     "Perfil",
   ];
+
+  bool get _esPerfil => _indiceSeleccionado == 4;
 
   void _alPresionar(int indice) async {
     setState(() {
@@ -66,10 +69,15 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
         appBar: AppBar(
           title: Text(
             _titulos[_indiceSeleccionado],
-            style: TextEstilos.encabezados,
+            style: _esPerfil
+                ? TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                : TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: AppColores.background2,
+          backgroundColor: _esPerfil
+              ? AppColores.primary
+              : AppColores.background2,
+          foregroundColor: _esPerfil ? Colors.white : AppColores.foreground,
         ),
         body: Container(
           color: AppColores.background2,
