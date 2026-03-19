@@ -150,84 +150,157 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Titulo ${itemActual.titulo}",
-                            style: TextEstilos.labelCard.copyWith(fontSize: 16),
-                          ),
                           Row(
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_month_outlined,
-                                    color: AppColores.foreground,
-                                  ),
-                                  Text(
-                                    " Fecha: ${itemActual.fecha}",
-                                    style: TextEstilos.labelCard,
-                                  ),
-                                ],
+                              Text(
+                                "Titulo: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 14,
+                                ),
                               ),
-                              const SizedBox(width: 50),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.alarm,
-                                    color: AppColores.foreground,
-                                  ),
-                                  Text(
-                                    " Hora: ${itemActual.hora}",
-                                    style: TextEstilos.labelCard,
-                                  ),
-                                ],
+                              Text(
+                                itemActual.titulo,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                  color: AppColores.foreground,
+                                ),
                               ),
                             ],
                           ),
+
                           Row(
                             children: [
-                              Text(
-                                "Salon: ${itemActual.salon}",
-                                style: TextEstilos.labelCard,
+                              Icon(
+                                Icons.calendar_month_outlined,
+                                color: AppColores.foreground,
+                                size: 16,
                               ),
-                              const SizedBox(width: 50),
+                              const SizedBox(width: 4),
                               Text(
-                                "Montaje: ${itemActual.montaje}",
-                                style: TextEstilos.labelCard,
+                                "Fecha: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                itemActual.fecha,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                              const SizedBox(width: 30),
+                              Icon(
+                                Icons.alarm,
+                                color: AppColores.foreground,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Hora: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                itemActual.hora,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                  color: AppColores.foreground,
+                                ),
                               ),
                             ],
                           ),
+
                           Row(
                             children: [
                               Text(
-                                "Equipamientos:",
-                                style: TextEstilos.labelCard,
+                                "Salon: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                itemActual.salon,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                              const SizedBox(width: 30),
+                              Text(
+                                "Montaje: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                itemActual.montaje,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          Row(
+                            children: [
+                              Text(
+                                "Equipamientos: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
                               ),
                               itemActual.equipos
-                                  ? const Icon(Icons.check, color: Colors.green)
-                                  : const Icon(Icons.close, color: Colors.red),
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.green,
+                                      size: 16,
+                                    )
+                                  : const Icon(
+                                      Icons.close,
+                                      color: Colors.red,
+                                      size: 16,
+                                    ),
                             ],
                           ),
+
                           Row(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Servicios:",
-                                    style: TextEstilos.labelCard,
-                                  ),
-                                  itemActual.servicos
-                                      ? const Icon(
-                                          Icons.check,
-                                          color: Colors.green,
-                                        )
-                                      : const Icon(
-                                          Icons.close,
-                                          color: Colors.red,
-                                        ),
-                                ],
+                              Text(
+                                "Servicios: ",
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                ),
                               ),
+                              itemActual.servicos
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.green,
+                                      size: 16,
+                                    )
+                                  : const Icon(
+                                      Icons.close,
+                                      color: Colors.red,
+                                      size: 16,
+                                    ),
                               Spacer(),
-                              Text("Detalles >", style: TextEstilos.valorCard),
+                              Text(
+                                "Click en el contenedor para ver detalles del evento",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColores.foreground.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                             ],
                           ),
                         ],
