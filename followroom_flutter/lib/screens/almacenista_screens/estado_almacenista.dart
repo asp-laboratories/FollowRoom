@@ -37,11 +37,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
             {'cosa': 'Sila Negra', 'cantidadDisponible': 10, 'tipo': "Mesa"},
           ]
         : datosObtenidos = [
-            {
-              'cosa': 'laptop',
-              'cantidadDisponible': 10,
-              'tipo': "Ejecutivo",
-            },
+            {'cosa': 'laptop', 'cantidadDisponible': 10, 'tipo': "Ejecutivo"},
           ];
 
     if (!mounted) return;
@@ -122,7 +118,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
           },
 
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(left: 0, top: 14, bottom: 10, right: 8),
             child: Row(
               children: [
                 const SizedBox(width: 24),
@@ -229,9 +225,23 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
 
                               children: [
-                                Text(
-                                  itemActual['cosa'],
-                                  style: TextEstilos.labelCard,
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Nombre: ",
+                                      style: TextEstilos.labelCard.copyWith(
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      itemActual['cosa'],
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.normal,
+                                        color: AppColores.foreground,
+                                      ),
+                                    ),
+                                  ],
                                 ),
 
                                 SizedBox(height: 10),
@@ -239,13 +249,30 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      "Disponibles: ${itemActual['cantidadDisponible'].toString()}",
-                                      style: TextEstilos.labelCard,
+                                      "Disponibles: ",
+                                      style: TextEstilos.labelCard.copyWith(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      itemActual['cantidadDisponible']
+                                          .toString(),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal,
+                                        color: AppColores.foreground,
+                                      ),
                                     ),
                                     Spacer(),
                                     Text(
-                                      "Inspeccionar >",
-                                      style: TextEstilos.valorCard,
+                                      "Click para cambiar de estado",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: AppColores.foreground.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -580,33 +607,39 @@ class _FiltroState extends State<Filtro> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(15),
-
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
-          const Text("Seleccione un tipo:"),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(
+              "Seleccione un tipo:",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColores.foreground,
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
           ListTile(
-            leading: const Icon(Icons.all_inclusive),
-            title: const Text("Quitar filtro"),
+            leading: Icon(Icons.all_inclusive, color: AppColores.primary),
+            title: Text("Quitar filtro"),
             onTap: () {
               Navigator.pop(context, "Todos");
             },
           ),
-
-          const Divider(),
-
+          Divider(color: AppColores.primary.withValues(alpha: 0.3)),
           ...widget.tipos.map((tipo) {
             return ListTile(
-              leading: const Icon(Icons.category),
+              leading: Icon(Icons.category, color: AppColores.primary),
               title: Text(tipo),
               onTap: () {
                 Navigator.pop(context, tipo);
               },
             );
           }),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
     );

@@ -3,10 +3,11 @@ import 'package:followroom_flutter/core/colores.dart';
 
 class AlmacenistaSolicitudesScreen extends StatelessWidget {
   AlmacenistaSolicitudesScreen({super.key});
-  
+
   List reservaciones = [
     {
       'nombre': "Reservacion 1",
+      'descripcion': "Evento de prueba",
       'solicitudesEquipos': [
         {'nomre': "Microfono", 'cantidad': 1, 'completado': false},
         {'nomre': "Television", 'cantidad': 2, 'completado': false},
@@ -17,7 +18,6 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
         {'nomre': "Taburete", 'cantidad': 3, 'completado': false},
       ],
     },
-
   ];
 
   @override
@@ -53,19 +53,32 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      item['nombre'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColores.foreground,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['nombre'],
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColores.foreground,
+                          ),
+                        ),
                       ),
+                      const Icon(Icons.arrow_forward_ios, size: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['descripcion'],
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColores.foreground.withValues(alpha: 0.6),
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, size: 16)
                 ],
               ),
             ),
@@ -136,7 +149,7 @@ class Solicitudes extends StatelessWidget {
       backgroundColor: AppColores.background2,
       appBar: AppBar(
         title: const Text("Solicitudes"),
-        backgroundColor: AppColores.primary,
+        backgroundColor: AppColores.background2,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -156,10 +169,7 @@ class Solicitudes extends StatelessWidget {
             ),
             child: Text(
               evento['nombre'],
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -167,17 +177,13 @@ class Solicitudes extends StatelessWidget {
           _seccion(
             titulo: "Mobiliario",
             icono: Icons.chair,
-            child: GenerarChecklists(
-              objetos: evento['solicitudesMobiles'],
-            ),
+            child: GenerarChecklists(objetos: evento['solicitudesMobiles']),
           ),
           const SizedBox(height: 16),
           _seccion(
             titulo: "Equipamiento",
             icono: Icons.devices,
-            child: GenerarChecklists(
-              objetos: evento['solicitudesEquipos'],
-            ),
+            child: GenerarChecklists(objetos: evento['solicitudesEquipos']),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
