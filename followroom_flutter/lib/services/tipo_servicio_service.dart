@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class TipoServicioService {
-  static const String baseUrl = 'http://192.168.100.8/api';
+  static const String baseUrl = 'http://192.168.100.8:8000/api';
 
   Future<List<dynamic>> getTiposServicio() async {
     final response = await http.get(Uri.parse('$baseUrl/tipo-servicio/'));

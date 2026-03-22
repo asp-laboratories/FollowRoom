@@ -4,11 +4,14 @@ import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
-import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart';
-import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart';
-import 'package:followroom_flutter/screens/coordinador_screens/navegacion_barra.dart';
-import 'package:followroom_flutter/screens/coordinador_screens/panelprincipal.dart';
 import 'package:followroom_flutter/features/auth/screens/signup_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/navbar_screen_cliente.dart'
+    show FollowRoom;
+import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenista.dart'
+    show Almacen;
+import 'package:followroom_flutter/screens/coordinador_screens/navegacion_barra.dart'
+    show NavegacionBarra;
+import 'package:followroom_flutter/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,10 +21,71 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   String mensajeError = '';
+  bool _isLoading = false;
+
+  void _redirigirPorRol(Map<String, dynamic> userData) {
+    Widget pantalla;
+    String? rol = userData['rol'];
+    String tipo = userData['tipo'] ?? 'cliente';
+
+    if (tipo == 'trabajador') {
+      switch (rol) {
+        case 'ADMIN':
+          pantalla = const NavegacionBarra();
+          break;
+        case 'RECEP':
+          pantalla = const NavegacionBarra();
+          break;
+        case 'ALMAC':
+          pantalla = const Almacen();
+          break;
+        default:
+          pantalla = const NavegacionBarra();
+      }
+    } else {
+      pantalla = const FollowRoom();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pantalla),
+    );
+  }
+
+  Future<void> _iniciarSesion() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      setState(() => mensajeError = 'Por favor completa todos los campos');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final userData = await _authService.login(
+        emailController.text.trim(),
+        passwordController.text,
+      );
+      print('Usuario autenticado: $userData');
+      if (mounted) {
+        _redirigirPorRol(userData);
+      }
+    } catch (e) {
+      setState(() => mensajeError = e.toString().replaceAll('Exception: ', ''));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,23 +125,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextEstilos.encabezadosBlancos,
                             textAlign: TextAlign.center,
                           ),
-
-                          SizedBox(height: 24),
-
+                          const SizedBox(height: 24),
                           Image.asset(
                             'assets/images/followroom_logo.png',
                             height: 120,
                           ),
-
-                          SizedBox(height: 24),
-
-                          Text(
+                          const SizedBox(height: 24),
+                          const Text(
                             "Correo electronico",
                             style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
-
                           TextField(
-                            controller: email,
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
                             decoration: createAppDecoration(
                               prefixIcon: Icon(
                                 Icons.email,
@@ -86,16 +146,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Ingresa tu correo',
                             ),
                           ),
-
-                          SizedBox(height: 24),
-
-                          Text(
+                          const SizedBox(height: 24),
+                          const Text(
                             "Contraseña",
                             style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
-
                           TextField(
-                            controller: password,
+                            controller: passwordController,
+                            obscureText: true,
                             decoration: createAppDecoration(
                               prefixIcon: Icon(
                                 Icons.password,
@@ -104,44 +162,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Ingresa tu contraseña',
                             ),
                           ),
-
-                          SizedBox(height: 24),
-
-                          Text(mensajeError),
-
+                          const SizedBox(height: 16),
+                          if (mensajeError.isNotEmpty)
+                            Text(
+                              mensajeError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          const SizedBox(height: 8),
                           ElevatedButton(
-                            onPressed: () {
-                              if (email.text == 'example' &&
-                                  password.text == '123') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => FollowRoom(),
-                                  ),
-                                );
-                              } else if ((email.text == 'exa' &&
-                                  password.text == '321')) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Almacen(),
-                                  ),
-                                );
-                              } else if (email.text == 'coordinador' &&
-                                  password.text == '456') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => NavegacionBarra(),
-                                  ),
-                                );
-                              } else {
-                                setState(() {
-                                  mensajeError = "Campos incorrectos";
-                                });
-                              }
-                            },
-
+                            onPressed: _isLoading ? null : _iniciarSesion,
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.white,
                               backgroundColor: AppColores.primary,
@@ -149,23 +182,31 @@ class _LoginScreenState extends State<LoginScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
-                            child: Text("Iniciar sesión"),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text("Iniciar sesión"),
                           ),
-
-                          SizedBox(height: 12),
-
+                          const SizedBox(height: 12),
                           ElevatedButton(
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => Registro(),
+                                  builder: (context) => const Registro(),
                                 ),
                               );
                             },
                             style: BotonStyles.botonEstilos,
-                            child: Text("Registrate"),
+                            child: const Text("Registrate"),
                           ),
                         ],
                       ),
@@ -173,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ).blurry(
                     blur: 5,
                     elevation: 0,
-                    color: const Color.fromARGB(54, 255, 255, 255).withValues(),
+                    color: const Color.fromARGB(54, 255, 255, 255),
                   ),
             ),
           ),
