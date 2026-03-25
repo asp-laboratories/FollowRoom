@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.100.8:8000/api';
+  static const String baseUrl = 'http://192.168.100.10:8000/api';
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<Map<String, dynamic>> login(String email, String password) async {

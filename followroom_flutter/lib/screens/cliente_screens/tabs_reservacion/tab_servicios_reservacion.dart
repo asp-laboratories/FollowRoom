@@ -33,7 +33,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
   Future<void> _loadTiposServicio() async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.100.8:8000/api/tipo-servicio/'),
+        Uri.parse('http://192.168.100.10:8000/api/tipo-servicio/'),
       );
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 Future<Map<String, dynamic>> fetchTrabajador() async {
   var dio = Dio();
-  dio.options.baseUrl = 'http://192.168.100.8:8000/api';
+  dio.options.baseUrl = 'http://192.168.100.10:8000/api';
   try {
     final response = await dio.get('/trabajador/');
     print(response.data); // Dio ya entrega el JSON parseado (Map/List)
@@ -32,7 +32,7 @@ class TrabajadorService {
 
     // 3. Flutter manda el JWT a Django
     final response = await _dio.post(
-      'http://192.168.100.8:8000/api/trabajador/',
+      'http://192.168.100.10:8000/api/trabajador/',
       data: {'token': idToken},
     );
 
@@ -66,7 +66,7 @@ class TrabajadorService {
 // import 'package:http/http.dart' as http;
 
 // class TrabajadoresService {
-//   static const String baseUrl = 'http://192.168.100.8/api';
+//   static const String baseUrl = 'http://192.168.100.10/api';
 
 //   Future<List<dynamic>> getTrabajadores() async {
 //     final response = await http.get(Uri.parse('$baseUrl/trabajadores/'));
