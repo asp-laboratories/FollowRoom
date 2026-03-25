@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "629559071896",
+    "project_id": "eventos-en-hoteles-aspl",
+    "storage_bucket": "eventos-en-hoteles-aspl.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629559071896:android:c51acb888a8edd629baced",
+        "android_client_info": {
+          "package_name": "com.example.followroom_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuLRQox1yk1SxXbIKrLF6GkfA19Xw0YIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

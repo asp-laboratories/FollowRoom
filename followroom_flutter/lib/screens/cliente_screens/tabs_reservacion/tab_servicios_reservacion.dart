@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class TabServiciosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onServiciosChanged;
@@ -18,8 +20,36 @@ class TabServiciosReservacion extends StatefulWidget {
 }
 
 class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
-  final List<String> tiposServicios = ['ejecutivos', 'empresariales'];
+  List<String> tiposServicios = [];
   String? tiposServicioSeleccionado;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTiposServicio();
+  }
+
+  Future<void> _loadTiposServicio() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.100.8:8000/api/tipo-servicio/'),
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        setState(() {
+          tiposServicios = data.map((e) => e['nombre'].toString()).toList();
+          print("Datos");
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        tiposServicios = ['ejecutivos', 'empresariales'];
+        isLoading = false;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> serviciosDB = [
     {
@@ -99,17 +129,27 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                 SizedBox(height: 8),
                 DropdownMenu<String>(
                   initialSelection: tiposServicioSeleccionado,
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(value: 'todos', label: 'Todos'),
-                    ...tiposServicios.map(
-                      (value) => DropdownMenuEntry(value: value, label: value),
-                    ),
-                  ],
-                  onSelected: (String? nuevoValor) {
-                    setState(() {
-                      tiposServicioSeleccionado = nuevoValor;
-                    });
-                  },
+                  dropdownMenuEntries: isLoading
+                      ? [
+                          DropdownMenuEntry(
+                            value: 'cargando',
+                            label: 'Cargando...',
+                          ),
+                        ]
+                      : [
+                          DropdownMenuEntry(value: 'todos', label: 'Todos'),
+                          ...tiposServicios.map(
+                            (value) =>
+                                DropdownMenuEntry(value: value, label: value),
+                          ),
+                        ],
+                  onSelected: isLoading
+                      ? null
+                      : (String? nuevoValor) {
+                          setState(() {
+                            tiposServicioSeleccionado = nuevoValor;
+                          });
+                        },
                   label: const Text('Tipo de servicio'),
                 ),
               ],
