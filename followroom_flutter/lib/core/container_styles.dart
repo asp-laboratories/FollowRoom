@@ -133,6 +133,34 @@ class ContainerStyles {
     ],
   );
 
+  static BoxDecoration get sombreadoCard => BoxDecoration(
+    borderRadius: BorderRadius.circular(12),
+    color: AppColores.backgroundComponent,
+    border: Border.all(
+      color: AppColores.primary.withValues(alpha: 0.3),
+      width: 1.5,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.1),
+        blurRadius: 4,
+        offset: Offset(0, 2),
+      ),
+    ],
+  );
+
+  static BoxDecoration get sombreadoCardSelected => BoxDecoration(
+    borderRadius: BorderRadius.circular(12),
+    color: AppColores.backgroundComponentSelected,
+    boxShadow: [
+      BoxShadow(
+        color: AppColores.primary.withValues(alpha: 0.3),
+        blurRadius: 8,
+        offset: Offset(0, 4),
+      ),
+    ],
+  );
+
   // Estados de reservación
   static BoxDecoration get estadoAceptado => BoxDecoration(
     color: Colors.green.withValues(alpha: 0.15),
