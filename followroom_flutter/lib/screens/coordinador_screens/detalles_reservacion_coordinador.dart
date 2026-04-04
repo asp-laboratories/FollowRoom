@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class PantallaDetallesCoordinador extends StatefulWidget {
   final String idReservacion;
@@ -21,10 +22,29 @@ class _PantallaDetallesCoordinadorState
   bool _cargando = true;
   String _puntos = ".";
   Timer? _timerPuntos;
+  final ReservacionService _reservacionService = ReservacionService();
 
   Map<String, dynamic>? _datosCompletos;
   final TextEditingController _precioController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
+  Widget _buildLabelValue(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, color: AppColores.foreground),
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
 
   final List<Map<String, bool>> _checklist = [
     {'Confirmar reservación': false},
@@ -56,42 +76,92 @@ class _PantallaDetallesCoordinadorState
   }
 
   Future<void> _descargarDatos() async {
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final data = await _reservacionService.getDetalleReservacion(
+        int.parse(widget.idReservacion),
+      );
 
-    final datoPruebas = {
-      'descripcionEvento': "fiesta para mi sobrino que cumple 18",
-      'invitados': 100,
-      'fechaEvento': "18-12-2027",
-      'horainicio': "12:00 PM",
-      'cliente': 'Juan Pérez',
-      'tipoCliente': "Persona fisica",
-      'telefono': "666 6666 66 66",
-      'email': "juanperez@correo.com",
-      'tipoMontaje': "Herradura",
-      'nombreSalon': "Salón Imperial",
-      'precioTotal': 15000,
-      'servicios': [
-        {'nombre': 'Guardias', 'precio': 500},
-        {'nombre': 'Decoradores', 'precio': 1500},
-        {'nombre': 'Meseros', 'precio': 800},
-        {'nombre': 'Limpieza', 'precio': 600},
-      ],
-      'equipos': [
-        {'nombre': 'Microfono', 'precio': 300, 'cantidad': 2},
-        {'nombre': 'Equipo Audiovisual', 'precio': 2000, 'cantidad': 1},
-        {'nombre': 'Televisor', 'precio': 500, 'cantidad': 3},
-      ],
-    };
+      if (!mounted) return;
 
-    if (!mounted) return;
+      setState(() {
+        _datosCompletos = {
+          'descripcionEvento':
+              data['descripEvento'] ?? data['nombreEvento'] ?? '',
+          'invitados': data['estimaAsistentes'] ?? 0,
+          'fechaEvento': data['fechaEvento'] ?? '',
+          'horaInicio': data['horaInicio'] ?? '',
+          'horaFin': data['horaFin'] ?? '',
+          'cliente': data['cliente_nombre'] ?? '',
+          'tipoCliente': data['cliente_tipo'] ?? '',
+          'telefono': data['cliente_telefono'] ?? '',
+          'email': data['cliente_email'] ?? '',
+          'tipoMontaje': data['montaje_tipo'] ?? '',
+          'nombreSalon': data['salon_nombre'] ?? '',
+          'estado': data['estado_nombre'] ?? '',
+          'tipoEvento': data['tipo_evento_nombre'] ?? '',
+          'subtotal': data['subtotal'] ?? 0,
+          'IVA': data['IVA'] ?? 0,
+          'precioTotal': data['total'] ?? 0,
+          'servicios': (data['servicios'] as List? ?? [])
+              .map(
+                (s) => {'nombre': s['nombre'] ?? '', 'precio': s['costo'] ?? 0},
+              )
+              .toList(),
+          'equipamentos': (data['equipamentos'] as List? ?? [])
+              .map(
+                (e) => {
+                  'nombre': e['equipamiento__nombre'] ?? '',
+                  'precio': e['costo'] ?? 0,
+                  'cantidad': e['cantidad'] ?? 1,
+                },
+              )
+              .toList(),
+        };
+        _precioController.text = (_datosCompletos?['precioTotal'] ?? 0)
+            .toString();
+        _cargando = false;
+      });
 
-    setState(() {
-      _datosCompletos = datoPruebas;
-      _precioController.text = (datoPruebas['precioTotal'] ?? 0).toString();
-      _cargando = false;
-    });
+      _timerPuntos?.cancel();
+    } catch (e) {
+      if (!mounted) return;
 
-    _timerPuntos?.cancel();
+      setState(() {
+        _cargando = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar: $e')));
+      }
+    }
+  }
+
+  int _calcularSubtotal() {
+    int serviciosTotal = 0;
+    int equiposTotal = 0;
+
+    if (_datosCompletos?['servicios'] != null) {
+      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<int>(
+        0,
+        (sum, s) => sum + ((s['precio'] ?? 0) as int),
+      );
+    }
+
+    if (_datosCompletos?['equipamentos'] != null) {
+      equiposTotal = (_datosCompletos?['equipamentos'] as List).fold<int>(
+        0,
+        (sum, e) =>
+            sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+      );
+    }
+
+    return serviciosTotal + equiposTotal;
+  }
+
+  int _calcularIVA() {
+    return (_calcularSubtotal() * 0.16).round();
   }
 
   void _actualizarPrecio() {
@@ -139,7 +209,7 @@ class _PantallaDetallesCoordinadorState
       body: _cargando
           ? Center(
               child: Text(
-                'Cargando $_puntos',
+                'Cargando$_puntos',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -168,11 +238,13 @@ class _PantallaDetallesCoordinadorState
                       ],
                     ),
                   ),
-
                   SizedBox(height: 5),
-
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       decoration: ContainerStyles.sombreado,
                       width: double.infinity,
@@ -188,28 +260,42 @@ class _PantallaDetallesCoordinadorState
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Nombre del evento: ${_datosCompletos?['descripcionEvento'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Nombre del evento:",
+                            _datosCompletos?['descripcionEvento'] ??
+                                'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Fecha: ${_datosCompletos?['fechaEvento'] ?? 'No definida'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Fecha:",
+                            _datosCompletos?['fechaEvento'] ?? 'No definida',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Hora: ${_datosCompletos?['horainicio'] ?? 'No definida'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Horario:",
+                            "${_datosCompletos?['horaInicio'] ?? 'No definida'} - ${_datosCompletos?['horaFin'] ?? ''}",
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Asistentes: ${_datosCompletos?['invitados'] ?? 0}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Tipo de evento:",
+                            _datosCompletos?['tipoEvento'] ?? 'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Asistentes:",
+                            (_datosCompletos?['invitados'] ?? 0).toString(),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -225,28 +311,36 @@ class _PantallaDetallesCoordinadorState
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Nombre: ${_datosCompletos?['cliente'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Nombre:",
+                            _datosCompletos?['cliente'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Tipo: ${_datosCompletos?['tipoCliente'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Tipo:",
+                            _datosCompletos?['tipoCliente'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Teléfono: ${_datosCompletos?['telefono'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Teléfono:",
+                            _datosCompletos?['telefono'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Email: ${_datosCompletos?['email'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Email:",
+                            _datosCompletos?['email'] ?? 'No definido',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -262,29 +356,36 @@ class _PantallaDetallesCoordinadorState
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Salón: ${_datosCompletos?['nombreSalon'] ?? 'Ningún salón'}",
+                          _buildLabelValue(
+                            "Salón:",
+                            _datosCompletos?['nombreSalon'] ?? 'Ningún salón',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Montaje: ${_datosCompletos?['tipoMontaje'] ?? 'No seleccionado'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Montaje:",
+                            _datosCompletos?['tipoMontaje'] ??
+                                'No seleccionado',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final bool esPantallaChica = constraints.maxWidth < 400;
 
                       if (esPantallaChica) {
                         return Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                          ),
                           child: Column(
                             children: [
                               _buildServiciosContainer(),
-                              SizedBox(height: 10),
+                              SizedBox(height: 16),
                               _buildEquipamientosContainer(),
                             ],
                           ),
@@ -292,19 +393,22 @@ class _PantallaDetallesCoordinadorState
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: _buildServiciosContainer()),
-                            SizedBox(width: 8),
+                            SizedBox(width: 16),
                             Expanded(child: _buildEquipamientosContainer()),
                           ],
                         ),
                       );
                     },
                   ),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Divider(thickness: 2, color: AppColores.primary),
@@ -315,7 +419,11 @@ class _PantallaDetallesCoordinadorState
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -352,7 +460,11 @@ class _PantallaDetallesCoordinadorState
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -402,7 +514,11 @@ class _PantallaDetallesCoordinadorState
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -421,15 +537,21 @@ class _PantallaDetallesCoordinadorState
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("Subtotal:"),
+                              _buildLabelValue(
+                                "Subtotal:",
+                                "\$${_calcularSubtotal()}",
+                              ),
                               Text("\$${_calcularSubtotal()}"),
                             ],
                           ),
-                          SizedBox(height: 5),
+                          SizedBox(height: 2),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("IVA (16%):"),
+                              _buildLabelValue(
+                                "IVA (16%):",
+                                "\$${_calcularIVA()}",
+                              ),
                               Text("\$${_calcularIVA()}"),
                             ],
                           ),
@@ -437,9 +559,9 @@ class _PantallaDetallesCoordinadorState
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
+                              _buildLabelValue(
                                 "Total:",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                "\$${_datosCompletos?['precioTotal'] ?? 0}",
                               ),
                               Text(
                                 "\$${_datosCompletos?['precioTotal'] ?? 0}",
@@ -477,32 +599,6 @@ class _PantallaDetallesCoordinadorState
               ),
             ),
     );
-  }
-
-  int _calcularSubtotal() {
-    int serviciosTotal = 0;
-    int equiposTotal = 0;
-
-    if (_datosCompletos?['servicios'] != null) {
-      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<int>(
-        0,
-        (sum, s) => sum + ((s['precio'] ?? 0) as int),
-      );
-    }
-
-    if (_datosCompletos?['equipos'] != null) {
-      equiposTotal = (_datosCompletos?['equipos'] as List).fold<int>(
-        0,
-        (sum, e) =>
-            sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
-      );
-    }
-
-    return serviciosTotal + equiposTotal;
-  }
-
-  int _calcularIVA() {
-    return (_calcularSubtotal() * 0.16).round();
   }
 
   Widget _buildServiciosContainer() {
@@ -586,11 +682,11 @@ class _PantallaDetallesCoordinadorState
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
-          if (_datosCompletos?['equipos'] == null ||
-              (_datosCompletos?['equipos'] as List).isEmpty)
+          if (_datosCompletos?['equipamentos'] == null ||
+              (_datosCompletos?['equipamentos'] as List).isEmpty)
             Text("Sin equipos", style: TextStyle(fontSize: 12))
           else
-            ...(_datosCompletos?['equipos'] as List).map(
+            ...(_datosCompletos?['equipamentos'] as List).map(
               (e) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
@@ -615,8 +711,8 @@ class _PantallaDetallesCoordinadorState
                 ),
               ),
             ),
-          if (_datosCompletos?['equipos'] != null &&
-              (_datosCompletos?['equipos'] as List).isNotEmpty) ...[
+          if (_datosCompletos?['equipamentos'] != null &&
+              (_datosCompletos?['equipamentos'] as List).isNotEmpty) ...[
             Divider(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -626,7 +722,7 @@ class _PantallaDetallesCoordinadorState
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${(_datosCompletos?['equipos'] as List).fold<int>(0, (sum, e) => sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
+                  "\$${(_datosCompletos?['equipamentos'] as List).fold<int>(0, (sum, e) => sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

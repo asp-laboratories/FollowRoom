@@ -31,6 +31,24 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   final bool _cargando = false;
   final double _progreso = 0.75;
 
+  Widget _buildLabelValue(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, color: AppColores.foreground),
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +93,11 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       decoration: ContainerStyles.sombreado,
                       width: double.infinity,
@@ -91,32 +113,43 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Nombre del evento: ${widget.datosReservacion?['nombre'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Nombre del evento:",
+                            widget.datosReservacion?['nombre'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Fecha: ${widget.datosReservacion?['fecha'] ?? 'No definida'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Fecha:",
+                            widget.datosReservacion?['fecha'] ?? 'No definida',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Horario: ${widget.datosReservacion?['horario'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Horario:",
+                            widget.datosReservacion?['horario'] ??
+                                'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Tipo de evento: ${widget.datosReservacion?['tipo'] ?? 'No seleccionado'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Tipo de evento:",
+                            widget.datosReservacion?['tipo'] ??
+                                'No seleccionado',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Asistentes: ${widget.datosReservacion?['asistentes'] ?? '0'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Asistentes:",
+                            widget.datosReservacion?['asistentes'] ?? '0',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -132,28 +165,38 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Nombre: ${widget.datosCliente?['nombre'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Nombre:",
+                            widget.datosCliente?['nombre'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Apellido: ${widget.datosCliente?['apellidoPaterno'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Apellido:",
+                            widget.datosCliente?['apellidoPaterno'] ??
+                                'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Teléfono: ${widget.datosCliente?['telefono'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Teléfono:",
+                            widget.datosCliente?['telefono'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Email: ${widget.datosCliente?['correoElectronico'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Email:",
+                            widget.datosCliente?['correoElectronico'] ??
+                                'No definido',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(12),
@@ -172,32 +215,41 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           if (widget.salonSeleccionado == null)
                             Text("Ningún salón seleccionado")
                           else ...[
-                            Text(
-                              "Salón: ${widget.salonSeleccionado!['nombre']}",
+                            _buildLabelValue(
+                              "Salón:",
+                              widget.salonSeleccionado!['nombre'].toString(),
                             ),
-                            Text(
-                              "Precio: \$${widget.salonSeleccionado!['precio']}",
+                            _buildLabelValue(
+                              "Precio:",
+                              "\$${widget.salonSeleccionado!['precio']}",
                             ),
-                            Text(
-                              "Montaje: ${widget.montajesPorSalon?[widget.salonSeleccionado!['id']] ?? 'No seleccionado'}",
+                            _buildLabelValue(
+                              "Montaje:",
+                              widget.montajesPorSalon?[widget
+                                      .salonSeleccionado!['id']] ??
+                                  'No seleccionado',
                             ),
                           ],
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final bool esPantallaChica = constraints.maxWidth < 400;
 
                       if (esPantallaChica) {
                         return Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                          ),
                           child: Column(
                             children: [
                               _buildServiciosContainer(),
-                              SizedBox(height: 10),
+                              SizedBox(height: 16),
                               _buildEquipamientosContainer(),
                             ],
                           ),
@@ -205,12 +257,16 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: _buildServiciosContainer()),
-                            SizedBox(width: 8),
+                            SizedBox(width: 16),
                             Expanded(child: _buildEquipamientosContainer()),
                           ],
                         ),
@@ -218,8 +274,12 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                     },
                   ),
 
-                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -242,7 +302,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                               Text("\$${_calcularSubtotal()}"),
                             ],
                           ),
-                          SizedBox(height: 5),
+                          SizedBox(height: 2),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -412,11 +472,10 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
         ],
       ),
     );
-  
-  
   }
-int _calcularSubtotal() {
-  return 1;
+
+  int _calcularSubtotal() {
+    return 1;
     // int serviciosTotal = 0;
     // int equiposTotal = 0;
     // int salonPrecio = _datosReservacion?['precioSalon'] as int? ?? 0;
@@ -444,5 +503,5 @@ int _calcularSubtotal() {
 
   int _calcularTotal() {
     return _calcularSubtotal() + _calcularIVA();
-  }  
+  }
 }

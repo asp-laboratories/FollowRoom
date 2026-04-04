@@ -14,6 +14,24 @@ class DetallesReservacionActual extends StatefulWidget {
 class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
   final bool _cargando = false;
 
+  Widget _buildLabelValue(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, color: AppColores.foreground),
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   final Map<String, dynamic> _datosReservacion = {
     'nombre': 'Cumpleaños de jorge',
     'fecha': '15 de Marzo 2026',
@@ -120,7 +138,11 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       decoration: ContainerStyles.sombreado,
                       width: double.infinity,
@@ -136,20 +158,26 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Tipo: ${_datosReservacion?['tipo'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Tipo:",
+                            _datosReservacion?['tipo'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Asistentes: ${_datosReservacion?['asistentes'] ?? 0}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Asistentes:",
+                            _datosReservacion?['asistentes']?.toString() ?? '0',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -165,24 +193,31 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Salón: ${_datosReservacion?['salon'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Salón:",
+                            _datosReservacion?['salon'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Precio: \$${_datosReservacion?['precioSalon'] ?? 0}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Precio:",
+                            "\$${_datosReservacion?['precioSalon'] ?? 0}",
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Montaje: ${_datosReservacion?['montaje'] ?? 'No seleccionado'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Montaje:",
+                            _datosReservacion?['montaje'] ?? 'No seleccionado',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -198,33 +233,40 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "Nombre: ${_datosReservacion?['cliente'] ?? 'No definido'}",
+                          _buildLabelValue(
+                            "Nombre:",
+                            _datosReservacion?['cliente'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Teléfono: ${_datosReservacion?['telefono'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Teléfono:",
+                            _datosReservacion?['telefono'] ?? 'No definido',
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Email: ${_datosReservacion?['email'] ?? 'No definido'}",
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Email:",
+                            _datosReservacion?['email'] ?? 'No definido',
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final bool esPantallaChica = constraints.maxWidth < 400;
 
                       if (esPantallaChica) {
                         return Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                          ),
                           child: Column(
                             children: [
                               _buildServiciosContainer(),
-                              SizedBox(height: 10),
+                              SizedBox(height: 16),
                               _buildEquipamientosContainer(),
                             ],
                           ),
@@ -232,12 +274,16 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: _buildServiciosContainer()),
-                            SizedBox(width: 8),
+                            SizedBox(width: 16),
                             Expanded(child: _buildEquipamientosContainer()),
                           ],
                         ),
@@ -246,7 +292,11 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: ContainerStyles.sombreado,
@@ -332,7 +382,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${s['nombre']}",
+                        "- ${s['nombre']} ",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -399,7 +449,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre']} (x${e['cantidad']})",
+                        "- ${e['nombre']} (x${e['cantidad']}) ",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),

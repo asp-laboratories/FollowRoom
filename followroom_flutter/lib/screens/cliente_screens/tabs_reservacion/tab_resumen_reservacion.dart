@@ -25,17 +25,38 @@ class TabResumen extends StatefulWidget {
 }
 
 class _TabResumenState extends State<TabResumen> {
+  Widget _buildLabelValue(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, color: AppColores.foreground),
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColores.background2,
-        ),
+        decoration: BoxDecoration(color: AppColores.background2),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                top: 16,
+              ),
               child: Container(
                 decoration: ContainerStyles.sombreado,
                 width: double.infinity,
@@ -45,116 +66,107 @@ class _TabResumenState extends State<TabResumen> {
                   children: [
                     Text(
                       "Datos de la Reservación",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      "Nombre del evento: ${widget.datosReservacion['nombre'] ?? 'No definido'}",
+                    _buildLabelValue(
+                      "Nombre del evento:",
+                      widget.datosReservacion['nombre'] ?? 'No definido',
                     ),
-                    SizedBox(height: 5),
-        
-                    Text(
-                      "Fecha: ${widget.datosReservacion['fecha'] ?? 'No definida'}",
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Fecha:",
+                      widget.datosReservacion['fecha'] ?? 'No definida',
                     ),
-                    SizedBox(height: 5),
-        
-                    Text(
-                      "Horario: ${widget.datosReservacion['horario'] ?? 'No definido'}",
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Horario:",
+                      widget.datosReservacion['horario'] ?? 'No definido',
                     ),
-                    SizedBox(height: 5),
-        
-                    Text(
-                      "Tipo de evento: ${widget.datosReservacion['tipo'] ?? 'No seleccionado'}",
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Tipo de evento:",
+                      widget.datosReservacion['tipo'] ?? 'No seleccionado',
                     ),
-                    SizedBox(height: 5),
-        
-                    Text(
-                      "Asistentes: ${widget.datosReservacion['asistentes'] ?? '0'}",
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Asistentes:",
+                      widget.datosReservacion['asistentes'] ?? '0',
                     ),
-                    SizedBox(height: 5),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 10),
-        
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Container(
                 width: double.infinity,
                 decoration: ContainerStyles.sombreado,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Datos del cliente",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Datos del cliente",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Nombre del contacto: ${widget.datosCliente['nombre'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Apellido del contacto: ${widget.datosCliente['apellidoPaterno'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Apellido materno del contacto: ${widget.datosCliente['apellidoMaterno'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "RFC: ${widget.datosReservacion['rfc'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Nombre fiscal: ${widget.datosCliente['nombreFiscal'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Telefono del contacto: ${widget.datosCliente['telefono'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Correo electronico del contacto: ${widget.datosCliente['correoElectronico'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Colonia: ${widget.datosCliente['colonia'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Calle: ${widget.datosCliente['calle'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-        
-                      Text(
-                        "Numero: ${widget.datosCliente['numero'] ?? 'No definido'}",
-                      ),
-                      SizedBox(height: 5),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildLabelValue(
+                      "Nombre del contacto:",
+                      widget.datosCliente['nombre'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Apellido del contacto:",
+                      widget.datosCliente['apellidoPaterno'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Apellido materno:",
+                      widget.datosCliente['apellidoMaterno'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "RFC:",
+                      widget.datosReservacion['rfc'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Nombre fiscal:",
+                      widget.datosCliente['nombreFiscal'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Telefono:",
+                      widget.datosCliente['telefono'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Colonia:",
+                      widget.datosCliente['dir_colonia'] ?? 'No definido',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Calle:",
+                      widget.datosCliente['dir_calle'] ?? 'No defined',
+                    ),
+                    SizedBox(height: 2),
+                    _buildLabelValue(
+                      "Numero:",
+                      widget.datosCliente['dir_numero'] ?? 'No definido',
+                    ),
+                  ],
                 ),
               ),
             ),
-        
-            SizedBox(height: 10),
-        
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12),
@@ -164,58 +176,71 @@ class _TabResumenState extends State<TabResumen> {
                   children: [
                     Text(
                       "Salón y Montaje",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 8),
                     if (widget.salonSeleccionado == null)
                       Text("Ningún salón seleccionado")
                     else ...[
-                      Text("Salón: ${widget.salonSeleccionado!['nombre']}"),
-                      Text("Precio: \$${widget.salonSeleccionado!['precio']}"),
-                      Text(
-                        "Montaje: ${widget.montajesPorSalon[widget.salonSeleccionado!['id']] ?? 'No seleccionado'}",
+                      _buildLabelValue(
+                        "Salón:",
+                        widget.salonSeleccionado!['nombre'].toString(),
+                      ),
+                      _buildLabelValue(
+                        "Precio:",
+                        "\$${widget.salonSeleccionado!['precio']}",
+                      ),
+                      _buildLabelValue(
+                        "Montaje:",
+                        widget.montajesPorSalon[widget
+                                .salonSeleccionado!['id']] ??
+                            'No seleccionado',
                       ),
                     ],
                   ],
                 ),
               ),
             ),
-        
-            SizedBox(height: 10),
-        
             LayoutBuilder(
               builder: (context, constraints) {
                 final bool esPantallaChica = constraints.maxWidth < 400;
-        
                 if (esPantallaChica) {
                   return Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: Column(
                       children: [
                         _buildServiciosContainer(),
-                        SizedBox(height: 10),
+                        SizedBox(height: 16),
                         _buildEquipamientosContainer(),
                       ],
                     ),
                   );
                 }
-        
                 return Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: _buildServiciosContainer()),
-                      SizedBox(width: 8),
+                      SizedBox(width: 16),
                       Expanded(child: _buildEquipamientosContainer()),
                     ],
                   ),
                 );
               },
             ),
-        
             SizedBox(height: 10),
-        
           ],
         ),
       ),
