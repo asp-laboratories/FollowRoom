@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 
 class CuentaService {
-  static const String baseUrl = 'http://192.168.100.10:8000/api';
+  static const String baseUrl = 'http://${IpConfig.ip}/api';
 
   Future<Map<String, dynamic>> getCuenta(String nombre) async {
     try {

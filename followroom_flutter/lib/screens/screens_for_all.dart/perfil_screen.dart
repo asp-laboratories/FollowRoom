@@ -2,9 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/features/auth/screens/login_screen.dart';
+import 'package:followroom_flutter/services/perfil_service.dart';
+import 'package:followroom_flutter/services/session_data.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Perfil extends StatefulWidget {
   const Perfil({super.key});
@@ -17,7 +22,82 @@ class _PerfilState extends State<Perfil> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _correoController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  final PerfilService _perfilService = PerfilService();
   File? _imageFile;
+  bool _cargando = true;
+
+  String _nombreCompleto = '[Sin nombre]';
+  String _noEmpleado = '[Sin número de trabajador]';
+  String _rfc = '[Sin RFC]';
+  String _telefono = '[Sin teléfono]';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPerfil();
+    _cargarImagenLocal();
+  }
+
+  Future<void> _cargarImagenLocal() async {
+    try {
+      final email = SessionData.email;
+      debugPrint('SessionData.email: $email');
+      if (email == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'imagen_perfil_${email.hashCode}';
+      debugPrint('Buscando imagen con key: $key');
+      final savedPath = prefs.getString(key);
+      debugPrint('savedPath: $savedPath');
+      if (savedPath != null) {
+        final file = File(savedPath);
+        if (await file.exists()) {
+          debugPrint('Imagen encontrada: ${file.path}');
+          setState(() {
+            _imageFile = file;
+          });
+        } else {
+          debugPrint('El archivo no existe');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al cargar imagen local: $e');
+    }
+  }
+
+  Future<void> _guardarImagenLocal(File image) async {
+    try {
+      final email = SessionData.email;
+      if (email == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'imagen_perfil_${email.hashCode}';
+      await prefs.setString(key, image.path);
+    } catch (e) {
+      debugPrint('Error al guardar imagen local: $e');
+    }
+  }
+
+  Future<void> _cargarPerfil() async {
+    try {
+      final data = await _perfilService.getPerfil();
+      setState(() {
+        _nombreCompleto =
+            '${data['nombre'] ?? ''} ${data['apellidoPaterno'] ?? ''}'.trim();
+        if (_nombreCompleto.isEmpty) _nombreCompleto = '[Sin nombre]';
+
+        _noEmpleado = data['no_empleado'] ?? '[Sin número de trabajador]';
+        _rfc = data['rfc'] ?? '[Sin RFC]';
+        _telefono = data['telefono'] ?? '[Sin teléfono]';
+
+        _nombreController.text = data['nombre_usuario'] ?? '';
+        _correoController.text = data['correo_electronico'] ?? '';
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() => _cargando = false);
+    }
+  }
 
   Future<void> _pickImage() async {
     showModalBottomSheet(
@@ -66,6 +146,7 @@ class _PerfilState extends State<Perfil> {
       );
 
       if (pickedFile != null) {
+        // === GUARDAR IMAGEN LOCALMENTE (actual) ===
         final Directory appDir = await getApplicationDocumentsDirectory();
         final String fileName =
             'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -76,6 +157,13 @@ class _PerfilState extends State<Perfil> {
         setState(() {
           _imageFile = savedImage;
         });
+
+        // Guardar ruta de imagen en preferences
+        await _guardarImagenLocal(savedImage);
+        //       );
+        //     }
+        //   }
+        // }
       }
     } catch (e) {
       if (mounted) {
@@ -84,13 +172,6 @@ class _PerfilState extends State<Perfil> {
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _nombreController.dispose();
-    _correoController.dispose();
-    super.dispose();
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {
@@ -123,249 +204,301 @@ class _PerfilState extends State<Perfil> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColores.primary,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(5),
-                bottomRight: Radius.circular(5),
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColores.primary,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: AppColores.background2,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: _imageFile != null
-                                    ? Image.file(
-                                        _imageFile!,
-                                        fit: BoxFit.cover,
-                                        width: 100,
-                                        height: 100,
-                                      )
-                                    : Icon(
-                                        Icons.person,
-                                        size: 50,
-                                        color: Colors.white,
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
                                 decoration: BoxDecoration(
                                   color: AppColores.background2,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: Colors.white,
                                     width: 2,
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  size: 16,
-                                  color: AppColores.primary,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  // === MOSTRAR IMAGEN DE PERFIL (comentado para revisión) ===
+                                  // child: _imagenUrl != null
+                                  //     ? Image.network(_imagenUrl!, fit: BoxFit.cover)
+                                  //     : (_imageFile != null
+                                  //         ? Image.file(_imageFile!, fit: BoxFit.cover)
+                                  //         : Icon(Icons.person, size: 50, color: Colors.white))
+                                  child: _imageFile != null
+                                      ? Image.file(
+                                          _imageFile!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.white,
+                                        ),
                                 ),
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: AppColores.background2,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.camera_alt,
+                                    size: 16,
+                                    color: AppColores.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Nombre completo: ",
-                            style: TextEstilos.simpleTexto,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "[Sin nombre]",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
+                  Expanded(
+                    child: _cargando
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
                             ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Nombre completo: ",
+                                    style: TextEstilos.simpleTexto,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _nombreCompleto,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "Numero de trabajador: ",
+                                    style: TextEstilos.simpleTexto,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _noEmpleado,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text("RFC", style: TextEstilos.simpleTexto),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _rfc,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "Telefono",
+                                    style: TextEstilos.simpleTexto,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _telefono,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Numero de trabajador: ",
-                            style: TextEstilos.simpleTexto,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "[Sin número de trabajador]",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text("RFC", style: TextEstilos.simpleTexto),
-                          const SizedBox(height: 4),
-                          Text(
-                            "[Sin RFC]",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text("Telefono", style: TextEstilos.simpleTexto),
-                          const SizedBox(height: 4),
-                          Text(
-                            "[Sin teléfono]",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColores.backgroundComponent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Editar Perfil", style: TextEstilos.subtitulos),
-                  const SizedBox(height: 20),
-
-                  Text(
-                    "Nombre de usuario",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColores.foreground,
+            ),
+            const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColores.backgroundComponent,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _nombreController,
-                    decoration: _inputDecoration(
-                      "Nombre completo",
-                      Icons.person,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    "Correo electrónico",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColores.foreground,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _correoController,
-                    decoration: _inputDecoration("Correo", Icons.email),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    "Contraseña",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColores.foreground,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColores.primary,
-                      side: BorderSide(color: AppColores.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Editar Perfil", style: TextEstilos.subtitulos),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Nombre de usuario",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColores.foreground,
                       ),
                     ),
-                    icon: const Icon(Icons.lock_reset),
-                    label: const Text("Enviar correo para cambiar contraseña"),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nombreController,
+                      decoration: _inputDecoration(
+                        "Nombre completo",
+                        Icons.person,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Correo electrónico",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColores.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _correoController,
+                      decoration: _inputDecoration("Correo", Icons.email),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Contraseña",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColores.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
                       onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColores.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColores.primary,
+                        side: BorderSide(color: AppColores.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 4,
                       ),
-                      child: const Text(
-                        "Actualizar perfil",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      icon: const Icon(Icons.lock_reset),
+                      label: const Text(
+                        "Enviar correo para cambiar contraseña",
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColores.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                        ),
+                        child: const Text(
+                          "Actualizar perfil",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.logout),
+                        label: const Text(
+                          "Cerrar sesión",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

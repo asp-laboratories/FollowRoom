@@ -1,3 +1,4 @@
+import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:blurrycontainer/blurrycontainer.dart';
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/boton_styles.dart';
@@ -12,6 +13,7 @@ import 'package:followroom_flutter/screens/almacenista_screens/navbar_almacenist
 import 'package:followroom_flutter/screens/coordinador_screens/navegacion_barra.dart'
     show NavegacionBarra;
 import 'package:followroom_flutter/services/auth_service.dart';
+import 'package:followroom_flutter/services/session_data.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,8 +27,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
-  String mensajeError = '';
   bool _isLoading = false;
+
+  void _mostrarSnackBar(String mensaje, {bool esError = true}) {
+    AnimatedSnackBar(
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: esError ? Colors.red.shade100 : Colors.orange.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              esError ? Icons.error_outline : Icons.warning_amber,
+              color: esError ? Colors.red : Colors.orange,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                mensaje,
+                style: TextStyle(
+                  color: esError ? Colors.red.shade800 : Colors.orange.shade800,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).show(context);
+  }
 
   void _redirigirPorRol(Map<String, dynamic> userData) {
     Widget pantalla;
@@ -59,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _iniciarSesion() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      setState(() => mensajeError = 'Por favor completa todos los campos');
+      _mostrarSnackBar('Por favor completa todos los campos');
       return;
     }
 
@@ -70,11 +101,12 @@ class _LoginScreenState extends State<LoginScreen> {
         passwordController.text,
       );
       print('Usuario autenticado: $userData');
+      await SessionData.setFromLogin(userData);
       if (mounted) {
         _redirigirPorRol(userData);
       }
     } catch (e) {
-      setState(() => mensajeError = e.toString().replaceAll('Exception: ', ''));
+      _mostrarSnackBar(e.toString().replaceAll('Exception: ', ''));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -90,7 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -104,10 +135,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-        child: SafeArea(
-          child: Center(
+        child: Center(
+          child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(12.0),
               child:
                   Container(
                     decoration: BoxDecoration(
@@ -160,15 +191,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          if (mensajeError.isNotEmpty)
-                            Text(
-                              mensajeError,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: _isLoading ? null : _iniciarSesion,

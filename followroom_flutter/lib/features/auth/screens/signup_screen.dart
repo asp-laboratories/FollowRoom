@@ -1,9 +1,11 @@
 import 'package:blurrycontainer/blurrycontainer.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 
 class Registro extends StatefulWidget {
   const Registro({super.key});
@@ -19,6 +21,7 @@ class _RegistroState extends State<Registro> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  static const String _baseUrl = 'http://10.0.2.2:8000/api';
 
   String _mensajeError = '';
   bool _isLoading = false;
@@ -56,9 +59,22 @@ class _RegistroState extends State<Registro> {
     }
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      // 1. Crear usuario en Firebase
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
+      );
+
+      // 2. Obtener token de Firebase
+      final idToken = await userCredential.user!.getIdToken();
+
+      // 3. Enviar token a Django para crear cuenta en la base de datos
+      final dio = Dio();
+      dio.options.baseUrl = _baseUrl;
+
+      final response = await dio.post(
+        '/signup/',
+        data: {'token': idToken, 'nombre': nombreController.text.trim()},
       );
 
       if (mounted) {
@@ -72,6 +88,8 @@ class _RegistroState extends State<Registro> {
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _mensajeError = _obtenerMensajeError(e.code));
+    } catch (e) {
+      setState(() => _mensajeError = 'Error al registrar: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -102,7 +120,6 @@ class _RegistroState extends State<Registro> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(
           "¿Tienes cuenta?",

@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.100.10:8000/api';
+  static const String baseUrl = 'http://${IpConfig.ip}/api';
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -40,7 +41,9 @@ class AuthService {
       print('Error de Dio: ${e.type} - ${e.message}');
       if (e.response != null) {
         print('Data del error: ${e.response?.data}');
-        throw Exception(e.response?.data['error'] ?? 'Error en el servidor Django');
+        throw Exception(
+          e.response?.data['error'] ?? 'Error en el servidor Django',
+        );
       }
       throw Exception('Error de conexión con el servidor (Django)');
     } catch (e) {
