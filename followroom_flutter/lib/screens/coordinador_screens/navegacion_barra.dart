@@ -36,8 +36,6 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     "Perfil",
   ];
 
-  bool get _esPerfil => _indiceSeleccionado == 4;
-
   void _alPresionar(int indice) async {
     setState(() {
       _indiceSeleccionado = indice;
@@ -69,15 +67,11 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
         appBar: AppBar(
           title: Text(
             _titulos[_indiceSeleccionado],
-            style: _esPerfil
-                ? TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-                : TextEstilos.encabezados,
+            style: TextEstilos.encabezados,
           ),
           scrolledUnderElevation: 0,
-          backgroundColor: _esPerfil
-              ? AppColores.primary
-              : AppColores.background2,
-          foregroundColor: _esPerfil ? Colors.white : AppColores.foreground,
+          backgroundColor: AppColores.background2,
+          foregroundColor: AppColores.foreground,
         ),
         body: Container(
           color: AppColores.background2,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/estado_almacenista.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/inicio_almacenista.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
@@ -29,7 +30,7 @@ class _AlmacenState extends State<Almacen> {
     Perfil(),
   ];
 
-  bool get _esPerfil => _indiceSeleccionado == 3;
+  final List<String> _titulos = ["Almacen", "Estados", "Solicitudes", "Perfil"];
 
   void _alPresionar(int indice) async {
     setState(() {
@@ -83,10 +84,7 @@ class _AlmacenState extends State<Almacen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Ta bien"),
           ),
-          TextButton(
-            onPressed: _prenderLinterna,
-            child: const Text("Ta bien"),
-          ),
+          TextButton(onPressed: _prenderLinterna, child: const Text("Ta bien")),
         ],
       ),
     ).then((_) {
@@ -133,12 +131,13 @@ class _AlmacenState extends State<Almacen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_esPerfil ? "Perfil" : "Almacen"),
+          title: Text(
+            _titulos[_indiceSeleccionado],
+            style: TextEstilos.encabezados,
+          ),
           scrolledUnderElevation: 0,
-          backgroundColor: _esPerfil
-              ? AppColores.primary
-              : AppColores.background2,
-          foregroundColor: _esPerfil ? Colors.white : AppColores.foreground,
+          backgroundColor: AppColores.background2,
+          foregroundColor: AppColores.foreground,
         ),
 
         body: Container(
