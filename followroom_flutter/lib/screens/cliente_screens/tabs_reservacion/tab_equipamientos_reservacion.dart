@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class TabEquipamientosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onEquipamientosChanged;
@@ -19,51 +22,124 @@ class TabEquipamientosReservacion extends StatefulWidget {
 
 class _TabEquipamientosReservacionState
     extends State<TabEquipamientosReservacion> {
-  final List<String> tiposEquipamiento = ['sillas', 'mesas'];
-  String? tiposEquipamientoSeleccionado;
+  final int _pageSize = 10;
+  int _currentPage = 0;
+  bool _isLoadingMore = false;
+  bool _hasMoreData = true;
 
-  final List<Map<String, dynamic>> equipamientosDB = [
-    {
-      'id': 1,
-      'nombre': 'Silla de madera',
-      'tipo': 'sillas',
-      'descripcion': 'Sillas estándar',
-      'precio': 50,
-      'stock': 100,
-    },
-    {
-      'id': 2,
-      'nombre': 'Silla tijera',
-      'tipo': 'sillas',
-      'descripcion': 'Sillas elegantes',
-      'precio': 80,
-      'stock': 50,
-    },
-    {
-      'id': 3,
-      'nombre': 'Mesa redonda',
-      'tipo': 'mesas',
-      'descripcion': 'Mesas redondas',
-      'precio': 100,
-      'stock': 30,
-    },
-    {
-      'id': 4,
-      'nombre': 'Mesa rectangular',
-      'tipo': 'mesas',
-      'descripcion': 'Mesas para banquetes',
-      'precio': 150,
-      'stock': 25,
-    },
-  ];
+  List<dynamic> _tiposEquipamiento = [];
+  List<Map<String, dynamic>> _equipamientosDB = [];
+  List<Map<String, dynamic>> _equipamientosMostrados = [];
+  String? tiposEquipamientoSeleccionado;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDatos();
+  }
+
+  Future<void> _loadDatos() async {
+    await Future.wait([_loadTiposEquipamiento(), _loadEquipamientos()]);
+  }
+
+  Future<void> _loadTiposEquipamiento() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://${IpConfig.ip}/api/tipo-equipa/'),
+      );
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _tiposEquipamiento = data
+              .map((e) => e['nombre']?.toString() ?? '')
+              .toList();
+        });
+      }
+    } catch (e) {
+      print("Error loading tipos equipamiento: $e");
+    }
+  }
+
+  Future<void> _loadEquipamientos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://${IpConfig.ip}/api/equipamiento/'),
+      );
+      print("equipamiento response status: ${response.statusCode}");
+      print("equipamiento response body: ${response.body}");
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _equipamientosDB = data
+              .map(
+                (e) => {
+                  'id': e['id'],
+                  'nombre': e['nombre'] ?? '',
+                  'tipo': e['tipo_equipa']?.toString() ?? 'sin tipo',
+                  'descripcion': e['descripcion'] ?? '',
+                  'precio': e['costo'] ?? 0,
+                  'stock': e['stock'] ?? 0,
+                },
+              )
+              .toList();
+          _equipamientosMostrados = _equipamientosDB.take(_pageSize).toList();
+          _currentPage = 1;
+          _hasMoreData = _equipamientosDB.length > _pageSize;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error loading equipamentos: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMoreData) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    await Future.delayed(Duration(milliseconds: 500));
+
+    final startIndex = _currentPage * _pageSize;
+    final endIndex = (startIndex + _pageSize).clamp(0, _equipamientosDB.length);
+
+    if (startIndex < _equipamientosDB.length) {
+      final nuevosEquipos = _equipamientosDB.sublist(startIndex, endIndex);
+      setState(() {
+        _equipamientosMostrados.addAll(
+          nuevosEquipos.map((e) => Map<String, dynamic>.from(e)),
+        );
+        _currentPage++;
+        _hasMoreData = endIndex < _equipamientosDB.length;
+        _isLoadingMore = false;
+      });
+    } else {
+      setState(() {
+        _hasMoreData = false;
+        _isLoadingMore = false;
+      });
+    }
+  }
 
   List<Map<String, dynamic>> get equipamientosFiltrados {
     if (tiposEquipamientoSeleccionado == null ||
         tiposEquipamientoSeleccionado == 'todos') {
-      return equipamientosDB;
+      return _equipamientosMostrados;
     }
-    return equipamientosDB
-        .where((equipa) => equipa['tipo'] == tiposEquipamientoSeleccionado)
+    return _equipamientosMostrados
+        .where(
+          (equipa) =>
+              equipa['tipo']?.toString().toLowerCase() ==
+              tiposEquipamientoSeleccionado?.toLowerCase(),
+        )
         .toList();
   }
 
@@ -96,91 +172,147 @@ class _TabEquipamientosReservacionState
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColores.background2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  decoration: ContainerStyles.sombreado,
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Equipamientos seleccionados",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      if (widget.equipamientosSeleccionados.isEmpty)
+                        Text("Sin equipos", style: TextStyle(fontSize: 12))
+                      else
+                        ...widget.equipamientosSeleccionados.map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    "- ${e['nombre']} (x${e['cantidad']})",
+                                    style: TextStyle(fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+                        Divider(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Total:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + (((e['precio'] as num?)?.toInt() ?? 0) * ((e['cantidad'] as num?)?.toInt() ?? 1)))}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColores.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Equipamientos seleccionados:",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              child: Container(
+                decoration: ContainerStyles.sombreado,
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Text(
+                      "Filtrar:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        value: tiposEquipamientoSeleccionado,
+                        hint: Text("Todos"),
+                        isExpanded: true,
+                        items: isLoading
+                            ? [
+                                DropdownMenuItem(
+                                  value: 'cargando',
+                                  child: Text("Cargando..."),
+                                ),
+                              ]
+                            : [
+                                DropdownMenuItem(
+                                  value: 'todos',
+                                  child: Text("Todos"),
+                                ),
+                                ..._tiposEquipamiento.map(
+                                  (value) => DropdownMenuItem(
+                                    value: value.toString(),
+                                    child: Text(value.toString()),
+                                  ),
+                                ),
+                              ],
+                        onChanged: isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  tiposEquipamientoSeleccionado = value;
+                                });
+                              },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: widget.equipamientosSeleccionados.map((e) {
-                  return Chip(
-                    label: Text("${e['nombre']} (x${e['cantidad']})"),
-                    deleteIcon: Icon(Icons.close, size: 16),
-                    onDeleted: () => actualizarCantidad(e, 0),
-                  );
-                }).toList(),
+              child: Text(
+                "Catálogo de equipamiento:",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Total equipamiento:",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppColores.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(),
-          ],
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Text("Filtrar:", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: tiposEquipamientoSeleccionado,
-                  hint: Text("Todos"),
-                  items: [
-                    DropdownMenuItem(value: 'todos', child: Text("Todos")),
-                    DropdownMenuItem(value: 'sillas', child: Text("Sillas")),
-                    DropdownMenuItem(value: 'mesas', child: Text("Mesas")),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      tiposEquipamientoSeleccionado = value;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              "Catálogo de equipamiento:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
-
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
               itemCount: equipamientosFiltrados.length,
               itemBuilder: (context, index) {
                 final equipamiento = equipamientosFiltrados[index];
@@ -188,9 +320,7 @@ class _TabEquipamientosReservacionState
 
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  decoration: ContainerStyles.cardSeleccion(
-                    isSelected: cantidad > 0,
-                  ),
+                  decoration: ContainerStyles.sombreado,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -276,8 +406,25 @@ class _TabEquipamientosReservacionState
                 );
               },
             ),
-          ),
-        ],
+            if (_hasMoreData)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: _isLoadingMore
+                      ? CircularProgressIndicator(color: AppColores.primary)
+                      : ElevatedButton(
+                          onPressed: _loadMore,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColores.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text("Cargar más"),
+                        ),
+                ),
+              ),
+            SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

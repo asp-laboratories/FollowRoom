@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 
 class ReservacionesVisualScreen extends StatefulWidget {
   const ReservacionesVisualScreen({super.key});
@@ -47,119 +48,110 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColores.background2,
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: reservaciones.length,
-        itemBuilder: (context, index) {
-          final reservacion = reservaciones[index];
-          final isExpanded = _expandedItems.contains(index);
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.all(16),
+          itemCount: reservaciones.length,
+          itemBuilder: (context, index) {
+            final reservacion = reservaciones[index];
+            final isExpanded = _expandedItems.contains(index);
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: AppColores.backgroundComponent,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isExpanded ? AppColores.primary : Colors.transparent,
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      if (isExpanded) {
-                        _expandedItems.remove(index);
-                      } else {
-                        _expandedItems.add(index);
-                      }
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                reservacion["nombre"],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                reservacion["fecha"],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColores.foreground.withValues(
-                                    alpha: 0.6,
+            return Container(
+              margin: EdgeInsets.only(bottom: 12),
+              decoration: ContainerStyles.sombreado,
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (isExpanded) {
+                            _expandedItems.remove(index);
+                          } else {
+                            _expandedItems.add(index);
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    reservacion["nombre"],
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColores.foreground,
+                                    ),
                                   ),
-                                ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    reservacion["fecha"],
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            AnimatedRotation(
+                              turns: isExpanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: AppColores.primary,
+                              ),
+                            ),
+                          ],
                         ),
-                        AnimatedRotation(
-                          turns: isExpanded ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: AppColores.primary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox(),
-                  secondChild: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Column(
-                      children: [
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        _buildSeccion(
-                          titulo: "Mobiliario",
-                          lista: reservacion["mobiliario"],
-                          icono: Icons.chair,
+                    AnimatedCrossFade(
+                      firstChild: const SizedBox(),
+                      secondChild: Padding(
+                        padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        child: Column(
+                          children: [
+                            Divider(),
+                            SizedBox(height: 8),
+                            _buildSeccion(
+                              titulo: "Mobiliario",
+                              lista: reservacion["mobiliario"],
+                              icono: Icons.chair,
+                            ),
+                            if (reservacion["mobiliario"].isNotEmpty &&
+                                reservacion["equipamiento"].isNotEmpty)
+                              SizedBox(height: 12),
+                            _buildSeccion(
+                              titulo: "Equipamiento",
+                              lista: reservacion["equipamiento"],
+                              icono: Icons.devices,
+                            ),
+                          ],
                         ),
-                        if (reservacion["mobiliario"].isNotEmpty &&
-                            reservacion["equipamiento"].isNotEmpty)
-                          const SizedBox(height: 12),
-                        _buildSeccion(
-                          titulo: "Equipamiento",
-                          lista: reservacion["equipamiento"],
-                          icono: Icons.devices,
-                        ),
-                      ],
+                      ),
+                      crossFadeState: isExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 200),
                     ),
-                  ),
-                  crossFadeState: isExpanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 200),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -177,21 +169,21 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         Row(
           children: [
             Icon(icono, size: 18, color: AppColores.primary),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               titulo,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColores.foreground,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         ...lista.map((item) {
           return Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            margin: EdgeInsets.only(bottom: 6),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.grey.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
@@ -208,7 +200,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                 ),
                 Text(
                   "x${item["cantidad"]}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColores.primary,
                     fontSize: 13,

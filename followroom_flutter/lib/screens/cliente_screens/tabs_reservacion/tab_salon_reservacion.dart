@@ -61,108 +61,119 @@ class _TabSalonState extends State<TabSalon> {
   Widget build(BuildContext context) {
     final bool haySalonSeleccionado = widget.salonSeleccionado != null;
 
-    return Container(
-      color: AppColores.background2,
-      child: Column(
-        children: [
-          if (haySalonSeleccionado)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColores.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColores.primary),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (haySalonSeleccionado)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: ContainerStyles.sombreado,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColores.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "SALÓN SELECCIONADO",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColores.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              "SALÓN SELECCIONADO",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
                           ),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () {
+                              widget.onSalonSelected(null);
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        widget.salonSeleccionado!['nombre'],
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColores.foreground,
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: () {
-                          widget.onSalonSelected(null);
-                        },
+                      Text(
+                        "Precio: \$${widget.salonSeleccionado!['precio']}",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      Text(
+                        "Capacidad: ${widget.salonSeleccionado!['capacidad']} personas",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      Divider(),
+                      Text(
+                        "Montaje: ${getMontajeDelSalon(widget.salonSeleccionado!['id']) ?? 'No seleccionado'}",
+                        style: TextStyle(
+                          color:
+                              getMontajeDelSalon(
+                                    widget.salonSeleccionado!['id'],
+                                  ) !=
+                                  null
+                              ? AppColores.foreground
+                              : Colors.grey,
+                        ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    widget.salonSeleccionado!['nombre'],
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange),
                   ),
-                  Text("Precio: \$${widget.salonSeleccionado!['precio']}"),
-                  Text(
-                    "Capacidad: ${widget.salonSeleccionado!['capacidad']} personas",
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text(
+                        "Selecciona un salón de la lista",
+                        style: TextStyle(color: Colors.orange),
+                      ),
+                    ],
                   ),
-                  Divider(),
-                  Text(
-                    "Montaje: ${getMontajeDelSalon(widget.salonSeleccionado!['id']) ?? 'No seleccionado'}",
-                    style: TextStyle(
-                      color:
-                          getMontajeDelSalon(widget.salonSeleccionado!['id']) !=
-                              null
-                          ? Colors.black
-                          : Colors.grey,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text(
-                    "Selecciona un salón de la lista",
-                    style: TextStyle(color: Colors.orange),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Catálogo de salones:",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              "Selecciona un salón:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
-          SizedBox(height: 8),
-
-          Expanded(
-            child: ListView.builder(
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
               padding: EdgeInsets.all(16),
               itemCount: salonesDB.length,
               itemBuilder: (context, index) {
@@ -174,9 +185,7 @@ class _TabSalonState extends State<TabSalon> {
 
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  decoration: ContainerStyles.cardSeleccion(
-                    isSelected: isSelected,
-                  ),
+                  decoration: ContainerStyles.sombreado,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -185,7 +194,7 @@ class _TabSalonState extends State<TabSalon> {
                         widget.onSalonSelected(salon);
                       },
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -198,6 +207,7 @@ class _TabSalonState extends State<TabSalon> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
+                                      color: AppColores.foreground,
                                     ),
                                   ),
                                 ),
@@ -274,8 +284,9 @@ class _TabSalonState extends State<TabSalon> {
                 );
               },
             ),
-          ),
-        ],
+            SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

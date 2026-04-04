@@ -269,184 +269,358 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   }
 
   Widget _buildMobiliarioLista() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: DropdownMenu<String>(
-              initialSelection: tipoMobiliarioSeleccionado,
-              dropdownMenuEntries: [
-                const DropdownMenuEntry(value: 'todos', label: 'Todos'),
-                ...tiposMobiliario.map(
-                  (value) => DropdownMenuEntry(value: value, label: value),
-                ),
-              ],
-              onSelected: (String? nuevoValor) {
-                setState(() {
-                  tipoMobiliarioSeleccionado = nuevoValor;
-                });
-              },
-              label: const Text('Tipo de mobiliario'),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(child: _buildLista(mobiliarioFiltrado, mobiliario)),
-      ],
-    );
-  }
-
-  Widget _buildEquipamientoLista() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: DropdownMenu<String>(
-              initialSelection: tipoEquipamientoSeleccionado,
-              dropdownMenuEntries: [
-                const DropdownMenuEntry(value: 'todos', label: 'Todos'),
-                ...tiposEquipamiento.map(
-                  (value) => DropdownMenuEntry(value: value, label: value),
-                ),
-              ],
-              onSelected: (String? nuevoValor) {
-                setState(() {
-                  tipoEquipamientoSeleccionado = nuevoValor;
-                });
-              },
-              label: const Text('Tipo de equipamiento'),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(child: _buildLista(equipamientoFiltrado, equipamiento)),
-      ],
-    );
-  }
-
-  Widget _buildLista(
-    List<Map<String, dynamic>> listaFiltrada,
-    List<Map<String, dynamic>> listaOriginal,
-  ) {
-    if (listaFiltrada.isEmpty) {
-      return const Center(child: Text("No hay elementos disponibles"));
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: listaFiltrada.length,
-      itemBuilder: (context, index) {
-        final item = listaFiltrada[index];
-        final cantidad = getCantidad(
-          listaOriginal,
-          listaOriginal.indexOf(item),
-        );
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: ContainerStyles.cardSeleccion(isSelected: cantidad > 0),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item["nombre"],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColores.foreground,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item["descripcion"],
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColores.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item["tipo"],
-                              style: TextStyle(
-                                color: AppColores.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: ContainerStyles.sombreado,
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Text(
+                      "Filtrar:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        value: tipoMobiliarioSeleccionado,
+                        hint: Text("Todos"),
+                        isExpanded: true,
+                        items: [
+                          DropdownMenuItem(
+                            value: 'todos',
+                            child: Text("Todos"),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '\$${item["precio"]}',
-                            style: TextStyle(
-                              color: AppColores.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                          ...tiposMobiliario.map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value),
                             ),
                           ),
                         ],
-                      ),
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: cantidad > 0
-                          ? () => actualizarCantidad(
-                              listaOriginal,
-                              listaOriginal.indexOf(item),
-                              cantidad - 1,
-                            )
-                          : null,
-                      icon: Icon(
-                        Icons.remove_circle_outline,
-                        color: cantidad > 0 ? AppColores.primary : Colors.grey,
-                      ),
-                    ),
-                    Text(
-                      "$cantidad",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => actualizarCantidad(
-                        listaOriginal,
-                        listaOriginal.indexOf(item),
-                        cantidad + 1,
-                      ),
-                      icon: Icon(
-                        Icons.add_circle_outline,
-                        color: AppColores.primary,
+                        onChanged: (String? nuevoValor) {
+                          setState(() {
+                            tipoMobiliarioSeleccionado = nuevoValor;
+                          });
+                        },
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Catálogo de mobiliario:",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              itemCount: mobiliarioFiltrado.length,
+              itemBuilder: (context, index) {
+                final item = mobiliarioFiltrado[index];
+                final cantidad = getCantidad(
+                  mobiliario,
+                  mobiliario.indexOf(item),
+                );
+
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  decoration: ContainerStyles.sombreado,
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item["nombre"],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                              Text(
+                                item["descripcion"],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColores.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      item["tipo"],
+                                      style: TextStyle(
+                                        color: AppColores.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '\$${item["precio"]}',
+                                    style: TextStyle(
+                                      color: AppColores.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: cantidad > 0
+                                  ? () => actualizarCantidad(
+                                      mobiliario,
+                                      mobiliario.indexOf(item),
+                                      cantidad - 1,
+                                    )
+                                  : null,
+                              icon: Icon(
+                                Icons.remove_circle_outline,
+                                color: cantidad > 0
+                                    ? AppColores.primary
+                                    : Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              "$cantidad",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => actualizarCantidad(
+                                mobiliario,
+                                mobiliario.indexOf(item),
+                                cantidad + 1,
+                              ),
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: AppColores.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEquipamientoLista() {
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: ContainerStyles.sombreado,
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Text(
+                      "Filtrar:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        value: tipoEquipamientoSeleccionado,
+                        hint: Text("Todos"),
+                        isExpanded: true,
+                        items: [
+                          DropdownMenuItem(
+                            value: 'todos',
+                            child: Text("Todos"),
+                          ),
+                          ...tiposEquipamiento.map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value),
+                            ),
+                          ),
+                        ],
+                        onChanged: (String? nuevoValor) {
+                          setState(() {
+                            tipoEquipamientoSeleccionado = nuevoValor;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Catálogo de equipamiento:",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              itemCount: equipamientoFiltrado.length,
+              itemBuilder: (context, index) {
+                final item = equipamientoFiltrado[index];
+                final cantidad = getCantidad(
+                  equipamiento,
+                  equipamiento.indexOf(item),
+                );
+
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  decoration: ContainerStyles.sombreado,
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item["nombre"],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                              Text(
+                                item["descripcion"],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColores.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      item["tipo"],
+                                      style: TextStyle(
+                                        color: AppColores.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '\$${item["precio"]}',
+                                    style: TextStyle(
+                                      color: AppColores.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: cantidad > 0
+                                  ? () => actualizarCantidad(
+                                      equipamiento,
+                                      equipamiento.indexOf(item),
+                                      cantidad - 1,
+                                    )
+                                  : null,
+                              icon: Icon(
+                                Icons.remove_circle_outline,
+                                color: cantidad > 0
+                                    ? AppColores.primary
+                                    : Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              "$cantidad",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => actualizarCantidad(
+                                equipamiento,
+                                equipamiento.indexOf(item),
+                                cantidad + 1,
+                              ),
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: AppColores.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
