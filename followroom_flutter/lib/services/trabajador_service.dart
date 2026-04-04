@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 
 Future<Map<String, dynamic>> fetchTrabajador() async {
   var dio = Dio();
-  dio.options.baseUrl = 'http://192.168.100.10:8000/api';
+  dio.options.baseUrl = 'http://${IpConfig.ip}/api';
   try {
     final response = await dio.get('/trabajador/');
     print(response.data); // Dio ya entrega el JSON parseado (Map/List)

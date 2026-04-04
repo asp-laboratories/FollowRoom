@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/services/disponibilidad_service.dart';
 
 class NavigatorEventosReservacion extends StatefulWidget {
   const NavigatorEventosReservacion({super.key});
@@ -14,65 +15,51 @@ class _NavigatorEventosReservacionState
   DateTime fechaSeleccionada = DateTime.now();
   String? salonSeleccionado;
   final TextEditingController _busquedaController = TextEditingController();
+  final DisponibilidadService _disponibilidadService = DisponibilidadService();
+  List<Map<String, dynamic>> reservacionesDB = [];
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
+
+  Future<void> _cargarReservaciones() async {
+    setState(() => _cargando = true);
+    try {
+      final fechaStr =
+          '${fechaSeleccionada.year}-${fechaSeleccionada.month.toString().padLeft(2, '0')}-${fechaSeleccionada.day.toString().padLeft(2, '0')}';
+      final data = await _disponibilidadService.getDisponibilidadSalones(
+        fechaStr,
+      );
+      setState(() {
+        reservacionesDB = data.map((item) {
+          return {
+            'id': item['id'],
+            'salon': item['salon_nombre'],
+            'salonId': item['id'],
+            'fecha': DateTime.parse(item['fechaEvento']),
+            'horaInicio': int.parse(
+              item['horaInicio'].toString().split(':')[0],
+            ),
+            'horaFin': int.parse(item['horaFin'].toString().split(':')[0]),
+            'evento': item['nombreEvento'],
+            'tipo_evento': item['tipo_evento_nombre'],
+          };
+        }).toList();
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() => _cargando = false);
+    }
+  }
 
   final List<Map<String, dynamic>> salonesDB = [
     {'id': 1, 'nombre': 'Salón Imperial'},
     {'id': 2, 'nombre': 'Salón Ejecutivo'},
     {'id': 3, 'nombre': 'Salón Universal'},
     {'id': 4, 'nombre': 'Salón Premium'},
-  ];
-
-  final List<Map<String, dynamic>> reservacionesDB = [
-    {
-      'id': 1,
-      'salon': 'Salón Imperial',
-      'salonId': 1,
-      'fecha': DateTime.now(),
-      'horaInicio': 14,
-      'horaFin': 18,
-      'evento': 'Cumpleaños de María',
-      'cliente': 'Juan Pérez',
-    },
-    {
-      'id': 2,
-      'salon': 'Salón Ejecutivo',
-      'salonId': 2,
-      'fecha': DateTime.now(),
-      'horaInicio': 9,
-      'horaFin': 12,
-      'evento': 'Reunión de trabajo',
-      'cliente': 'Carlos García',
-    },
-    {
-      'id': 3,
-      'salon': 'Salón Imperial',
-      'salonId': 1,
-      'fecha': DateTime.now().add(Duration(days: 1)),
-      'horaInicio': 10,
-      'horaFin': 14,
-      'evento': 'Conferencia',
-      'cliente': 'Ana López',
-    },
-    {
-      'id': 4,
-      'salon': 'Salón Premium',
-      'salonId': 4,
-      'fecha': DateTime.now().add(Duration(days: 1)),
-      'horaInicio': 16,
-      'horaFin': 20,
-      'evento': 'Boda',
-      'cliente': 'Pedro y María',
-    },
-    {
-      'id': 5,
-      'salon': 'Salón Universal',
-      'salonId': 3,
-      'fecha': DateTime.now().add(Duration(days: 2)),
-      'horaInicio': 8,
-      'horaFin': 17,
-      'evento': 'Exposicion',
-      'cliente': 'Exposiciones SA',
-    },
   ];
 
   List<Map<String, dynamic>> get reservacionesFiltradas {
@@ -84,10 +71,7 @@ class _NavigatorEventosReservacionState
           r['salon'] == salonSeleccionado;
       bool coincideBusqueda =
           _busquedaController.text.isEmpty ||
-          r['evento'].toLowerCase().contains(
-            _busquedaController.text.toLowerCase(),
-          ) ||
-          r['cliente'].toLowerCase().contains(
+          r['evento'].toString().toLowerCase().contains(
             _busquedaController.text.toLowerCase(),
           );
       return coincideFecha && coincideSalon && coincideBusqueda;
@@ -273,7 +257,13 @@ class _NavigatorEventosReservacionState
 
             // Lista de reservaciones
             Expanded(
-              child: fechas.isEmpty
+              child: _cargando
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColores.primary,
+                      ),
+                    )
+                  : fechas.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -399,16 +389,19 @@ class _NavigatorEventosReservacionState
               ],
             ),
             SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.person, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
-                Text(
-                  reservacion['cliente'],
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
+            if (reservacion['tipo_evento'] != null)
+              Row(
+                children: [
+                  Icon(Icons.category, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      reservacion['tipo_evento'],
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -427,6 +420,7 @@ class _NavigatorEventosReservacionState
       setState(() {
         fechaSeleccionada = seleccionada;
       });
+      _cargarReservaciones();
     }
   }
 }

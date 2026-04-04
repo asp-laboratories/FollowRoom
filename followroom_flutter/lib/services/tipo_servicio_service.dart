@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 import 'package:http/http.dart' as http;
 
 class TipoServicioService {
-  static const String baseUrl = 'http://192.168.100.10:8000/api';
+  static const String baseUrl = 'http://${IpConfig.ip}/api';
 
   Future<List<dynamic>> getTiposServicio() async {
     final response = await http.get(Uri.parse('$baseUrl/tipo-servicio/'));

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/services/cliente_service.dart';
+import 'package:followroom_flutter/services/session_data.dart';
+import 'package:animated_snack_bar/animated_snack_bar.dart';
 
 class TabClienteReservacion extends StatefulWidget {
   final Function(Map<String, String>) onDatosChanged;
@@ -50,6 +53,10 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
   late final TextEditingController calle;
   late final TextEditingController numero;
 
+  final ClienteService _clienteService = ClienteService();
+  bool _cargando = true;
+  bool _esClienteNuevo = true;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +73,8 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     calle = widget.calleController ?? TextEditingController();
     numero = widget.numeroController ?? TextEditingController();
 
+    _cargarDatosCliente();
+
     nombre.addListener(_autoSave);
     apellidoPaterno.addListener(_autoSave);
     apellidoMaterno.addListener(_autoSave);
@@ -76,6 +85,74 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     colonia.addListener(_autoSave);
     calle.addListener(_autoSave);
     numero.addListener(_autoSave);
+  }
+
+  Future<void> _cargarDatosCliente() async {
+    final datos = await _clienteService.getDatosCliente();
+
+    if (mounted) {
+      setState(() {
+        _cargando = false;
+
+        if (datos != null) {
+          _esClienteNuevo = false;
+          nombre.text = datos['nombre'] ?? '';
+          apellidoPaterno.text = datos['apellidoPaterno'] ?? '';
+          apellidoMaterno.text = datos['apelidoMaterno'] ?? '';
+          rfc.text = datos['rfc'] ?? '';
+          nombreFiscal.text = datos['nombre_fiscal'] ?? '';
+          telefono.text = datos['telefono'] ?? '';
+          correoElectronico.text =
+              datos['correo_electronico'] ?? SessionData.email ?? '';
+          colonia.text = datos['dir_colonia'] ?? '';
+          calle.text = datos['dir_calle'] ?? '';
+          numero.text = datos['dir_numero'] ?? '';
+        } else {
+          _esClienteNuevo = true;
+          correoElectronico.text = SessionData.email ?? '';
+        }
+      });
+
+      _autoSave();
+    }
+  }
+
+  Future<void> _guardarDatos() async {
+    await _clienteService.guardarDatosCliente({
+      'nombre': nombre.text,
+      'apellidoPaterno': apellidoPaterno.text,
+      'apelidoMaterno': apellidoMaterno.text,
+      'rfc': rfc.text,
+      'nombre_fiscal': nombreFiscal.text,
+      'telefono': telefono.text,
+      'dir_colonia': colonia.text,
+      'dir_calle': calle.text,
+      'dir_numero': numero.text,
+    });
+
+    if (mounted) {
+      AnimatedSnackBar(
+        builder: (context) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.green.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.green),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Datos guardados con éxito',
+                  style: TextStyle(color: Colors.green.shade800),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ).show(context);
+    }
   }
 
   @override
@@ -110,14 +187,14 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     widget.onDatosChanged({
       'nombre': nombre.text,
       'apellidoPaterno': apellidoPaterno.text,
-      'apellidoMaterno': apellidoMaterno.text,
+      'apelidoMaterno': apellidoMaterno.text,
       'rfc': rfc.text,
-      'nombreFiscal': nombreFiscal.text,
+      'nombre_fiscal': nombreFiscal.text,
       'telefono': telefono.text,
       'correoElectronico': correoElectronico.text,
-      'colonia': colonia.text,
-      'calle': calle.text,
-      'numero': numero.text,
+      'dir_colonia': colonia.text,
+      'dir_calle': calle.text,
+      'dir_numero': numero.text,
     });
   }
 
@@ -126,163 +203,188 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     super.build(context);
     return Container(
       color: AppColores.background2,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                Text("Datos personales", style: TextEstilos.subtitulos),
-                Container(
-                  width: double.infinity,
-                  // decoration: BoxDecoration(color: AppColores.primary),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-
-                        Text("Nombre"),
-                        TextField(
-                          controller: nombre,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu nombre',
-                          ),
+      child: _cargando
+          ? Center(child: CircularProgressIndicator(color: AppColores.primary))
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_esClienteNuevo)
+                      Container(
+                        margin: EdgeInsets.all(8),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange),
                         ),
-                        const SizedBox(height: 10),
-
-                        Text("Apellidos"),
-                        TextField(
-                          controller: apellidoPaterno,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu apellido paterno',
-                          ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Es tu primera vez. Completa tus datos y se guardarán automáticamente.',
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
-
-                        Text("Apellido materno"),
-                        TextField(
-                          controller: apellidoMaterno,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu apellido materno',
-                          ),
+                      ),
+                    const SizedBox(height: 12),
+                    Text("Datos personales", style: TextEstilos.subtitulos),
+                    Container(
+                      width: double.infinity,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Text("Nombre"),
+                            TextField(
+                              controller: nombre,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.perm_identity),
+                                hintText: 'Ingresa tu nombre',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Apellidos"),
+                            TextField(
+                              controller: apellidoPaterno,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.perm_identity),
+                                hintText: 'Ingresa tu apellido paterno',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Apellido materno"),
+                            TextField(
+                              controller: apellidoMaterno,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.perm_identity),
+                                hintText: 'Ingresa tu apellido materno',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("RFC"),
+                            TextField(
+                              controller: rfc,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.perm_identity),
+                                hintText: 'Ingresa tu RFC',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Nombre fiscal"),
+                            TextField(
+                              controller: nombreFiscal,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.perm_identity),
+                                hintText: 'Ingresa tu nombre fiscal',
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
-                        Text("RFC"),
-
-                        TextField(
-                          controller: rfc,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu RFC',
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        Text("Nombre fiscal"),
-                        TextField(
-                          controller: nombreFiscal,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu nombre fiscal',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                Text("Contacto", style: TextEstilos.subtitulos),
-                Container(
-                  width: double.infinity,
-                  // decoration: BoxDecoration(color: AppColores.primary),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-
-                        Text("Telefono"),
-                        TextField(
-                          controller: telefono,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu telefono',
-                          ),
+                    const SizedBox(height: 12),
+                    Text("Contacto", style: TextEstilos.subtitulos),
+                    Container(
+                      width: double.infinity,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Text("Telefono"),
+                            TextField(
+                              controller: telefono,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.phone),
+                                hintText: 'Ingresa tu telefono',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Correo electronico"),
+                            TextField(
+                              controller: correoElectronico,
+                              readOnly: true,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.email),
+                                hintText: 'Ingresa tu correo electronico',
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
-
-                        Text("Correo electronico"),
-
-                        TextField(
-                          controller: correoElectronico,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu correo electronico',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                Text("Direccion", style: TextEstilos.subtitulos),
-
-                Container(
-                  width: double.infinity,
-                  // decoration: BoxDecoration(color: AppColores.primary),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-
-                        Text("Colonia"),
-                        TextField(
-                          controller: colonia,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu colonia',
-                          ),
+                    const SizedBox(height: 12),
+                    Text("Direccion", style: TextEstilos.subtitulos),
+                    Container(
+                      width: double.infinity,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Text("Colonia"),
+                            TextField(
+                              controller: colonia,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.location_on),
+                                hintText: 'Ingresa tu colonia',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Calle"),
+                            TextField(
+                              controller: calle,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.location_on),
+                                hintText: 'Ingresa tu calle',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text("Numero"),
+                            TextField(
+                              controller: numero,
+                              decoration: createAppDecoration(
+                                prefixIcon: Icon(Icons.location_on),
+                                hintText: 'Ingresa tu numero',
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
-
-                        Text("Calle"),
-                        TextField(
-                          controller: calle,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu calle',
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text("Numero"),
-                        TextField(
-                          controller: numero,
-                          decoration: createAppDecoration(
-                            prefixIcon: Icon(Icons.perm_identity),
-                            hintText: 'Ingresa tu numero',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _guardarDatos,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColores.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text(
+                          _esClienteNuevo
+                              ? 'Guardar mis datos'
+                              : 'Actualizar mis datos',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
