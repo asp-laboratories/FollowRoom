@@ -84,208 +84,178 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
       _buscar = false;
     }
 
-    return Column(
-      children: [
-        Textos(
-          texts: ['Mobiliarios', 'Equipamientos'],
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Textos(
+                texts: const ['Mobiliarios', 'Equipamientos'],
+                seleccionActual: _actualIndice,
+                alSeleccionar: (int nuevoIndice) {
+                  setState(() {
+                    _actualIndice = nuevoIndice;
+                    _cagando = true;
+                  });
+                  _datosBaseDatos();
+                },
+              ),
+            ),
 
-          seleccionActual: _actualIndice,
+            GestureDetector(
+              onTap: () async {
+                List tipos = await _tipos();
 
-          alSeleccionar: (int nuevoIndice) {
-            setState(() {
-              _actualIndice = nuevoIndice;
-              _cagando = true;
-            });
-            _datosBaseDatos();
-          },
-        ),
+                final String? seleccionado = await showModalBottomSheet<String>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Filtro(tipos: tipos);
+                  },
+                );
 
-        // filtros
-        GestureDetector(
-          onTap: () async {
-            List tipos = await _tipos();
-
-            final String? seleccionado = await showModalBottomSheet<String>(
-              context: context,
-              builder: (BuildContext context) {
-                return Filtro(tipos: tipos);
+                if (seleccionado != null) {
+                  _aplicarFiltro(seleccionado);
+                }
               },
-            );
-
-            if (seleccionado != null) {
-              _aplicarFiltro(seleccionado);
-            }
-          },
-
-          child: Padding(
-            padding: const EdgeInsets.only(left: 0, top: 14, bottom: 10, right: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 24),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColores.backgroundComponent,
-                    border: Border.all(
-                      color: AppColores.primary.withValues(alpha: 0.5),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColores.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
+                child: Container(
+                  decoration: ContainerStyles.sombreado,
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Filtro: $_filtroAplicado",
+                        style: TextEstilos.labelCard.copyWith(
+                          color: AppColores.foreground,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.arrow_drop_down,
+                        size: 27,
+                        color: AppColores.foreground,
                       ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 24),
-
-                        Text(
-                          "Filtro: $_filtroAplicado",
-                          style: TextEstilos.labelCard.copyWith(
-                            color: AppColores.foreground,
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_drop_down,
-                          size: 27,
-                          color: AppColores.foreground,
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-                Spacer(),
-              ],
+              ),
             ),
-          ),
-        ),
 
-        // contenido (tarjetitas)
-        Expanded(
-          child: _cagando
-              ? const Center(
-                  child: CircularProgressIndicator(color: Colors.blue),
-                )
-              : ListView.builder(
-                  itemCount: _datosMostrados.length,
+            _cagando
+                ? const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.blue),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _datosMostrados.length,
+                    itemBuilder: (context, index) {
+                      final itemActual = _datosMostrados[index];
 
-                  itemBuilder: (context, index) {
-                    final itemActual = _datosMostrados[index];
-
-                    return Padding(
-                      padding: EdgeInsets.all(10),
-                      child: GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-
-                            builder: (BuildContext context) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: MediaQuery.of(
-                                    context,
-                                  ).viewInsets.bottom,
-                                ),
-
-                                child: SingleChildScrollView(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(10),
-                                    child: TarjetaMobiliarioElegante(
-                                      idMobiliario: 1,
-                                      equipamientoMobiliario: _buscar,
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: ContainerStyles.sombreado,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (BuildContext context) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: MediaQuery.of(
+                                        context,
+                                      ).viewInsets.bottom,
                                     ),
-                                  ),
-                                ),
+                                    child: SingleChildScrollView(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: TarjetaMobiliarioElegante(
+                                          idMobiliario: 1,
+                                          equipamientoMobiliario: _buscar,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-
-                        child: Container(
-                          height: 100,
-                          width: double.infinity,
-                          decoration: ContainerStyles.cardAlmacenista,
-
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Nombre: ",
-                                      style: TextEstilos.labelCard.copyWith(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      itemActual['cosa'],
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                        color: AppColores.foreground,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: 10),
-
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Disponibles: ",
-                                      style: TextEstilos.labelCard.copyWith(
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      itemActual['cantidadDisponible']
-                                          .toString(),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.normal,
-                                        color: AppColores.foreground,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Text(
-                                      "Click para cambiar de estado",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: AppColores.foreground.withValues(
-                                          alpha: 0.5,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Nombre: ",
+                                        style: TextEstilos.labelCard.copyWith(
+                                          fontSize: 14,
                                         ),
-                                        fontStyle: FontStyle.italic,
                                       ),
+                                      Text(
+                                        itemActual['cosa'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                          color: AppColores.foreground,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Disponibles: ",
+                                        style: TextEstilos.labelCard.copyWith(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        itemActual['cantidadDisponible']
+                                            .toString(),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.normal,
+                                          color: AppColores.foreground,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Click para cambiar de estado",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppColores.foreground.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      fontStyle: FontStyle.italic,
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/core/container_styles.dart';
 
 class AlmacenistaSolicitudesScreen extends StatelessWidget {
   AlmacenistaSolicitudesScreen({super.key});
@@ -22,68 +23,68 @@ class AlmacenistaSolicitudesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColores.background2,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: reservaciones.length,
-        itemBuilder: (context, index) {
-          final item = reservaciones[index];
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          itemCount: reservaciones.length,
+          itemBuilder: (context, index) {
+            final item = reservaciones[index];
 
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Solicitudes(evento: item),
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColores.backgroundComponent,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item['nombre'],
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColores.foreground,
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: ContainerStyles.sombreado,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Solicitudes(evento: item),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item['nombre'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item['descripcion'],
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColores.foreground.withValues(alpha: 0.6),
                           ),
                         ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['descripcion'],
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColores.foreground.withValues(alpha: 0.6),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -119,7 +120,7 @@ class _GenerarChecklistsState extends State<GenerarChecklists> {
                 Text(item['nomre']),
                 Text(
                   "x${item['cantidad']}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColores.primary,
                   ),
@@ -151,51 +152,50 @@ class Solicitudes extends StatelessWidget {
         title: const Text("Solicitudes"),
         backgroundColor: AppColores.background2,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColores.backgroundComponent,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+      body: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(color: AppColores.background2),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  evento['nombre'],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ],
-            ),
-            child: Text(
-              evento['nombre'],
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+              ),
+              const SizedBox(height: 16),
+              _seccion(
+                titulo: "Mobiliario",
+                icono: Icons.chair,
+                child: GenerarChecklists(objetos: evento['solicitudesMobiles']),
+              ),
+              const SizedBox(height: 16),
+              _seccion(
+                titulo: "Equipamiento",
+                icono: Icons.devices,
+                child: GenerarChecklists(objetos: evento['solicitudesEquipos']),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColores.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  onPressed: () {},
+                  child: const Text("Completar Registro"),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-          _seccion(
-            titulo: "Mobiliario",
-            icono: Icons.chair,
-            child: GenerarChecklists(objetos: evento['solicitudesMobiles']),
-          ),
-          const SizedBox(height: 16),
-          _seccion(
-            titulo: "Equipamiento",
-            icono: Icons.devices,
-            child: GenerarChecklists(objetos: evento['solicitudesEquipos']),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColores.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            onPressed: () {},
-            child: const Text("Completar Registro"),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -207,17 +207,7 @@ class Solicitudes extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColores.backgroundComponent,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: ContainerStyles.sombreado,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
