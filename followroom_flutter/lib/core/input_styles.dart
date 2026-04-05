@@ -34,7 +34,6 @@ class InputStyles {
 }
 
 InputDecoration createAppDecoration({
-  String? labelText,
   String? hintText,
   Widget? prefixIcon,
   Widget? suffixIcon,
@@ -42,7 +41,6 @@ InputDecoration createAppDecoration({
   bool enabled = true,
 }) {
   return InputDecoration(
-    labelText: labelText,
     hintText: hintText,
     prefixIcon: prefixIcon,
     suffixIcon: suffixIcon,
