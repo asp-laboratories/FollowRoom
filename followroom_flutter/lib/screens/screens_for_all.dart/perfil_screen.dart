@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:animated_snack_bar/animated_snack_bar.dart';
 
 class Perfil extends StatefulWidget {
   const Perfil({super.key});
@@ -26,10 +27,13 @@ class _PerfilState extends State<Perfil> {
   File? _imageFile;
   bool _cargando = true;
 
+  String _tipoUsuario = '';
   String _nombreCompleto = '[Sin nombre]';
-  String _noEmpleado = '[Sin número de trabajador]';
+  String _noEmpleado = '';
   String _rfc = '[Sin RFC]';
   String _telefono = '[Sin teléfono]';
+  String _nombreFiscal = '[Sin nombre fiscal]';
+  bool _actualizando = false;
 
   @override
   void initState() {
@@ -82,13 +86,28 @@ class _PerfilState extends State<Perfil> {
     try {
       final data = await _perfilService.getPerfil();
       setState(() {
-        _nombreCompleto =
-            '${data['nombre'] ?? ''} ${data['apellidoPaterno'] ?? ''}'.trim();
-        if (_nombreCompleto.isEmpty) _nombreCompleto = '[Sin nombre]';
+        _tipoUsuario = data['tipo_usuario'] ?? '';
 
-        _noEmpleado = data['no_empleado'] ?? '[Sin número de trabajador]';
-        _rfc = data['rfc'] ?? '[Sin RFC]';
-        _telefono = data['telefono'] ?? '[Sin teléfono]';
+        if (_tipoUsuario == 'trabajador') {
+          _nombreCompleto =
+              '${data['nombre'] ?? ''} ${data['apellidoPaterno'] ?? ''}'.trim();
+          if (_nombreCompleto.isEmpty) _nombreCompleto = '[Sin nombre]';
+
+          _noEmpleado = data['no_empleado'] ?? '';
+          _rfc = data['rfc'] ?? '[Sin RFC]';
+          _telefono = data['telefono'] ?? '[Sin teléfono]';
+          _nombreFiscal = '';
+        } else {
+          _nombreCompleto =
+              '${data['nombre'] ?? ''} ${data['apellidoPaterno'] ?? ''} ${data['apellidoMaterno'] ?? ''}'
+                  .trim();
+          if (_nombreCompleto.isEmpty) _nombreCompleto = '[Sin nombre]';
+
+          _noEmpleado = '';
+          _rfc = data['rfc'] ?? '[Sin RFC]';
+          _telefono = data['telefono'] ?? '[Sin teléfono]';
+          _nombreFiscal = data['nombre_fiscal'] ?? '[Sin nombre fiscal]';
+        }
 
         _nombreController.text = data['nombre_usuario'] ?? '';
         _correoController.text = data['correo_electronico'] ?? '';
@@ -96,6 +115,81 @@ class _PerfilState extends State<Perfil> {
       });
     } catch (e) {
       setState(() => _cargando = false);
+    }
+  }
+
+  Future<void> _actualizarPerfil() async {
+    if (_actualizando) return;
+
+    setState(() {
+      _actualizando = true;
+    });
+
+    try {
+      final success = await _perfilService.actualizarPerfil(
+        nombreUsuario: _nombreController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success ? 'Perfil actualizado' : 'Error al actualizar',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _actualizando = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _enviarCorreoCambioContrasena() async {
+    final email = SessionData.email;
+    if (email == null || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo obtener el correo'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Correo enviado a $email'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -208,155 +302,172 @@ class _PerfilState extends State<Perfil> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColores.primary,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(5),
-                  bottomRight: Radius.circular(5),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColores.primary,
+                  borderRadius: const BorderRadius.all(Radius.circular(16)),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: AppColores.background2,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  // === MOSTRAR IMAGEN DE PERFIL (comentado para revisión) ===
-                                  // child: _imagenUrl != null
-                                  //     ? Image.network(_imagenUrl!, fit: BoxFit.cover)
-                                  //     : (_imageFile != null
-                                  //         ? Image.file(_imageFile!, fit: BoxFit.cover)
-                                  //         : Icon(Icons.person, size: 50, color: Colors.white))
-                                  child: _imageFile != null
-                                      ? Image.file(
-                                          _imageFile!,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Icon(
-                                          Icons.person,
-                                          size: 50,
-                                          color: Colors.white,
-                                        ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
                                   decoration: BoxDecoration(
                                     color: AppColores.background2,
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: Colors.white,
                                       width: 2,
                                     ),
                                   ),
-                                  child: Icon(
-                                    Icons.camera_alt,
-                                    size: 16,
-                                    color: AppColores.primary,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    // === MOSTRAR IMAGEN DE PERFIL (comentado para revisión) ===
+                                    // child: _imagenUrl != null
+                                    //     ? Image.network(_imagenUrl!, fit: BoxFit.cover)
+                                    //     : (_imageFile != null
+                                    //         ? Image.file(_imageFile!, fit: BoxFit.cover)
+                                    //         : Icon(Icons.person, size: 50, color: Colors.white))
+                                    child: _imageFile != null
+                                        ? Image.file(
+                                            _imageFile!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: Colors.white,
+                                          ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: _cargando
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: AppColores.background2,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      Icons.camera_alt,
+                                      size: 16,
+                                      color: AppColores.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Nombre completo: ",
-                                    style: TextEstilos.simpleTexto,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _nombreCompleto,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    "Numero de trabajador: ",
-                                    style: TextEstilos.simpleTexto,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _noEmpleado,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text("RFC", style: TextEstilos.simpleTexto),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _rfc,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    "Telefono",
-                                    style: TextEstilos.simpleTexto,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _telefono,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-                              ),
-                            ],
                           ),
-                  ),
-                ],
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: _cargando
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Nombre completo: ",
+                                      style: TextEstilos.simpleTexto,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _nombreCompleto,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (_tipoUsuario == 'trabajador') ...[
+                                      Text(
+                                        "Numero de trabajador: ",
+                                        style: TextEstilos.simpleTexto,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _noEmpleado,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ] else ...[
+                                      Text(
+                                        "Nombre fiscal: ",
+                                        style: TextEstilos.simpleTexto,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _nombreFiscal,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ],
+                                    Text("RFC", style: TextEstilos.simpleTexto),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _rfc,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Telefono",
+                                      style: TextEstilos.simpleTexto,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _telefono,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -391,10 +502,7 @@ class _PerfilState extends State<Perfil> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nombreController,
-                      decoration: _inputDecoration(
-                        "Nombre completo",
-                        Icons.person,
-                      ),
+                      decoration: _inputDecoration("", Icons.person),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -408,7 +516,8 @@ class _PerfilState extends State<Perfil> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _correoController,
-                      decoration: _inputDecoration("Correo", Icons.email),
+                      readOnly: true,
+                      decoration: _inputDecoration("", Icons.email),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -420,26 +529,148 @@ class _PerfilState extends State<Perfil> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColores.primary,
-                        side: BorderSide(color: AppColores.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: _enviarCorreoCambioContrasena,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColores.primary,
+                          side: BorderSide(color: AppColores.primary),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.lock_reset),
-                      label: const Text(
-                        "Enviar correo para cambiar contraseña",
+                        icon: const Icon(Icons.lock_reset),
+                        label: const Text(
+                          "Enviar correo para cambiar contraseña",
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _actualizando
+                            ? null
+                            : () async {
+                                setState(() => _actualizando = true);
+                                try {
+                                  final success = await _perfilService
+                                      .actualizarPerfil(
+                                        nombreUsuario: _nombreController.text
+                                            .trim(),
+                                      );
+                                  if (mounted) {
+                                    if (success) {
+                                      AnimatedSnackBar(
+                                        builder: (context) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade100,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.check_circle_outline,
+                                                color: Colors.green,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  'Perfil actualizado con éxito',
+                                                  style: TextStyle(
+                                                    color:
+                                                        Colors.green.shade800,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ).show(context);
+                                    } else {
+                                      AnimatedSnackBar(
+                                        builder: (context) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.shade100,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.error_outline,
+                                                color: Colors.red,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  'Error al actualizar perfil',
+                                                  style: TextStyle(
+                                                    color: Colors.red.shade800,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ).show(context);
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    AnimatedSnackBar(
+                                      builder: (context) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade100,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Error: ${e.toString()}',
+                                                style: TextStyle(
+                                                  color: Colors.red.shade800,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ).show(context);
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _actualizando = false);
+                                  }
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColores.primary,
                           foregroundColor: Colors.white,

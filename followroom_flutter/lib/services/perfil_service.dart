@@ -29,4 +29,30 @@ class PerfilService {
       throw Exception('Error al cargar perfil');
     }
   }
+
+  Future<bool> actualizarPerfil({required String nombreUsuario}) async {
+    final email = SessionData.email;
+
+    if (email == null) {
+      throw Exception('No hay sesión guardada');
+    }
+
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+
+      final response = await dio.put(
+        '/perfil/',
+        data: {'correo_electronico': email, 'nombre_usuario': nombreUsuario},
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print('Error al actualizar perfil: $e');
+      rethrow;
+    }
+  }
 }

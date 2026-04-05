@@ -1,5 +1,6 @@
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:blurrycontainer/blurrycontainer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
@@ -112,6 +113,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _olvideContrasena() async {
+    final email = emailController.text.trim();
+    if (email.isEmpty) {
+      _mostrarSnackBar('Ingresa tu correo primero');
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      _mostrarSnackBar('Correo de recuperación enviado a $email');
+    } catch (e) {
+      _mostrarSnackBar('Error: ${e.toString()}');
+    }
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -190,7 +206,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Ingresa tu contraseña',
                             ),
                           ),
-                          const SizedBox(height: 16),
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: _isLoading ? null : _iniciarSesion,
@@ -198,6 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               foregroundColor: Colors.white,
                               backgroundColor: AppColores.primary,
                               shadowColor: Colors.black,
+                              minimumSize: const Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -224,8 +240,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               );
                             },
-                            style: BotonStyles.botonEstilos,
-                            child: const Text("Registrate"),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: AppColores.primary,
+                              shadowColor: Colors.black,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text("Regístrate"),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: _olvideContrasena,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColores.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              minimumSize: const Size(double.infinity, 40),
+                            ),
+                            child: const Text(
+                              "¿Olvidaste tu contraseña?",
+                              style: TextStyle(
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
                           ),
                         ],
                       ),
