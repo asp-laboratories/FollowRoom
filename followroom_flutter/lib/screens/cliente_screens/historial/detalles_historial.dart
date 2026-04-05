@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:dio/dio.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
+import 'package:animated_snack_bar/animated_snack_bar.dart';
 
 class DetallesHistorial extends StatefulWidget {
   final String idReservacion;
@@ -30,6 +33,223 @@ class DetallesHistorial extends StatefulWidget {
 class _DetallesHistorialState extends State<DetallesHistorial> {
   final bool _cargando = false;
   final double _progreso = 0.75;
+  bool _encuestaEnviada = false;
+
+  int _calificacionPersonal = 0;
+  int _calificacionEquipamiento = 0;
+  int _calificacionServicios = 0;
+  int _calificacionSalon = 0;
+  int _calificacionMobiliario = 0;
+
+  bool _esReservacionTerminada() {
+    final estado = widget.datosReservacion?['estado']?.toLowerCase() ?? '';
+    return estado == 'concluido' ||
+        estado == 'finalizado' ||
+        estado == 'finalizada' ||
+        estado == 'terminado';
+  }
+
+  void _mostrarEncuesta() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildModalEncuesta(),
+    );
+  }
+
+  Widget _buildModalEncuesta() {
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Tu opinión nos importa',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Califica tu experiencia del 1 al 5',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                SizedBox(height: 24),
+                _buildPreguntaEncuesta('Personal', _calificacionPersonal, (v) {
+                  setModalState(() => _calificacionPersonal = v);
+                  setState(() {});
+                }),
+                _buildPreguntaEncuesta(
+                  'Equipamiento',
+                  _calificacionEquipamiento,
+                  (v) {
+                    setModalState(() => _calificacionEquipamiento = v);
+                    setState(() {});
+                  },
+                ),
+                _buildPreguntaEncuesta('Servicios', _calificacionServicios, (
+                  v,
+                ) {
+                  setModalState(() => _calificacionServicios = v);
+                  setState(() {});
+                }),
+                _buildPreguntaEncuesta('Salón', _calificacionSalon, (v) {
+                  setModalState(() => _calificacionSalon = v);
+                  setState(() {});
+                }),
+                _buildPreguntaEncuesta('Mobiliario', _calificacionMobiliario, (
+                  v,
+                ) {
+                  setModalState(() => _calificacionMobiliario = v);
+                  setState(() {});
+                }),
+                SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                        _calificacionPersonal > 0 &&
+                            _calificacionEquipamiento > 0 &&
+                            _calificacionServicios > 0 &&
+                            _calificacionSalon > 0 &&
+                            _calificacionMobiliario > 0
+                        ? _enviarEncuesta
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColores.primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text('Enviar encuesta'),
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPreguntaEncuesta(
+    String pregunta,
+    int valor,
+    Function(int) onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            pregunta,
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(5, (index) {
+              final numero = index + 1;
+              final isSelected = valor == numero;
+              return GestureDetector(
+                onTap: () => onChanged(numero),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColores.primary
+                        : Colors.grey.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$numero',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _enviarEncuesta() async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = 'http://${IpConfig.ip}/api';
+
+      await dio.post(
+        '/encuesta/',
+        data: {
+          'personal': _calificacionPersonal,
+          'equipamiento': _calificacionEquipamiento,
+          'servicios': _calificacionServicios,
+          'salon': _calificacionSalon,
+          'mobiliario': _calificacionMobiliario,
+          'reservacion': int.tryParse(widget.idReservacion) ?? 0,
+        },
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        setState(() => _encuestaEnviada = true);
+
+        AnimatedSnackBar(
+          builder: (context) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.green),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '¡Gracias por tu opinión!',
+                    style: TextStyle(color: Colors.green.shade800),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ).show(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al enviar encuesta')));
+      }
+    }
+  }
 
   Widget _buildLabelValue(String label, String value) {
     return Padding(
@@ -334,6 +554,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   ),
 
                   SizedBox(height: 20),
+                  _buildBotonEncuesta(),
                 ],
               ),
             ),
@@ -495,6 +716,29 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
     // }
 
     // return serviciosTotal + equiposTotal + salonPrecio;
+  }
+
+  Widget _buildBotonEncuesta() {
+    if (!_esReservacionTerminada() || _encuestaEnviada) {
+      return SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _mostrarEncuesta,
+          icon: Icon(Icons.rate_review),
+          label: Text('Calificar experiencia'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColores.primary,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
+    );
   }
 
   int _calcularIVA() {

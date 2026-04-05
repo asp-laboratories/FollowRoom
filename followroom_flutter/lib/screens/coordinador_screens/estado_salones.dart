@@ -266,7 +266,12 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
   }
 }
 
-class _ModalEstados extends StatelessWidget {
+class _ModalEstados extends StatefulWidget {
+  @override
+  State<_ModalEstados> createState() => _ModalEstadosState();
+}
+
+class _ModalEstadosState extends State<_ModalEstados> {
   final List<Map<String, String>> estados = [
     {"nombre": "Disponible", "codigo": "DISP"},
     {"nombre": "No disponible", "codigo": "NODISP"},
@@ -274,21 +279,114 @@ class _ModalEstados extends StatelessWidget {
     {"nombre": "En limpieza", "codigo": "LIM"},
   ];
 
+  DateTime _fechaSeleccionada = DateTime.now();
+  DateTime _primerDia = DateTime.now();
+  DateTime _ultimoDia = DateTime.now().add(Duration(days: 365));
+
+  Future<void> _seleccionarFecha(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _fechaSeleccionada,
+      firstDate: _primerDia,
+      lastDate: _ultimoDia,
+      helpText: "Selecciona la fecha",
+    );
+    if (picked != null && picked != _fechaSeleccionada) {
+      setState(() {
+        _fechaSeleccionada = picked;
+      });
+    }
+  }
+
+  String _formatearFecha(DateTime fecha) {
+    final meses = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+    return '${fecha.day} ${meses[fecha.month - 1]} ${fecha.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(15),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: estados.map((estado) {
-          return ListTile(
-            leading: Icon(Icons.circle),
-            title: Text(estado['nombre']!),
-            onTap: () {
-              Navigator.pop(context, estado);
-            },
-          );
-        }).toList(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Cambiar estado del salón",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 16),
+          Text(
+            "Fecha específica:",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColores.foreground,
+            ),
+          ),
+          SizedBox(height: 8),
+          InkWell(
+            onTap: () => _seleccionarFecha(context),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 20,
+                    color: AppColores.primary,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    _formatearFecha(_fechaSeleccionada),
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  Spacer(),
+                  Icon(Icons.arrow_drop_down, color: Colors.grey),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            "Seleccionar estado:",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColores.foreground,
+            ),
+          ),
+          SizedBox(height: 8),
+          ...estados.map((estado) {
+            return ListTile(
+              leading: Icon(Icons.circle),
+              title: Text(estado['nombre']!),
+              onTap: () {
+                Navigator.pop(context, {
+                  ...estado,
+                  'fecha': _fechaSeleccionada.toIso8601String(),
+                });
+              },
+            );
+          }).toList(),
+        ],
       ),
     );
   }

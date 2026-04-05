@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/detalles_reservacion_coordinador.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/subnavbar_coordinador.dart';
+// import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class InicioCoordinador extends StatefulWidget {
   const InicioCoordinador({super.key});
@@ -38,6 +39,9 @@ class Reservacion {
 
 class _InicioCoordinadorState extends State<InicioCoordinador> {
   int _actualIndice = 0;
+  // final ReservacionService _reservacionService = ReservacionService();
+  // List<Map<String, dynamic>> reservaciones = [];
+  // bool _cargando = true;
 
   List<Reservacion> reservaciones = [
     Reservacion(
@@ -86,6 +90,38 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
     ),
   ];
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _cargarReservaciones();
+  // }
+
+  // Future<void> _cargarReservaciones() async {
+  //   setState(() => _cargando = true);
+  //   try {
+  //     final data = await _reservacionService.getListaReservaciones();
+  //     setState(() {
+  //       reservaciones = data.map((item) {
+  //         return {
+  //           'id': item['id'],
+  //           'titulo': item['nombreEvento'] ?? 'Sin título',
+  //           'fecha': item['fechaEvento'] ?? '',
+  //           'hora': item['horaInicio'] ?? '',
+  //           'horaFin': item['horaFin'] ?? '',
+  //           'salon': item['salon_nombre'] ?? 'Sin salón',
+  //           'montaje': item['montaje_tipo'] ?? 'Sin montaje',
+  //           'equipos': (item['equipamentos'] as List? ?? []).isNotEmpty,
+  //           'servicios': (item['servicios'] as List? ?? []).isNotEmpty,
+  //           'estado': item['estado_nombre'] ?? 'Sin estado',
+  //         };
+  //       }).toList();
+  //       _cargando = false;
+  //     });
+  //   } catch (e) {
+  //     setState(() => _cargando = false);
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     String estadoBuscado = "";
@@ -106,213 +142,222 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
       }
     }).toList();
 
-    return Column(
-      children: [
-        Textos(
-          texts: ['Por Hacer', 'En Marcha', 'Concluidos'],
-          seleccionActual: _actualIndice,
-          alSeleccionar: (int nuevoIndice) {
-            setState(() {
-              _actualIndice = nuevoIndice;
-            });
-          },
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: ListView.builder(
-            itemCount: reservacionesFinales.length,
-            itemBuilder: (context, index) {
-              final itemActual = reservacionesFinales[index];
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(color: AppColores.background2),
+        child: Column(
+          children: [
+            Textos(
+              texts: ['Por Hacer', 'En Marcha', 'Concluidos'],
+              seleccionActual: _actualIndice,
+              alSeleccionar: (int nuevoIndice) {
+                setState(() {
+                  _actualIndice = nuevoIndice;
+                });
+              },
+            ),
+            const SizedBox(width: 24),
+            // _cargando
+            //     ? Center(
+            //         child: CircularProgressIndicator(color: AppColores.primary),
+            //       )
+            //     :
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              itemCount: reservacionesFinales.length,
+              itemBuilder: (context, index) {
+                final itemActual = reservacionesFinales[index];
 
-              return Padding(
-                padding: const EdgeInsets.all(10),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PantallaDetallesCoordinador(
-                          idReservacion: itemActual.idReservacion.toString(),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: ContainerStyles.cardAlmacenista,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                "Titulo: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                itemActual.titulo,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.normal,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                            ],
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  decoration: ContainerStyles.sombreado,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PantallaDetallesCoordinador(
+                              idReservacion: itemActual.idReservacion
+                                  .toString(),
+                            ),
                           ),
-
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_month_outlined,
-                                color: AppColores.foreground,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Fecha: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                itemActual.fecha,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.normal,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                              const SizedBox(width: 30),
-                              Icon(
-                                Icons.alarm,
-                                color: AppColores.foreground,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Hora: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                itemActual.hora,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.normal,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          Row(
-                            children: [
-                              Text(
-                                "Salon: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                itemActual.salon,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.normal,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                              const SizedBox(width: 30),
-                              Text(
-                                "Montaje: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                itemActual.montaje,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.normal,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          Row(
-                            children: [
-                              Text(
-                                "Equipamientos: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              itemActual.equipos
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: Colors.green,
-                                      size: 16,
-                                    )
-                                  : const Icon(
-                                      Icons.close,
-                                      color: Colors.red,
-                                      size: 16,
-                                    ),
-                            ],
-                          ),
-
-                          Row(
-                            children: [
-                              Text(
-                                "Servicios: ",
-                                style: TextEstilos.labelCard.copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              itemActual.servicos
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: Colors.green,
-                                      size: 16,
-                                    )
-                                  : const Icon(
-                                      Icons.close,
-                                      color: Colors.red,
-                                      size: 16,
-                                    ),
-                              Spacer(),
-                              Text(
-                                "Click en el contenedor para ver detalles del evento",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColores.foreground.withValues(
-                                    alpha: 0.5,
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  "Titulo: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 14,
                                   ),
-                                  fontStyle: FontStyle.italic,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                Text(
+                                  itemActual.titulo,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_month_outlined,
+                                  color: AppColores.foreground,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "Fecha: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  itemActual.fecha,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Icon(
+                                  Icons.alarm,
+                                  color: AppColores.foreground,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "Hora: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  itemActual.hora,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  "Salon: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  itemActual.salon,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Text(
+                                  "Montaje: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  itemActual.montaje,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  "Equipamientos: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                itemActual.equipos
+                                    ? Icon(
+                                        Icons.check,
+                                        color: Colors.green,
+                                        size: 16,
+                                      )
+                                    : Icon(
+                                        Icons.close,
+                                        color: Colors.red,
+                                        size: 16,
+                                      ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  "Servicios: ",
+                                  style: TextEstilos.labelCard.copyWith(
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                itemActual.servicos
+                                    ? Icon(
+                                        Icons.check,
+                                        color: Colors.green,
+                                        size: 16,
+                                      )
+                                    : Icon(
+                                        Icons.close,
+                                        color: Colors.red,
+                                        size: 16,
+                                      ),
+                                Spacer(),
+                                Text(
+                                  "Ver detalles",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColores.foreground.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

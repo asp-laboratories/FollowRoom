@@ -17,24 +17,31 @@ class _NavigatorEventosReservacionState
   final TextEditingController _busquedaController = TextEditingController();
   final DisponibilidadService _disponibilidadService = DisponibilidadService();
   List<Map<String, dynamic>> reservacionesDB = [];
+  List<Map<String, dynamic>> estadosSalonesDB = [];
   bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarReservaciones();
+    _cargarDatos();
   }
 
-  Future<void> _cargarReservaciones() async {
+  Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
     try {
       final fechaStr =
           '${fechaSeleccionada.year}-${fechaSeleccionada.month.toString().padLeft(2, '0')}-${fechaSeleccionada.day.toString().padLeft(2, '0')}';
-      final data = await _disponibilidadService.getDisponibilidadSalones(
-        fechaStr,
-      );
+
+      final resultados = await Future.wait([
+        _disponibilidadService.getDisponibilidadSalones(fechaStr),
+        _disponibilidadService.getEstadosSalones(fechaStr),
+      ]);
+
+      final reservacionesData = resultados[0];
+      final estadosData = resultados[1];
+
       setState(() {
-        reservacionesDB = data.map((item) {
+        reservacionesDB = reservacionesData.map((item) {
           return {
             'id': item['id'],
             'salon': item['salon_nombre'],
@@ -48,11 +55,62 @@ class _NavigatorEventosReservacionState
             'tipo_evento': item['tipo_evento_nombre'],
           };
         }).toList();
+
+        estadosSalonesDB = estadosData.map((item) {
+          return {
+            'salonId': item['salon']?['id'] ?? item['salon'],
+            'salonNombre': item['salon']?['nombre'] ?? '',
+            'estadoCodigo':
+                item['estado_codigo'] ?? item['estado_salon']?['codigo'] ?? '',
+            'estadoNombre':
+                item['estado_nombre'] ?? item['estado_salon']?['nombre'] ?? '',
+            // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
+            // 'fechaFin': item['fecha_fin'] != null
+            //     ? DateTime.parse(item['fecha_fin'])
+            //     : null,
+          };
+        }).toList();
+
         _cargando = false;
       });
     } catch (e) {
+      print("Error cargando datos: $e");
       setState(() => _cargando = false);
     }
+  }
+
+  bool _esSalonReservable(String salonNombre) {
+    final estado = estadosSalonesDB
+        .where((e) => e['salonNombre'] == salonNombre)
+        .firstOrNull;
+
+    if (estado == null) return true;
+
+    final codigo = estado['estadoCodigo']?.toString().toUpperCase();
+    // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
+    // final fechaFin = estado['fechaFin'] as DateTime?;
+    // if (fechaFin != null && fechaFin.isBefore(fechaSeleccionada)) {
+    //   return true;
+    // }
+
+    return codigo == 'DISP' || codigo == 'DISPONIBLE';
+  }
+
+  String? _getEstadoSalon(String salonNombre) {
+    final estado = estadosSalonesDB
+        .where((e) => e['salonNombre'] == salonNombre)
+        .firstOrNull;
+
+    if (estado == null) return null;
+
+    final codigo = estado['estadoCodigo']?.toString().toUpperCase();
+    // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
+    // final fechaFin = estado['fechaFin'] as DateTime?;
+    // if (fechaFin != null && fechaFin.isBefore(fechaSeleccionada)) {
+    //   return null;
+    // }
+
+    return codigo;
   }
 
   final List<Map<String, dynamic>> salonesDB = [
@@ -331,6 +389,47 @@ class _NavigatorEventosReservacionState
   }
 
   Widget _buildCardReservacion(Map<String, dynamic> reservacion) {
+    final salonNombre = reservacion['salon'] as String;
+    final estadoCodigo = _getEstadoSalon(salonNombre);
+
+    Color estadoColor = Colors.red.shade100;
+    Color textColor = Colors.red;
+    String estadoTexto = "OCUPADO";
+
+    if (estadoCodigo != null) {
+      switch (estadoCodigo) {
+        case 'DISP':
+        case 'DISPONIBLE':
+          estadoColor = Colors.green.shade100;
+          textColor = Colors.green;
+          estadoTexto = "DISPONIBLE";
+          break;
+        case 'NODIS':
+        case 'NODISP':
+        case 'NO DISPONIBLE':
+          estadoColor = Colors.red.shade100;
+          textColor = Colors.red;
+          estadoTexto = "NO DISPONIBLE";
+          break;
+        case 'LIM':
+        case 'LIMPIEZA':
+          estadoColor = Colors.orange.shade100;
+          textColor = Colors.orange;
+          estadoTexto = "EN LIMPIEZA";
+          break;
+        case 'MANT':
+        case 'MANTENIMIENTO':
+          estadoColor = Colors.blue.shade100;
+          textColor = Colors.blue;
+          estadoTexto = "MANTENIMIENTO";
+          break;
+        default:
+          estadoColor = Colors.red.shade100;
+          textColor = Colors.red;
+          estadoTexto = "OCUPADO";
+      }
+    }
+
     return Card(
       margin: EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -343,20 +442,20 @@ class _NavigatorEventosReservacionState
               children: [
                 Expanded(
                   child: Text(
-                    reservacion['salon'],
+                    salonNombre,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade100,
+                    color: estadoColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    "OCUPADO",
+                    estadoTexto,
                     style: TextStyle(
-                      color: Colors.red,
+                      color: textColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -420,7 +519,7 @@ class _NavigatorEventosReservacionState
       setState(() {
         fechaSeleccionada = seleccionada;
       });
-      _cargarReservaciones();
+      _cargarDatos();
     }
   }
 }
