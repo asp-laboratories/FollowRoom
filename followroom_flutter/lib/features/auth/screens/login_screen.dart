@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Ingresa tu correo',
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
                           Text("Contraseña", style: TextEstilos.simpleTexto),
                           TextField(
                             controller: passwordController,
@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Ingresa tu contraseña',
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 18),
                           ElevatedButton(
                             onPressed: _isLoading ? null : _iniciarSesion,
                             style: ElevatedButton.styleFrom(

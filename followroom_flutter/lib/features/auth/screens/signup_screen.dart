@@ -2,9 +2,9 @@ import 'package:blurrycontainer/blurrycontainer.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
+import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/services/ip_config.dart';
 
 class Registro extends StatefulWidget {
@@ -21,7 +21,7 @@ class _RegistroState extends State<Registro> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  static const String _baseUrl = 'http://10.0.2.2:8000/api';
+  static const String _baseUrl = 'http://${IpConfig.ip}/api';
 
   String _mensajeError = '';
   bool _isLoading = false;
@@ -59,20 +59,17 @@ class _RegistroState extends State<Registro> {
     }
 
     try {
-      // 1. Crear usuario en Firebase
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
-      // 2. Obtener token de Firebase
       final idToken = await userCredential.user!.getIdToken();
 
-      // 3. Enviar token a Django para crear cuenta en la base de datos
       final dio = Dio();
       dio.options.baseUrl = _baseUrl;
 
-      final response = await dio.post(
+      await dio.post(
         '/signup/',
         data: {'token': idToken, 'nombre': nombreController.text.trim()},
       );
@@ -138,112 +135,143 @@ class _RegistroState extends State<Registro> {
         ),
         backgroundColor: AppColores.secundary,
       ),
-      backgroundColor: AppColores.secundary,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child:
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          "Registrate",
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                offset: const Offset(0, 3),
-                                blurRadius: 5,
-                                color: AppColores.primary.withValues(alpha: 1),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        const Text("Nombre de usuario"),
-                        TextField(
-                          controller: nombreController,
-                          decoration: createAppDecoration(
-                            prefixIcon: const Icon(Icons.person),
-                            hintText: "Ingresa tu nombre de usuario",
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text("Correo electronico"),
-                        TextField(
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: createAppDecoration(
-                            prefixIcon: const Icon(Icons.email),
-                            hintText: "Ingresa tu correo electronico",
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text("Contraseña"),
-                        TextField(
-                          controller: passwordController,
-                          obscureText: true,
-                          decoration: createAppDecoration(
-                            prefixIcon: const Icon(Icons.password_sharp),
-                            hintText: "Ingresa tu contraseña",
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text("Confirmar contraseña"),
-                        TextField(
-                          controller: confirmPasswordController,
-                          obscureText: true,
-                          decoration: createAppDecoration(
-                            prefixIcon: const Icon(Icons.password_outlined),
-                            hintText: "Confirma tu contraseña",
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_mensajeError.isNotEmpty)
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColores.secundary,
+              AppColores.secundary,
+              AppColores.secundary,
+              AppColores.secundary.withValues(alpha: 0.7),
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child:
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           Text(
-                            _mensajeError,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
-                            ),
+                            "Registrate",
+                            style: TextEstilos.encabezadosBlancos,
                             textAlign: TextAlign.center,
                           ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _registrarUsuario,
-                          style: BotonStyles.botonEstilos,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text("Registrarse"),
-                        ),
-                      ],
+                          const SizedBox(height: 24),
+                          Text(
+                            "Nombre de usuario",
+                            style: TextEstilos.simpleTexto,
+                          ),
+                          TextField(
+                            controller: nombreController,
+                            decoration: createAppDecoration(
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: AppColores.primary,
+                              ),
+                              hintText: "Ingresa tu nombre de usuario",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Correo electronico",
+                            style: TextEstilos.simpleTexto,
+                          ),
+                          TextField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: createAppDecoration(
+                              prefixIcon: Icon(
+                                Icons.email,
+                                color: AppColores.primary,
+                              ),
+                              hintText: "Ingresa tu correo electronico",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text("Contraseña", style: TextEstilos.simpleTexto),
+                          TextField(
+                            controller: passwordController,
+                            obscureText: true,
+                            decoration: createAppDecoration(
+                              prefixIcon: Icon(
+                                Icons.password,
+                                color: AppColores.primary,
+                              ),
+                              hintText: "Ingresa tu contraseña",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Confirmar contraseña",
+                            style: TextEstilos.simpleTexto,
+                          ),
+                          TextField(
+                            controller: confirmPasswordController,
+                            obscureText: true,
+                            decoration: createAppDecoration(
+                              prefixIcon: Icon(
+                                Icons.password_outlined,
+                                color: AppColores.primary,
+                              ),
+                              hintText: "Confirma tu contraseña",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          if (_mensajeError.isNotEmpty)
+                            Text(
+                              _mensajeError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _registrarUsuario,
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: AppColores.primary,
+                              shadowColor: Colors.black,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text("Registrarse"),
+                          ),
+                        ],
+                      ),
                     ),
+                  ).blurry(
+                    blur: 5,
+                    elevation: 0,
+                    color: const Color.fromARGB(54, 255, 255, 255),
                   ),
-                ).blurry(
-                  blur: 5,
-                  borderRadius: BorderRadius.circular(16),
-                  color: AppColores.backgroundComponent.withValues(alpha: 0.9),
-                  shadowColor: AppColores.primary.withValues(alpha: 0.5),
-                ),
+            ),
           ),
         ),
       ),
