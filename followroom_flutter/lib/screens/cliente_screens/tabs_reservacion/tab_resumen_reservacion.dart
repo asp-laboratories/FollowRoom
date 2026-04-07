@@ -3,12 +3,13 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 
 class TabResumen extends StatefulWidget {
-  final Map<String, String> datosReservacion;
+  final Map<String, dynamic> datosReservacion;
   final Map<String, String> datosCliente;
   final Map<String, dynamic>? salonSeleccionado;
-  final Map<int, String> montajesPorSalon;
+  final Map<String, dynamic> montajesPorSalon;
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
+  final List<Map<String, dynamic>> mobiliariosSeleccionados;
 
   const TabResumen({
     super.key,
@@ -18,6 +19,7 @@ class TabResumen extends StatefulWidget {
     required this.montajesPorSalon,
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
+    required this.mobiliariosSeleccionados,
   });
 
   @override
@@ -79,7 +81,7 @@ class _TabResumenState extends State<TabResumen> {
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Fecha:",
-                      widget.datosReservacion['fecha'] ?? 'No definida',
+                      widget.datosReservacion['fechaEvento'] ?? 'No definida',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(
@@ -89,12 +91,13 @@ class _TabResumenState extends State<TabResumen> {
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Tipo de evento:",
-                      widget.datosReservacion['tipo'] ?? 'No seleccionado',
+                      widget.datosReservacion['tipo_evento']?['nombre'] ??
+                          'No seleccionado',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Asistentes:",
-                      widget.datosReservacion['asistentes'] ?? '0',
+                      widget.datosReservacion['estimaAsistentes'] ?? '0',
                     ),
                   ],
                 ),
@@ -134,12 +137,12 @@ class _TabResumenState extends State<TabResumen> {
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "RFC:",
-                      widget.datosReservacion['rfc'] ?? 'No definido',
+                      widget.datosCliente['rfc'] ?? 'No definido',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Nombre fiscal:",
-                      widget.datosCliente['nombreFiscal'] ?? 'No definido',
+                      widget.datosCliente['nombre_fiscal'] ?? 'No definido',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(
@@ -191,17 +194,23 @@ class _TabResumenState extends State<TabResumen> {
                       ),
                       _buildLabelValue(
                         "Precio:",
-                        "\$${widget.salonSeleccionado!['precio']}",
+                        "\$${widget.salonSeleccionado?['costo']}",
                       ),
                       _buildLabelValue(
                         "Montaje:",
                         widget.montajesPorSalon[widget
-                                .salonSeleccionado!['id']] ??
+                                .salonSeleccionado!['id'].toString()]?['nombre'] ??
                             'No seleccionado',
                       ),
                     ],
                   ],
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              child: Column(
+                children: [SizedBox(height: 8), _buildMobiliariosContainer()],
               ),
             ),
             LayoutBuilder(
@@ -278,7 +287,7 @@ class _TabResumenState extends State<TabResumen> {
                       ),
                     ),
                     Text(
-                      "\$${s['precio']}",
+                      "\$${s['costo']}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -298,7 +307,7 @@ class _TabResumenState extends State<TabResumen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${widget.serviciosSeleccionados.fold(0, (sum, s) => sum + (s['precio'] as int))}",
+                  "\$${widget.serviciosSeleccionados.fold<double>(0, (sum, s) => sum + (double.tryParse(s['costo']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -344,7 +353,7 @@ class _TabResumenState extends State<TabResumen> {
                       ),
                     ),
                     Text(
-                      "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                      "\$${((double.tryParse(e['costo']?.toString() ?? '0') ?? 0.0) * (int.tryParse(e['cantidad']?.toString() ?? '0') ?? 0)).toStringAsFixed(2)}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -364,7 +373,76 @@ class _TabResumenState extends State<TabResumen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
+                  "\$${widget.equipamientosSeleccionados.fold<double>(0, (sum, e) => sum + ((double.tryParse(e['costo']?.toString() ?? '0') ?? 0.0) * (int.tryParse(e['cantidad']?.toString() ?? '0') ?? 0))).toStringAsFixed(2)}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColores.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobiliariosContainer() {
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Mobiliarios",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (widget.mobiliariosSeleccionados.isEmpty)
+            Text(
+              "No se han seleccionado mobiliarios",
+              style: TextStyle(fontSize: 12),
+            )
+          else
+            ...widget.mobiliariosSeleccionados.map(
+              (mob) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- ${mob['nombre']} (x${mob['cantidad']})",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "\$${((double.tryParse(mob['costo']?.toString() ?? '0') ?? 0.0) * (int.tryParse(mob['cantidad']?.toString() ?? '0') ?? 0)).toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
+            Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Total",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  "\$${widget.mobiliariosSeleccionados.fold<double>(0, (sum, mob) => sum + ((double.tryParse(mob['costo']?.toString() ?? '0') ?? 0.0) * (int.tryParse(mob['cantidad']?.toString() ?? '0') ?? 0))).toStringAsFixed(2)}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

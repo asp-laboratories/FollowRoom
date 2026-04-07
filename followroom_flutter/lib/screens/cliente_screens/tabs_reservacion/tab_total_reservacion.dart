@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class TabTotalReservacion extends StatefulWidget {
-  final Map<String, String> datosReservacion;
+  final Map<String, dynamic> datosReservacion;
   final Map<String, String> datosCliente;
   final Map<String, dynamic>? salonSeleccionado;
-  final Map<int, String> montajesPorSalon;
+  final Map<String, dynamic> montajesPorSalon;
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
+  final List<Map<String, dynamic>> mobiliariosSeleccionados;
 
   const TabTotalReservacion({
     super.key,
@@ -18,6 +20,7 @@ class TabTotalReservacion extends StatefulWidget {
     required this.montajesPorSalon,
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
+    required this.mobiliariosSeleccionados,
   });
 
   @override
@@ -25,30 +28,100 @@ class TabTotalReservacion extends StatefulWidget {
 }
 
 class _TabTotalReservacionState extends State<TabTotalReservacion> {
-  int _calcularSubtotal() {
-    int total = 0;
+  final ReservacionService _servicioReservaciones = ReservacionService();
+
+  Map<String, dynamic> _datosFinalesParaEnviar() {
+    final List<Map> idsServicios = widget.serviciosSeleccionados
+        .map((servicio) => {"id": int.parse(servicio['id'].toString())})
+        .toList();
+
+    final List<Map<String, int>> equipos = widget.equipamientosSeleccionados
+        .map((equipo) {
+          return {
+            "id": int.parse(equipo['id'].toString()),
+            "cantidad": int.parse(equipo['cantidad'].toString()),
+          };
+        })
+        .toList();
+
+    final List<Map<String, int>> mobiliarios = widget.mobiliariosSeleccionados
+        .map((mobilairio) {
+          return {
+            "id": int.parse(mobilairio['id'].toString()),
+            "cantidad": int.parse(mobilairio['cantidad'].toString()),
+          };
+        })
+        .toList();
+
+    return {
+      "nombre": widget.datosReservacion['nombre'],
+      "descripEvento": widget.datosReservacion['descripEvento'],
+      "estimaAsistentes": int.parse(
+        widget.datosReservacion['estimaAsistentes'].toString(),
+      ),
+      "fechaEvento": widget.datosReservacion['fechaEvento'],
+      "horaInicio": widget.datosReservacion['horaInicio'],
+      "horaFin": widget.datosReservacion['horaFin'],
+      "cliente": widget.datosCliente['rfc'],
+      "estado_reserva": 'SOLIC',
+      "reserva_servicio": idsServicios,
+      "reserva_equipa": equipos,
+      "montaje": {
+        "salon": int.parse(widget.salonSeleccionado!['id'].toString()),
+        "tipo_montaje": int.parse(widget.montajesPorSalon['id'].toString()),
+        "mobiliarios": mobiliarios,
+      },
+      "tipo_evento": int.parse(
+        widget.datosReservacion['tipo_evento']['id'].toString(),
+      ),
+    };
+  }
+
+  void _registrarReservacion() async {
+    Map<String, dynamic> info = _datosFinalesParaEnviar();
+
+    try {
+      final resultad = await _servicioReservaciones.crearReservacion(info);
+
+      print("Reservacion hecha con el id: ${resultad.data['id']}");
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  double _calcularSubtotal() {
+    double total = 0;
 
     if (widget.salonSeleccionado != null) {
-      total += widget.salonSeleccionado!['precio'] as int? ?? 0;
+      total += double.parse(widget.salonSeleccionado!['costo'].toString());
     }
 
     for (var servicio in widget.serviciosSeleccionados) {
-      total += servicio['precio'] as int? ?? 0;
+      total += double.parse(servicio['costo'].toString());
     }
 
     for (var equipo in widget.equipamientosSeleccionados) {
       total +=
-          (equipo['precio'] as int? ?? 0) * (equipo['cantidad'] as int? ?? 1);
+          (double.parse(equipo['costo'].toString()) *
+          ((equipo['cantidad'] ?? 1) as num));
+    }
+
+    for (var mobiliario in widget.mobiliariosSeleccionados) {
+      total +=
+          (double.parse((mobiliario['costo'] ?? 0).toString()) *
+          (mobiliario['cantidad'] as num));
     }
 
     return total;
   }
 
-  int _calcularIVA() {
-    return (_calcularSubtotal() * 0.16).round();
+  double _calcularIVA() {
+    return (_calcularSubtotal() * 0.16);
   }
 
-  int _calcularTotal() {
+  double _calcularTotal() {
     return _calcularSubtotal() + _calcularIVA();
   }
 
@@ -56,9 +129,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColores.background2,
-        ),
+        decoration: BoxDecoration(color: AppColores.background2),
         child: Column(
           children: [
             Padding(
@@ -71,18 +142,44 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Desglose de Precios",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      "Desglose de costos",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 8),
-        
+
                     if (widget.salonSeleccionado != null) ...[
                       _buildPriceRow(
                         "Salón: ${widget.salonSeleccionado!['nombre']}",
-                        "\$${widget.salonSeleccionado!['precio']}",
+                        "\$${widget.salonSeleccionado!['costo']}",
                       ),
                     ],
-        
+
+                    if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        "Mobiliarios: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColores.foreground,
+                        ),
+                      ),
+                      ...widget.mobiliariosSeleccionados.map(
+                        (mob) => _buildPriceRow(
+                          "- ${mob["nombre"]} (x${mob['cantidad'] ?? 1})",
+                          "\$${double.parse((mob['costo'] ?? 0).toString()) * ((mob['cantidad'] ?? 1) as num)}",
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      _buildPriceRow(
+                        "Subtotal Mobiliarios",
+                        "\$${_calcularSubtotalMobiliarios()}",
+                        isBold: true,
+                      ),
+                    ],
+
                     if (widget.serviciosSeleccionados.isNotEmpty) ...[
                       SizedBox(height: 8),
                       Text(
@@ -95,7 +192,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                       ...widget.serviciosSeleccionados.map(
                         (s) => _buildPriceRow(
                           "- ${s['nombre']}",
-                          "\$${s['precio']}",
+                          "\$${s['costo']}",
                         ),
                       ),
                       SizedBox(height: 4),
@@ -105,7 +202,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                         isBold: true,
                       ),
                     ],
-        
+
                     if (widget.equipamientosSeleccionados.isNotEmpty) ...[
                       SizedBox(height: 8),
                       Text(
@@ -118,7 +215,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                       ...widget.equipamientosSeleccionados.map(
                         (e) => _buildPriceRow(
                           "- ${e['nombre']} (x${e['cantidad'] ?? 1})",
-                          "\$${((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)}",
+                          "\$${double.parse((e['costo'] ?? 0).toString()) * ((e['cantidad'] ?? 1) as num)}",
                         ),
                       ),
                       SizedBox(height: 4),
@@ -128,9 +225,9 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                         isBold: true,
                       ),
                     ],
-        
+
                     Divider(height: 24),
-        
+
                     _buildPriceRow(
                       "Subtotal",
                       "\$${_calcularSubtotal()}",
@@ -149,7 +246,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
@@ -161,7 +258,10 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                   children: [
                     Text(
                       "Información de Pago",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 12),
                     Text(
@@ -205,7 +305,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
@@ -228,6 +328,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                           ),
                           ElevatedButton(
                             onPressed: () {
+                              _registrarReservacion();
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -263,7 +364,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             SizedBox(height: 20),
           ],
         ),
@@ -271,18 +372,30 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
     );
   }
 
-  int _calcularSubtotalServicios() {
-    return widget.serviciosSeleccionados.fold<int>(
+  double _calcularSubtotalServicios() {
+    return widget.serviciosSeleccionados.fold<double>(
       0,
-      (sum, s) => sum + ((s['precio'] ?? 0) as int),
+      (sum, s) => sum + double.parse((s['costo'] ?? 0).toString()),
     );
   }
 
-  int _calcularSubtotalEquipamientos() {
-    return widget.equipamientosSeleccionados.fold<int>(
+  double _calcularSubtotalEquipamientos() {
+    return widget.equipamientosSeleccionados.fold<double>(
       0,
       (sum, e) =>
-          sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+          sum +
+          (double.parse((e['costo'] ?? 0).toString()) *
+              ((e['cantidad'] ?? 1) as num)),
+    );
+  }
+
+  double _calcularSubtotalMobiliarios() {
+    return widget.mobiliariosSeleccionados.fold<double>(
+      0,
+      (sum, mob) =>
+          sum +
+          (double.parse((mob['costo'] ?? 0).toString()) *
+              ((mob['cantidad'] ?? 1) as num)),
     );
   }
 

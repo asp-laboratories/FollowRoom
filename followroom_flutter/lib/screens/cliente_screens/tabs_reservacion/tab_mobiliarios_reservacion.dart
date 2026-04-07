@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
-import 'package:followroom_flutter/services/ip_config.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:followroom_flutter/services/tipo_mobiliario_service.dart';
+import 'package:followroom_flutter/services/mobiliario_service.dart';
 
-class TabEquipamientosReservacion extends StatefulWidget {
-  final Function(List<Map<String, dynamic>>) onEquipamientosChanged;
-  final List<Map<String, dynamic>> equipamientosSeleccionados;
+class TabMobiliariosReservacion extends StatefulWidget {
+  final Function(List<Map<String, dynamic>>) onMobiliariosChanged;
+  final List<Map<String, dynamic>> mobiliariosSeleccionados;
+  final Map<String, dynamic>? salon;
 
-  const TabEquipamientosReservacion({
+  const TabMobiliariosReservacion({
     super.key,
-    required this.onEquipamientosChanged,
-    required this.equipamientosSeleccionados,
+    required this.onMobiliariosChanged,
+    required this.mobiliariosSeleccionados,
+    required this.salon,
   });
 
   @override
-  State<TabEquipamientosReservacion> createState() =>
-      _TabEquipamientosReservacionState();
+  State<TabMobiliariosReservacion> createState() =>
+      _TabMobiliariosReservacionState();
 }
 
-class _TabEquipamientosReservacionState
-    extends State<TabEquipamientosReservacion> {
+class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
+  final TipoMobiliarioService _servicioTipos = TipoMobiliarioService();
+  final MobiliarioService _mobiliarioService = MobiliarioService();
+
   final int _pageSize = 10;
   int _currentPage = 0;
-  bool _isLoadingMore = false;
   bool _hasMoreData = true;
+  bool _isLoadingMore = false;
 
-  List<dynamic> _tiposEquipamiento = [];
-  List<Map<String, dynamic>> _equipamientosDB = [];
-  List<Map<String, dynamic>> _equipamientosMostrados = [];
-  String? tiposEquipamientoSeleccionado;
+  List<Map<String, dynamic>> _tiposMobiliarios = [];
+  List<Map<String, dynamic>> _mobiliario = [];
+  List<Map<String, dynamic>> _mobiliariosMostrados = [];
+  int? tipoMobiliarioSeleccionado;
   bool isLoading = true;
 
   @override
@@ -40,66 +43,29 @@ class _TabEquipamientosReservacionState
   }
 
   Future<void> _loadDatos() async {
-    await Future.wait([_loadTiposEquipamiento(), _loadEquipamientos()]);
+    if (!mounted) return;
+    await Future.wait([_loadTiposmobiliario(), _loadMobiliarios()]);
   }
 
-  Future<void> _loadTiposEquipamiento() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://${IpConfig.ip}/api/tipo-equipa/'),
-      );
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        if (!mounted) return;
-        setState(() {
-          _tiposEquipamiento = data
-              .map((e) => e['nombre']?.toString() ?? '')
-              .toList();
-        });
-      }
-    } catch (e) {
-      print("Error loading tipos equipamiento: $e");
-    }
+  Future<void> _loadTiposmobiliario() async {
+    List<Map<String, dynamic>> tiposMobiliariosObtenidos = await _servicioTipos
+        .getTiposMobiliarios();
+
+    setState(() {
+      _tiposMobiliarios = tiposMobiliariosObtenidos;
+    });
   }
 
-  Future<void> _loadEquipamientos() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://${IpConfig.ip}/api/equipamiento/'),
-      );
-      print("equipamiento response status: ${response.statusCode}");
-      print("equipamiento response body: ${response.body}");
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        if (!mounted) return;
-        setState(() {
-          _equipamientosDB = data
-              .map(
-                (e) => {
-                  'id': e['id'],
-                  'nombre': e['nombre'] ?? '',
-                  'tipo': e['tipo_equipa']?.toString() ?? 'sin tipo',
-                  'descripcion': e['descripcion'] ?? '',
-                  'costo': e['costo'] ?? 0,
-                  'stock': e['stock'] ?? 0,
-                  'inventario_detalles': e['inventario_detalles'] ?? [],
-                },
-              )
-              .toList();
-          _equipamientosMostrados = _equipamientosDB.take(_pageSize).toList();
-          _currentPage = 1;
-          _hasMoreData = _equipamientosDB.length > _pageSize;
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error loading equipamentos: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
+  Future<void> _loadMobiliarios() async {
+    List<Map<String, dynamic>> mobiliariosObtenidos = await _mobiliarioService
+        .getMobiliarios();
+    setState(() {
+      _mobiliario = mobiliariosObtenidos;
+      _mobiliariosMostrados = mobiliariosObtenidos.take(_pageSize).toList();
+      _currentPage = 1;
+      _hasMoreData = mobiliariosObtenidos.length > _pageSize;
+      isLoading = false;
+    });
   }
 
   Future<void> _loadMore() async {
@@ -112,17 +78,16 @@ class _TabEquipamientosReservacionState
     await Future.delayed(Duration(milliseconds: 500));
 
     final startIndex = _currentPage * _pageSize;
-    final endIndex = (startIndex + _pageSize).clamp(0, _equipamientosDB.length);
+    final endIndex = (startIndex + _pageSize).clamp(0, _mobiliario.length);
 
-    if (!mounted) return;
-    if (startIndex < _equipamientosDB.length) {
-      final nuevosEquipos = _equipamientosDB.sublist(startIndex, endIndex);
+    if (startIndex < _mobiliario.length) {
+      final nuevosEquipos = _mobiliario.sublist(startIndex, endIndex);
       setState(() {
-        _equipamientosMostrados.addAll(
+        _mobiliariosMostrados.addAll(
           nuevosEquipos.map((e) => Map<String, dynamic>.from(e)),
         );
         _currentPage++;
-        _hasMoreData = endIndex < _equipamientosDB.length;
+        _hasMoreData = endIndex < _mobiliario.length;
         _isLoadingMore = false;
       });
     } else {
@@ -133,46 +98,42 @@ class _TabEquipamientosReservacionState
     }
   }
 
-  List<Map<String, dynamic>> get equipamientosFiltrados {
-    if (tiposEquipamientoSeleccionado == null ||
-        tiposEquipamientoSeleccionado == 'todos') {
-      return _equipamientosMostrados;
+  List<Map<String, dynamic>> get mobiliariosFiltrados {
+    print(tipoMobiliarioSeleccionado);
+    if (tipoMobiliarioSeleccionado == null || tipoMobiliarioSeleccionado == 0) {
+      return _mobiliariosMostrados;
     }
-    return _equipamientosMostrados
-        .where(
-          (equipa) =>
-              equipa['tipo']?.toString().toLowerCase() ==
-              tiposEquipamientoSeleccionado?.toLowerCase(),
-        )
+    return _mobiliariosMostrados
+        .where((mob) => mob['tipo_movil']['id'] == tipoMobiliarioSeleccionado)
         .toList();
   }
 
-  void actualizarCantidad(Map<String, dynamic> equipamiento, int cantidad) {
+  void actualizarCantidad(Map<String, dynamic> mobiliario, int cantidad) {
     final List<Map<String, dynamic>> nuevaLista = List.from(
-      widget.equipamientosSeleccionados,
+      widget.mobiliariosSeleccionados,
     );
 
     if (cantidad == 0) {
-      nuevaLista.removeWhere((e) => e['id'] == equipamiento['id']);
+      nuevaLista.removeWhere((e) => e['id'] == mobiliario['id']);
     } else {
-      final index = nuevaLista.indexWhere((e) => e['id'] == equipamiento['id']);
+      final index = nuevaLista.indexWhere((e) => e['id'] == mobiliario['id']);
       if (index >= 0) {
-        nuevaLista[index] = {...equipamiento, 'cantidad': cantidad};
+        nuevaLista[index] = {...mobiliario, 'cantidad': cantidad};
       } else {
-        nuevaLista.add({...equipamiento, 'cantidad': cantidad});
+        nuevaLista.add({...mobiliario, 'cantidad': cantidad});
       }
     }
 
-    widget.onEquipamientosChanged(nuevaLista);
+    widget.onMobiliariosChanged(nuevaLista);
   }
 
-  int getCantidadDisponible(Map<String, dynamic> equipo) {
-    final detalles = equipo['inventario_detalles'] as List;
+  int getCantidadDisponible(Map<String, dynamic> mobiliario) {
+    final detalles = mobiliario['inventario_detalles'] as List;
 
     return detalles
         .where(
-          (disponible) =>
-              disponible['estado_equipa']?.toString().toUpperCase() == 'DISPO',
+          (disponibles) =>
+              disponibles['estado_mobil']?.toString().toUpperCase() == 'DISPO',
         )
         .fold(
           0,
@@ -180,9 +141,9 @@ class _TabEquipamientosReservacionState
         );
   }
 
-  int getCantidad(Map<String, dynamic> equipamiento) {
-    final found = widget.equipamientosSeleccionados.where(
-      (e) => e['id'] == equipamiento['id'],
+  int getCantidad(Map<String, dynamic> mobiliario) {
+    final found = widget.mobiliariosSeleccionados.where(
+      (e) => e['id'] == mobiliario['id'],
     );
     if (found.isEmpty) return 0;
     return found.first['cantidad'] as int;
@@ -196,7 +157,7 @@ class _TabEquipamientosReservacionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+            if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
@@ -207,17 +168,17 @@ class _TabEquipamientosReservacionState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Equipamientos seleccionados",
+                        "Mobiliarios seleccionados",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                       SizedBox(height: 8),
-                      if (widget.equipamientosSeleccionados.isEmpty)
-                        Text("Sin equipos", style: TextStyle(fontSize: 12))
+                      if (widget.mobiliariosSeleccionados.isEmpty)
+                        Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
                       else
-                        ...widget.equipamientosSeleccionados.map(
+                        ...widget.mobiliariosSeleccionados.map(
                           (e) => Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: Row(
@@ -232,7 +193,7 @@ class _TabEquipamientosReservacionState
                                   ),
                                 ),
                                 Text(
-                                  "\$${(e['costo'] as int) * (e['cantidad'] as int)}",
+                                  "\$${double.parse(e['costo'].toString()) * double.parse(e['cantidad'].toString())}",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -242,7 +203,7 @@ class _TabEquipamientosReservacionState
                             ),
                           ),
                         ),
-                      if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+                      if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
                         Divider(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -255,7 +216,7 @@ class _TabEquipamientosReservacionState
                               ),
                             ),
                             Text(
-                              "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + (((e['costo'] as num?)?.toInt() ?? 0) * ((e['cantidad'] as num?)?.toInt() ?? 1)))}",
+                              "\$${widget.mobiliariosSeleccionados.fold<double>(0, (sum, e) => sum + ((double.parse(e['costo'].toString())) * (double.parse(e['cantidad'].toString()))))}",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -284,26 +245,26 @@ class _TabEquipamientosReservacionState
                     ),
                     SizedBox(width: 16),
                     Expanded(
-                      child: DropdownButton<String>(
-                        value: tiposEquipamientoSeleccionado,
+                      child: DropdownButton<int>(
+                        value: tipoMobiliarioSeleccionado,
                         hint: Text("Todos"),
                         isExpanded: true,
                         items: isLoading
                             ? [
                                 DropdownMenuItem(
-                                  value: 'cargando',
+                                  value: 0,
                                   child: Text("Cargando..."),
                                 ),
                               ]
                             : [
                                 DropdownMenuItem(
-                                  value: 'todos',
+                                  value: 0,
                                   child: Text("Todos"),
                                 ),
-                                ..._tiposEquipamiento.map(
+                                ..._tiposMobiliarios.map(
                                   (value) => DropdownMenuItem(
-                                    value: value.toString(),
-                                    child: Text(value.toString()),
+                                    value: value['id'],
+                                    child: Text(value['nombre'].toString()),
                                   ),
                                 ),
                               ],
@@ -311,7 +272,7 @@ class _TabEquipamientosReservacionState
                             ? null
                             : (value) {
                                 setState(() {
-                                  tiposEquipamientoSeleccionado = value;
+                                  tipoMobiliarioSeleccionado = value;
                                 });
                               },
                       ),
@@ -323,7 +284,7 @@ class _TabEquipamientosReservacionState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                "Catálogo de equipamiento:",
+                "Catálogo de mobiliarios:",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
@@ -331,11 +292,10 @@ class _TabEquipamientosReservacionState
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               padding: EdgeInsets.all(16),
-              itemCount: equipamientosFiltrados.length,
+              itemCount: mobiliariosFiltrados.length,
               itemBuilder: (context, index) {
-                final equipamiento = equipamientosFiltrados[index];
-                final cantidad = getCantidad(equipamiento);
-
+                final mobiliario = mobiliariosFiltrados[index];
+                final cantidad = getCantidad(mobiliario);
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
@@ -353,19 +313,41 @@ class _TabEquipamientosReservacionState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    equipamiento['nombre'],
+                                    mobiliario['nombre'],
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                       color: AppColores.foreground,
                                     ),
                                   ),
+                                  // Se tiene q modificar para mostrar mas lo de las caracteristicas
                                   Text(
-                                    equipamiento['descripcion'],
+                                    mobiliario['descripcion'],
                                     style: TextStyle(color: Colors.grey),
                                   ),
+                                  Row(
+                                    children: [
+                                      if (mobiliario['descripcion_mob'] != null)
+                                        ...(mobiliario['descripcion_mob']
+                                                as List)
+                                            .map(
+                                              (caracteristica) => Text(
+                                                " - ${caracteristica['descripcion']}",
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            )
+                                      else
+                                        Text(
+                                          "No se encontraron caracteristicas",
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                    ],
+                                  ),
+
                                   Text(
-                                    "\$${equipamiento['costo']} c/u - Stock: ${getCantidadDisponible(equipamiento)}",
+                                    "\$${mobiliario['costo']} c/u - Stock: ${getCantidadDisponible(mobiliario)}",
                                     style: TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.w500,
@@ -380,7 +362,7 @@ class _TabEquipamientosReservacionState
                                 IconButton(
                                   onPressed: cantidad > 0
                                       ? () => actualizarCantidad(
-                                          equipamiento,
+                                          mobiliario,
                                           cantidad - 1,
                                         )
                                       : null,
@@ -403,16 +385,16 @@ class _TabEquipamientosReservacionState
                                 IconButton(
                                   onPressed:
                                       cantidad <
-                                          (getCantidadDisponible(equipamiento))
+                                          getCantidadDisponible(mobiliario)
                                       ? () => actualizarCantidad(
-                                          equipamiento,
+                                          mobiliario,
                                           cantidad + 1,
                                         )
                                       : null,
                                   icon: Icon(Icons.add_circle_outline),
                                   color:
                                       cantidad <
-                                          (getCantidadDisponible(equipamiento))
+                                          getCantidadDisponible(mobiliario)
                                       ? AppColores.primary
                                       : Colors.grey,
                                 ),

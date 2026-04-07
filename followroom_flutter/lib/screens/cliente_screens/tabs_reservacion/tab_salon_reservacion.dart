@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_montaje_reservacion.dart';
+import 'package:followroom_flutter/services/salon_service.dart';
 
 class TabSalon extends StatefulWidget {
-  final Map<int, String> montajesPorSalon;
+  final int cantidadAsistentes;
+  final Map<String, dynamic> montajesPorSalon;
   final Map<String, dynamic>? salonSeleccionado;
-  final Function(int, String) onMontajeSelected;
+  final Function(Map<String, dynamic>) onMontajeSelected;
   final Function(Map<String, dynamic>?) onSalonSelected;
 
   const TabSalon({
@@ -15,6 +17,7 @@ class TabSalon extends StatefulWidget {
     required this.salonSeleccionado,
     required this.onMontajeSelected,
     required this.onSalonSelected,
+    this.cantidadAsistentes = 0,
   });
 
   @override
@@ -22,39 +25,18 @@ class TabSalon extends StatefulWidget {
 }
 
 class _TabSalonState extends State<TabSalon> {
-  final List<Map<String, dynamic>> salonesDB = [
-    {
-      'id': 1,
-      'nombre': 'Salón Imperial',
-      'estado': 'En limpieza',
-      'precio': 1500,
-      'capacidad': 100,
-    },
-    {
-      'id': 2,
-      'nombre': 'Salón Ejecutivo',
-      'estado': 'Reservado',
-      'precio': 2500,
-      'capacidad': 50,
-    },
-    {
-      'id': 3,
-      'nombre': 'Salón Universal',
-      'estado': 'No disponible',
-      'precio': 3000,
-      'capacidad': 200,
-    },
-    {
-      'id': 4,
-      'nombre': 'Salón Premium',
-      'estado': 'Disponible',
-      'precio': 4000,
-      'capacidad': 80,
-    },
-  ];
+  final SalonService _salonService = SalonService();
 
-  String? getMontajeDelSalon(int salonId) {
-    return widget.montajesPorSalon[salonId];
+  late Future<List<Map<String, dynamic>>> _salones;
+
+  Map<String, dynamic>? getMontajeDelSalon(int salonId) {
+    return widget.montajesPorSalon[salonId.toString()];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _salones = _salonService.getSalonesConEstado();
   }
 
   @override
@@ -116,16 +98,16 @@ class _TabSalonState extends State<TabSalon> {
                         ),
                       ),
                       Text(
-                        "Precio: \$${widget.salonSeleccionado!['precio']}",
+                        "Precio: \$${widget.salonSeleccionado!['costo']}",
                         style: TextStyle(color: Colors.grey),
                       ),
                       Text(
-                        "Capacidad: ${widget.salonSeleccionado!['capacidad']} personas",
+                        "Capacidad: ${widget.salonSeleccionado!['maxCapacidad']} personas",
                         style: TextStyle(color: Colors.grey),
                       ),
                       Divider(),
                       Text(
-                        "Montaje: ${getMontajeDelSalon(widget.salonSeleccionado!['id']) ?? 'No seleccionado'}",
+                        "Montaje: ${getMontajeDelSalon(widget.salonSeleccionado!['id'])?['nombre'] ?? 'No seleccionado'}",
                         style: TextStyle(
                           color:
                               getMontajeDelSalon(
@@ -171,119 +153,170 @@ class _TabSalonState extends State<TabSalon> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16),
-              itemCount: salonesDB.length,
-              itemBuilder: (context, index) {
-                final salon = salonesDB[index];
-                final int salonId = salon['id'];
-                final bool isSelected =
-                    widget.salonSeleccionado?['id'] == salonId;
-                final String? montaje = getMontajeDelSalon(salonId);
 
-                return Container(
-                  margin: EdgeInsets.only(bottom: 12),
-                  decoration: ContainerStyles.sombreado,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        widget.onSalonSelected(salon);
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    salon['nombre'],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: AppColores.foreground,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: AppColores.primary,
-                                  ),
-                              ],
-                            ),
-                            SizedBox(height: 4),
-                            Row(
-                              children: [
-                                _getEstadoIcon(salon['estado']),
-                                SizedBox(width: 4),
-                                Text(
-                                  salon['estado'],
-                                  style: TextStyle(
-                                    color: _getEstadoColor(salon['estado']),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.people,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  "${salon['capacidad']} personas",
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                                SizedBox(width: 16),
-                                Icon(
-                                  Icons.attach_money,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                                Text(
-                                  "\$${salon['precio']}",
-                                  style: TextStyle(
-                                    color: AppColores.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                final resultado = await Navigator.push<String>(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        NavigatorMontajeReservacion(),
-                                  ),
-                                );
-                                if (resultado != null) {
-                                  widget.onMontajeSelected(salonId, resultado);
-                                }
-                              },
-                              icon: Icon(Icons.grid_view),
-                              label: Text(montaje ?? "Seleccionar montaje"),
-                            ),
-                          ],
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _salones,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Text(
+                    "Error al cargar los salones: ${snapshot.error}",
+                    style: const TextStyle(color: Colors.red),
+                  );
+                }
+
+                final salones = snapshot.data ?? [];
+                final saloneschidos = salones.where((salon) {
+                  final int capacidad = salon['maxCapacidad'] as int;
+                  return capacidad >= widget.cantidadAsistentes;
+                }).toList();
+
+                return saloneschidos.isEmpty
+                    ? Center(
+                        child: Text(
+                          "No hay salones disponibles para la cantidad de asistentes",
                         ),
-                      ),
-                    ),
-                  ),
-                );
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.all(16),
+                        itemCount: saloneschidos.length,
+                        itemBuilder: (context, index) {
+                          final salon = saloneschidos[index];
+                          final int idSalon = salon['id'] as int;
+                          final bool isSelected =
+                              widget.salonSeleccionado?['id'] == idSalon;
+                          final String estado = salon['estado_salon'] is Map
+                              ? (salon['estado_salon']['nombre'] ??
+                                    'Desconocido')
+                              : (salon['estado_salon']?.toString() ??
+                                    'Desconocido');
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 12),
+                            decoration: ContainerStyles.sombreado,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  widget.onSalonSelected(salon);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              salon['nombre'],
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: AppColores.foreground,
+                                              ),
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: AppColores.primary,
+                                            ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          _getEstadoIcon(estado),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            estado,
+                                            style: TextStyle(
+                                              color: _getEstadoColor(estado),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.people,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "${salon['maxCapacidad']} personas",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          SizedBox(width: 16),
+                                          Icon(
+                                            Icons.attach_money,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          Text(
+                                            "\$${salon['costo']}",
+                                            style: TextStyle(
+                                              color: AppColores.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 12),
+                                      OutlinedButton.icon(
+                                        onPressed: () async {
+                                          final resultado =
+                                              await Navigator.push<
+                                                Map<String, dynamic>
+                                              >(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      NavigatorMontajeReservacion(
+                                                        salon_id: salon['id'],
+                                                      ),
+                                                ),
+                                              );
+                                          if (resultado != null) {
+                                            widget.onMontajeSelected(resultado);
+                                          }
+                                        },
+                                        icon: Icon(Icons.grid_view),
+                                        label: Text(
+                                          (getMontajeDelSalon(
+                                                idSalon,
+                                              )?['nombre'] ??
+                                              "Seleccionar montaje"),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
               },
             ),
+
             SizedBox(height: 16),
           ],
         ),

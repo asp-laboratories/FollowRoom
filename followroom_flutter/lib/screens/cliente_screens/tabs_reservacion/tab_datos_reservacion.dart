@@ -3,18 +3,21 @@ import 'package:flutter/services.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/services/tipo_evento_service.dart';
 
 class TabDatosReservacion extends StatefulWidget {
-  final Function(Map<String, String>) onDatosChanged;
+  final Function(Map<String, dynamic>) onDatosChanged;
   final VoidCallback? onSaveAndNext;
   final TextEditingController? nombreController;
   final TextEditingController? fechaController;
   final TextEditingController? horaController;
   final TextEditingController? asistentesController;
+  final TextEditingController? descripcionController;
 
   const TabDatosReservacion({
     super.key,
     required this.onDatosChanged,
+    this.descripcionController,
     this.onSaveAndNext,
     this.nombreController,
     this.fechaController,
@@ -28,12 +31,11 @@ class TabDatosReservacion extends StatefulWidget {
 
 class _TabDatosReservacionState extends State<TabDatosReservacion>
     with AutomaticKeepAliveClientMixin {
-  final List<String> tiposEvento = [
-    'Conferencia',
-    'Boda',
-    'Reunión Corporativa',
-  ];
-  String? tipoEventoSelccionado;
+  final TipoEventoService _tipoServicioServicevice = TipoEventoService();
+
+  late Future<List<dynamic>> _tiposEventos;
+
+  Map<String, dynamic>? tipoEventoSeleccionado;
 
   TimeOfDay? _horaInicio;
   TimeOfDay? _horaFin;
@@ -45,16 +47,21 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
   late final TextEditingController _fechaController;
   late final TextEditingController _timeController;
   late final TextEditingController _asistentesController;
+  late final TextEditingController _descripcionEventoController;
 
   @override
   void initState() {
     super.initState();
+    _tiposEventos = _tipoServicioServicevice.getTiposEventos();
     _nombreController = widget.nombreController ?? TextEditingController();
     _fechaController = widget.fechaController ?? TextEditingController();
     _timeController = widget.horaController ?? TextEditingController();
     _asistentesController =
         widget.asistentesController ?? TextEditingController();
+    _descripcionEventoController =
+        widget.descripcionController ?? TextEditingController();
 
+    _descripcionEventoController.addListener(_autoSave);
     _nombreController.addListener(_autoSave);
     _fechaController.addListener(_autoSave);
     _timeController.addListener(_autoSave);
@@ -67,21 +74,34 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
     _fechaController.removeListener(_autoSave);
     _timeController.removeListener(_autoSave);
     _asistentesController.removeListener(_autoSave);
+    _descripcionEventoController.removeListener(_autoSave);
     if (widget.nombreController == null) _nombreController.dispose();
     if (widget.fechaController == null) _fechaController.dispose();
     if (widget.horaController == null) _timeController.dispose();
     if (widget.asistentesController == null) _asistentesController.dispose();
+    if (widget.descripcionController == null)
+      _descripcionEventoController.dispose();
     super.dispose();
   }
 
   void _autoSave() {
     widget.onDatosChanged({
       'nombre': _nombreController.text,
-      'fecha': _fechaController.text,
+      'fechaEvento': _fechaController.text,
       'horario': _timeController.text,
-      'tipo': tipoEventoSelccionado ?? '',
-      'asistentes': _asistentesController.text,
+      'horaInicio': _formatearPa24h(_horaInicio),
+      'horaFin': _formatearPa24h(_horaFin),
+      'tipo_evento': tipoEventoSeleccionado,
+      'estimaAsistentes': _asistentesController.text,
+      'descripEvento': _descripcionEventoController.text,
     });
+  }
+
+  String? _formatearPa24h(TimeOfDay? time) {
+    if (time == null) return null;
+    final hora = time.hour.toString().padLeft(2, '0');
+    final minuto = time.minute.toString().padLeft(2, '0');
+    return '$hora:$minuto:00';
   }
 
   String _formatTimeOfDay(TimeOfDay time) {
@@ -91,7 +111,6 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
     return '$hour:$minute $period';
   }
 
-  /// Genera el tema visual basado en la imagen de referencia
   ThemeData _getCustomTimePickerTheme(BuildContext context) {
     final Color colorPrincipal = AppColores.primary;
     final Color fondoMoradoClaro = colorPrincipal.withOpacity(0.12);
@@ -150,7 +169,6 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
           fontWeight: FontWeight.bold,
         ),
       ),
-      // Estilo para el modo de entrada de teclado (Imagen 2)
       inputDecorationTheme: InputDecorationTheme(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -201,6 +219,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
       _timeController.text =
           "${_formatTimeOfDay(selectedInicio)} - ${_formatTimeOfDay(selectedFin)}";
     });
+    _autoSave();
   }
 
   @override
@@ -220,6 +239,19 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
                 controller: _nombreController,
                 decoration: createAppDecoration(
                   hintText: "Ej. Lanzamiento de Producto",
+                ),
+              ),
+
+              const SizedBox(height: 16),
+              const Text(
+                "Descripcion del evento",
+                style: TextEstilos.indicador,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descripcionEventoController,
+                decoration: createAppDecoration(
+                  hintText: "Ej. Se realizara celebracion para ...",
                 ),
               ),
 
@@ -252,18 +284,65 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
               const SizedBox(height: 16),
               const Text("Tipo de evento", style: TextEstilos.indicador),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: tipoEventoSelccionado,
-                items: tiposEvento
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() => tipoEventoSelccionado = val);
-                  _autoSave();
+
+              FutureBuilder<List<dynamic>>(
+                future: _tiposEventos,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return DropdownButtonFormField(
+                      value: null,
+                      items: const [],
+                      onChanged: null,
+                      decoration: createAppDecoration(
+                        hintText: "Selecciona tipo",
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Text(
+                      "Error al cargar los salones: ${snapshot.error}",
+                      style: const TextStyle(color: Colors.red),
+                    );
+                  }
+
+                  final listaTiposEventos = snapshot.data ?? [];
+
+                  return DropdownButtonFormField<Map<String, dynamic>>(
+                    value: tipoEventoSeleccionado,
+                    decoration: createAppDecoration(
+                      hintText: "Selecciona tipo",
+                    ),
+                    hint: const Text("Toca para elegir un tipo de evento"),
+                    items: listaTiposEventos
+                        .map<DropdownMenuItem<Map<String, dynamic>>>((
+                          tipoEvento,
+                        ) {
+                          return DropdownMenuItem(
+                            value: tipoEvento,
+                            child: Text(tipoEvento['nombre'] ?? 'Sin nombre'),
+                          );
+                        })
+                        .toList(),
+                    onChanged: (nuevaEleccion) {
+                      setState(() => tipoEventoSeleccionado = nuevaEleccion);
+                      _autoSave();
+                    },
+                  );
                 },
-                decoration: createAppDecoration(hintText: "Selecciona tipo"),
               ),
 
+              // DropdownButtonFormField<String>(
+              //   value: tipoEventoSeleccionado,
+              //   items: tiposEvento
+              //       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              //       .toList(),
+              //   onChanged: (val) {
+              //     setState(() => tipoEventoSeleccionado = val);
+              //     _autoSave();
+              //   },
+              //   decoration: createAppDecoration(hintText: "Selecciona tipo"),
+              // ),
               const SizedBox(height: 16),
               const Text(
                 "Cantidad de asistentes",
@@ -295,10 +374,12 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
     );
 
     if (seleccionada != null) {
+      if (!mounted) return;
       setState(() {
         _fechaController.text =
-            "${seleccionada.day}/${seleccionada.month}/${seleccionada.year}";
+            "${seleccionada.year}-${seleccionada.month}-${seleccionada.day}";
       });
+      _autoSave();
     }
   }
 }

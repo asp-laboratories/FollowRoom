@@ -53,6 +53,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
       print("tipo-servicio body: ${response.body}");
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        if (!mounted) return;
         setState(() {
           _tiposServicios = data
               .map((e) => e['nombre']?.toString() ?? '')
@@ -73,6 +74,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
       print("servicio response body: ${response.body}");
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        if (!mounted) return;
         setState(() {
           _serviciosDB = data
               .map(
@@ -80,7 +82,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                   'id': e['id'],
                   'nombre': e['nombre'] ?? '',
                   'descripcion': e['descripcion'] ?? '',
-                  'precio': e['costo'] ?? 0,
+                  'costo': e['costo'] ?? 0,
                   'tipo': e['tipo_servicio']?.toString() ?? 'sin tipo',
                 },
               )
@@ -93,6 +95,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
       }
     } catch (e) {
       print("Error loading servicios: $e");
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -107,6 +110,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
     });
 
     await Future.delayed(Duration(milliseconds: 500));
+    if (!mounted) return;
 
     final startIndex = _currentPage * _pageSize;
     final endIndex = (startIndex + _pageSize).clamp(0, _serviciosDB.length);
@@ -205,7 +209,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                                   ),
                                 ),
                                 Text(
-                                  "\$${s['precio']}",
+                                  "\$${s['costo']}",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -228,7 +232,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                               ),
                             ),
                             Text(
-                              "\$${widget.serviciosSeleccionados.fold<int>(0, (sum, s) => sum + ((s['precio'] as num?)?.toInt() ?? 0))}",
+                              "\$${widget.serviciosSeleccionados.fold<int>(0, (sum, s) => sum + ((s['costo'] as num?)?.toInt() ?? 0))}",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -343,7 +347,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                                     style: TextStyle(color: Colors.grey),
                                   ),
                                   Text(
-                                    "\$${servicio['precio']}",
+                                    "\$${servicio['costo']}",
                                     style: TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.w500,

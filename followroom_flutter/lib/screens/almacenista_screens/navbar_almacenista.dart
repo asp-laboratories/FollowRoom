@@ -58,13 +58,25 @@ class _AlmacenState extends State<Almacen> {
 
   final AmbientLight _cantidadLuz = AmbientLight();
   void _checaLuz() async {
-    double? nivelLuz = await _cantidadLuz.currentAmbientLight();
-    print("hay un total de: $nivelLuz");
-    if (nivelLuz! < 5 && !_taAbiertoDialogo) {
+    double lectura = 100.0;
+
+    StreamSubscription<double> subscriptionTemporal = _cantidadLuz.ambientLightStream.listen((luz) {
+      lectura = luz;
+    }); 
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    subscriptionTemporal.cancel();
+
+    print("hay un total de: $lectura");
+
+
+    if (lectura < 2.5 && !_taAbiertoDialogo) {
       _mostrarAlerata();
     }
   }
 
+  bool _linternaPrendida = false;
   void _mostrarAlerata() {
     _taAbiertoDialogo = true;
     showDialog(
@@ -84,7 +96,10 @@ class _AlmacenState extends State<Almacen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Ta bien"),
           ),
-          TextButton(onPressed: _prenderLinterna, child: const Text("Ta bien")),
+          TextButton(
+            onPressed: _prenderLinterna,
+            child: Text(_linternaPrendida ? "Apagar linterna": "Prender lintenrna"),
+          ),
         ],
       ),
     ).then((_) {
@@ -92,16 +107,19 @@ class _AlmacenState extends State<Almacen> {
     });
   }
 
-  bool _linternaPrendida = false;
   Future<void> _prenderLinterna() async {
     try {
       bool litnera = await TorchLight.isTorchAvailable();
       if (litnera && !_linternaPrendida) {
         await TorchLight.enableTorch();
-        _linternaPrendida = true;
+        setState(() {
+          _linternaPrendida = true;
+        });
       } else if (_linternaPrendida) {
         await TorchLight.disableTorch();
-        _linternaPrendida = false;
+        setState(() {
+          _linternaPrendida = false;
+        });
       } else {
         print("Literna no disponible");
       }

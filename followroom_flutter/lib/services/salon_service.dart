@@ -9,9 +9,13 @@ class SalonService {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
       final response = await dio.get('/salon/');
-      if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+          if (response.statusCode == 200) {
+      List<dynamic> data = response.data;
+      return data.map((item) {
+        final map = Map<String, dynamic>.from(item);
+        map['id'] = int.parse(map['id'].toString());
+        return map;
+      }).toList();
       } else {
         throw Exception('Error al cargar salones');
       }

@@ -28,6 +28,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   Future<void> cargarDatos() async {
     await Future.delayed(const Duration(seconds: 1));
 
+    if(!mounted) return;
+
     setState(() {
       mobiliario = [
         {
