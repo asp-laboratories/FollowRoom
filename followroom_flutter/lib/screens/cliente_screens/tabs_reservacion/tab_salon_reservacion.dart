@@ -30,7 +30,12 @@ class _TabSalonState extends State<TabSalon> {
   late Future<List<Map<String, dynamic>>> _salones;
 
   Map<String, dynamic>? getMontajeDelSalon(int salonId) {
-    return widget.montajesPorSalon[salonId.toString()];
+    if (widget.salonSeleccionado != null && widget.salonSeleccionado!['id'] == salonId) {
+      if (widget.montajesPorSalon.isNotEmpty) {
+        return widget.montajesPorSalon;
+      }
+    }
+    return null;
   }
 
   @override

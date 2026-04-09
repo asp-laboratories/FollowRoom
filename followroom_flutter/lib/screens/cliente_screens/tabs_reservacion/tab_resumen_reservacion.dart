@@ -10,6 +10,10 @@ class TabResumen extends StatefulWidget {
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
   final List<Map<String, dynamic>> mobiliariosSeleccionados;
+  final List<Map<String, dynamic>>? mobiliariosPaquete;
+  final List<Map<String, dynamic>>? serviciosPaquete;
+  final Map<String, dynamic>? datosPaquete;
+  final List<Map<String, dynamic>>? equipamientosPaquete;
 
   const TabResumen({
     super.key,
@@ -20,6 +24,10 @@ class TabResumen extends StatefulWidget {
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
     required this.mobiliariosSeleccionados,
+    this.mobiliariosPaquete,
+    this.datosPaquete,
+    this.serviciosPaquete,
+    this.equipamientosPaquete,
   });
 
   @override
@@ -43,6 +51,20 @@ class _TabResumenState extends State<TabResumen> {
         ),
       ),
     );
+  }
+
+  bool get _paqueteOriginal {
+    if (widget.datosPaquete == null || widget.datosPaquete!.isEmpty) {
+      return false;
+    }
+    if (widget.salonSeleccionado == null) return false;
+
+    final montajeOriginal = widget.datosPaquete!['montaje'];
+    if (montajeOriginal == null) return false;
+
+    final idSalon = montajeOriginal['salon']['id'];
+
+    return idSalon == widget.salonSeleccionado!['id'];
   }
 
   @override
@@ -97,7 +119,7 @@ class _TabResumenState extends State<TabResumen> {
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Asistentes:",
-                      widget.datosReservacion['estimaAsistentes'] ?? '0',
+                      widget.datosReservacion['estimaAsistentes']?.toString() ?? '0',
                     ),
                   ],
                 ),
@@ -185,6 +207,18 @@ class _TabResumenState extends State<TabResumen> {
                       ),
                     ),
                     SizedBox(height: 8),
+
+                    if (_paqueteOriginal) ...[
+                      _buildLabelValue(
+                        "Paquete Base: ",
+                        widget.datosPaquete!['nombreEvento'] ?? 'Plantilla',
+                      ),
+                      _buildLabelValue(
+                        "Precio del Paquete: ",
+                        "\$${widget.datosPaquete!['subtotal'] ?? '0.0'}",
+                      ),
+                    ],
+
                     if (widget.salonSeleccionado == null)
                       Text("Ningún salón seleccionado")
                     else ...[
@@ -192,14 +226,17 @@ class _TabResumenState extends State<TabResumen> {
                         "Salón:",
                         widget.salonSeleccionado!['nombre'].toString(),
                       ),
-                      _buildLabelValue(
-                        "Precio:",
-                        "\$${widget.salonSeleccionado?['costo']}",
-                      ),
+
+                      if (!_paqueteOriginal)
+                        _buildLabelValue(
+                          "Precio:",
+                          "\$${widget.salonSeleccionado?['costo']}",
+                        ),
+
                       _buildLabelValue(
                         "Montaje:",
-                        widget.montajesPorSalon[widget
-                                .salonSeleccionado!['id'].toString()]?['nombre'] ??
+                        widget.montajesPorSalon[widget.salonSeleccionado!['id']
+                                .toString()]?['nombre'] ??
                             'No seleccionado',
                       ),
                     ],
@@ -269,8 +306,52 @@ class _TabResumenState extends State<TabResumen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
+
+          if (widget.serviciosPaquete != null &&
+              widget.serviciosPaquete!.isNotEmpty) ...[
+            Text(
+              "Incluidos en el paquete: ",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green[700],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ...widget.serviciosPaquete!.map((servicio) {
+              final nombre = servicio['servicio']?['nombre'] ?? 'Servicio';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- $nombre",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "Incluido",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            Divider(height: 16),
+            Text(
+              "Servicios elegidos:",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
+
           if (widget.serviciosSeleccionados.isEmpty)
-            Text("Sin servicios", style: TextStyle(fontSize: 12))
+            Text("Sin servicios elegidos", style: TextStyle(fontSize: 12))
           else
             ...widget.serviciosSeleccionados.map(
               (s) => Padding(
@@ -303,7 +384,7 @@ class _TabResumenState extends State<TabResumen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Total:",
+                  "Total elegidos:",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
@@ -335,8 +416,54 @@ class _TabResumenState extends State<TabResumen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
+
+          if (widget.equipamientosPaquete != null &&
+              widget.equipamientosPaquete!.isNotEmpty) ...[
+            Text(
+              "Equipos incluidos en el paquete: ",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green[700],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ...widget.equipamientosPaquete!.map((equipo) {
+              final nombre =
+                  equipo['equipamiento']?['nombre'] ?? 'Equipamiento';
+              final cantidad = equipo['cantidad'] ?? 1;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- $nombre (x$cantidad)",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "Incluido",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            Divider(height: 16),
+            Text(
+              "Equipamientos elegidos",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
+
           if (widget.equipamientosSeleccionados.isEmpty)
-            Text("Sin equipos", style: TextStyle(fontSize: 12))
+            Text("Sin equipos elegidos", style: TextStyle(fontSize: 12))
           else
             ...widget.equipamientosSeleccionados.map(
               (e) => Padding(
@@ -369,7 +496,7 @@ class _TabResumenState extends State<TabResumen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Total:",
+                  "Total elegidos:",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
@@ -401,9 +528,54 @@ class _TabResumenState extends State<TabResumen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
+
+          if (widget.mobiliariosPaquete != null &&
+              widget.mobiliariosPaquete!.isNotEmpty) ...[
+            Text(
+              "Mobiliarios incluidos en el paquete: ",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green[700],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ...widget.mobiliariosPaquete!.map((mobi) {
+              final nombre = mobi['mobiliario']?['nombre'] ?? 'Mobiliario';
+              final cantidad = mobi['cantidad'] ?? 1;
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- $nombre (x$cantidad)",
+                        style: TextStyle(
+                          fontSize: 12,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "Incluido",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            Divider(height: 16),
+            Text("Mobiliarios elegidos"),
+          ],
+
           if (widget.mobiliariosSeleccionados.isEmpty)
             Text(
-              "No se han seleccionado mobiliarios",
+              "Mobiliarios no elegidos",
               style: TextStyle(fontSize: 12),
             )
           else
@@ -438,7 +610,7 @@ class _TabResumenState extends State<TabResumen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Total",
+                  "Total elegidos",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(

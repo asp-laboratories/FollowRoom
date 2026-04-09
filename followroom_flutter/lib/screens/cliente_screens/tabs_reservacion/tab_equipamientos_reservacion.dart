@@ -8,11 +8,13 @@ import 'dart:convert';
 class TabEquipamientosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onEquipamientosChanged;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
+  final List<Map<String, dynamic>>? equipamientosPaquete;
 
   const TabEquipamientosReservacion({
     super.key,
     required this.onEquipamientosChanged,
     required this.equipamientosSeleccionados,
+    this.equipamientosPaquete,
   });
 
   @override
@@ -188,6 +190,23 @@ class _TabEquipamientosReservacionState
     return found.first['cantidad'] as int;
   }
 
+  int totalInlcuidoPaquete(Map<String, dynamic> equipo) {
+    if (widget.equipamientosPaquete == null ||
+        widget.equipamientosPaquete!.isEmpty) {
+      return 0;
+    }
+
+    int total = 0;
+
+    for (var equip in widget.equipamientosPaquete!) {
+      final idEquipo = equip['equipamiento']?['id'];
+      if (idEquipo == equipo['id']) {
+        total += (equipo['cantidad'] as num?)?.toInt() ?? 1;
+      }
+    }
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -196,7 +215,9 @@ class _TabEquipamientosReservacionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+            if ((widget.equipamientosPaquete != null &&
+                    widget.equipamientosPaquete!.isNotEmpty) ||
+                widget.equipamientosSeleccionados.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
@@ -206,6 +227,49 @@ class _TabEquipamientosReservacionState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.equipamientosPaquete != null &&
+                          widget.equipamientosPaquete!.isNotEmpty) ...[
+                        Text(
+                          "Incluidos en el paquete:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...widget.equipamientosPaquete!.map((equipamiento) {
+                          final nombre =
+                              equipamiento['equipamiento']?['nombre'] ??
+                              'Equipo';
+                          final cantidad = equipamiento['cantidad'] ?? 1;
+
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    "- $nombre (x$cantidad)",
+                                    style: TextStyle(fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  "Incluido",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        Divider(height: 16),
+                      ],
                       Text(
                         "Equipamientos seleccionados",
                         style: TextStyle(
@@ -232,7 +296,7 @@ class _TabEquipamientosReservacionState
                                   ),
                                 ),
                                 Text(
-                                  "\$${(e['costo'] as int) * (e['cantidad'] as int)}",
+                                  "\$${(e['costo'] as num) * (e['cantidad'] as int)}",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -336,6 +400,8 @@ class _TabEquipamientosReservacionState
                 final equipamiento = equipamientosFiltrados[index];
                 final cantidad = getCantidad(equipamiento);
 
+                final equipoIncluido = totalInlcuidoPaquete(equipamiento);
+
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
@@ -364,6 +430,17 @@ class _TabEquipamientosReservacionState
                                     equipamiento['descripcion'],
                                     style: TextStyle(color: Colors.grey),
                                   ),
+
+                                  if (equipoIncluido > 0)
+                                    Text(
+                                      "Ya se incluyen $equipoIncluido en tu paquete",
+                                      style: TextStyle(
+                                        color: Colors.green[700],
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+
                                   Text(
                                     "\$${equipamiento['costo']} c/u - Stock: ${getCantidadDisponible(equipamiento)}",
                                     style: TextStyle(

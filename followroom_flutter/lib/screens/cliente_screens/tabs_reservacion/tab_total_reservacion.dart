@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class TabTotalReservacion extends StatefulWidget {
+  final Map<String, dynamic>? datosPaquete;
   final Map<String, dynamic> datosReservacion;
   final Map<String, String> datosCliente;
   final Map<String, dynamic>? salonSeleccionado;
@@ -21,6 +22,7 @@ class TabTotalReservacion extends StatefulWidget {
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
     required this.mobiliariosSeleccionados,
+    this.datosPaquete,
   });
 
   @override
@@ -31,6 +33,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
   final ReservacionService _servicioReservaciones = ReservacionService();
 
   Map<String, dynamic> _datosFinalesParaEnviar() {
+
     final List<Map> idsServicios = widget.serviciosSeleccionados
         .map((servicio) => {"id": int.parse(servicio['id'].toString())})
         .toList();
@@ -53,7 +56,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
         })
         .toList();
 
-    return {
+    final Map<String, dynamic> datosEnviar = {
       "nombre": widget.datosReservacion['nombre'],
       "descripEvento": widget.datosReservacion['descripEvento'],
       "estimaAsistentes": int.parse(
@@ -75,6 +78,30 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
         widget.datosReservacion['tipo_evento']['id'].toString(),
       ),
     };
+
+    if (_paqueteOriginal) {
+      datosEnviar['subtotal'] = _calcularSubtotal();
+      datosEnviar['es_paquete'] = true;
+    }
+
+    return datosEnviar;
+  }
+
+  bool get _paqueteOriginal {
+    if (widget.datosPaquete == null || widget.datosPaquete!.isEmpty) {
+      return false;
+    }
+
+    if (widget.salonSeleccionado == null) return false;
+
+    final montajeOg = widget.datosPaquete!['montaje'];
+    if (montajeOg == null) return false;
+
+    final idSalonOg = montajeOg['salon']['id'];
+
+    final idSalonAc = widget.salonSeleccionado!['id'];
+
+    return idSalonOg == idSalonAc;
   }
 
   void _registrarReservacion() async {
@@ -94,7 +121,13 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
   double _calcularSubtotal() {
     double total = 0;
 
-    if (widget.salonSeleccionado != null) {
+    if (_paqueteOriginal) {
+      total +=
+          double.tryParse(
+            widget.datosPaquete!['subtotal']?.toString() ?? '0',
+          ) ??
+          0;
+    } else if (widget.salonSeleccionado != null) {
       total += double.parse(widget.salonSeleccionado!['costo'].toString());
     }
 
@@ -149,12 +182,26 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                       ),
                     ),
                     SizedBox(height: 8),
-
-                    if (widget.salonSeleccionado != null) ...[
+                    if (_paqueteOriginal) ...[
+                      _buildPriceRow(
+                        "Precio paquete: ${widget.datosPaquete!['nombreEvento'] ?? 'Plantilla'}",
+                        "\$${widget.datosPaquete!['subtotal'] ?? '0.00'}",
+                      ),
+                    ] else if (widget.salonSeleccionado != null) ...[
                       _buildPriceRow(
                         "Salón: ${widget.salonSeleccionado!['nombre']}",
                         "\$${widget.salonSeleccionado!['costo']}",
                       ),
+                      if (widget.datosPaquete != null &&
+                          widget.datosPaquete!.isNotEmpty)
+                        Text(
+                          "* Se ha modificado el salon del paquete orignial. Se aplicaran los precios bases individuales. *",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.orange,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                     ],
 
                     if (widget.mobiliariosSeleccionados.isNotEmpty) ...[

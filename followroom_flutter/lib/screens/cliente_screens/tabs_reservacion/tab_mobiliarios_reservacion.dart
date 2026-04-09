@@ -7,6 +7,7 @@ import 'package:followroom_flutter/services/mobiliario_service.dart';
 class TabMobiliariosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onMobiliariosChanged;
   final List<Map<String, dynamic>> mobiliariosSeleccionados;
+  final List<Map<String, dynamic>>? mobiliariosPaquete;
   final Map<String, dynamic>? salon;
 
   const TabMobiliariosReservacion({
@@ -14,6 +15,7 @@ class TabMobiliariosReservacion extends StatefulWidget {
     required this.onMobiliariosChanged,
     required this.mobiliariosSeleccionados,
     required this.salon,
+    this.mobiliariosPaquete,
   });
 
   @override
@@ -141,6 +143,24 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
         );
   }
 
+  int totalInlcuidosPaquete(Map<String, dynamic> mobiliario) {
+    if (widget.mobiliariosPaquete == null ||
+        widget.mobiliariosPaquete!.isEmpty) {
+      return 0;
+    }
+
+    int total = 0;
+
+    for (var mob in widget.mobiliariosPaquete!) {
+      final mobiliarioPaquete = mob['mobiliario']?['id'];
+      if (mobiliarioPaquete == mobiliario['id']) {
+        total += (mob['cantidad'] as num?)?.toInt() ?? 1;
+      }
+    }
+
+    return total;
+  }
+
   int getCantidad(Map<String, dynamic> mobiliario) {
     final found = widget.mobiliariosSeleccionados.where(
       (e) => e['id'] == mobiliario['id'],
@@ -157,7 +177,9 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
+            if ((widget.mobiliariosPaquete != null &&
+                    widget.mobiliariosPaquete!.isNotEmpty) ||
+                widget.mobiliariosSeleccionados.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
@@ -167,6 +189,48 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.mobiliariosPaquete != null &&
+                          widget.mobiliariosPaquete!.isNotEmpty) ...[
+                        Text(
+                          "Mobiliario incluido en el paquete:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...widget.mobiliariosPaquete!.map((mob) {
+                          final nombre =
+                              mob['mobiliario']?['nombre'] ?? 'Mobiliario';
+
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    "- $nombre (x${mob['cantidad']})",
+                                    style: TextStyle(fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  "Incluido",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        Divider(height: 16),
+                      ],
+
                       Text(
                         "Mobiliarios seleccionados",
                         style: TextStyle(
@@ -209,7 +273,7 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Total:",
+                              "Total Seleccionados:",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -296,6 +360,7 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
               itemBuilder: (context, index) {
                 final mobiliario = mobiliariosFiltrados[index];
                 final cantidad = getCantidad(mobiliario);
+                final mobiliarioInlcuido = totalInlcuidosPaquete(mobiliario);
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
@@ -320,7 +385,6 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
                                       color: AppColores.foreground,
                                     ),
                                   ),
-                                  // Se tiene q modificar para mostrar mas lo de las caracteristicas
                                   Text(
                                     mobiliario['descripcion'],
                                     style: TextStyle(color: Colors.grey),
@@ -345,6 +409,21 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
                                         ),
                                     ],
                                   ),
+
+                                  if (mobiliarioInlcuido > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      child: Text(
+                                        "El paquete incluye $mobiliarioInlcuido de este mobiliario",
+                                        style: TextStyle(
+                                          color: Colors.green[700],
+                                          fontStyle: FontStyle.italic,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
 
                                   Text(
                                     "\$${mobiliario['costo']} c/u - Stock: ${getCantidadDisponible(mobiliario)}",

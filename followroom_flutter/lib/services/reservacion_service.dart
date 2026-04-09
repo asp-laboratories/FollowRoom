@@ -69,4 +69,23 @@ class ReservacionService {
 
   }
 
+  Future<List<Map<String, dynamic>>> getPaquetes() async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/lista-paquetes/');
+      if (response.statusCode == 200){
+        List<dynamic> data = response.data;
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception("Error al cargar los paquetes");
+      }
+    }
+    catch (e) {
+      print("Error al cargar paquetes: $e");
+      throw Exception('Error al cargar los paquetes');
+    }
+
+  }
+
 }

@@ -9,11 +9,13 @@ import 'package:followroom_flutter/services/ip_config.dart';
 class TabServiciosReservacion extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onServiciosChanged;
   final List<Map<String, dynamic>> serviciosSeleccionados;
+  final List<Map<String, dynamic>>? serviciosPaquete;
 
   const TabServiciosReservacion({
     super.key,
     required this.onServiciosChanged,
     required this.serviciosSeleccionados,
+    this.serviciosPaquete,
   });
 
   @override
@@ -161,6 +163,16 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
     widget.onServiciosChanged(nuevaLista);
   }
 
+  bool incluidoPaquete(Map<String, dynamic> servicio) {
+    if (widget.serviciosPaquete == null || widget.serviciosPaquete!.isEmpty) {
+      return false;
+    }
+    return widget.serviciosPaquete!.any((serv) {
+      final idServicioPaquete = serv['servicio']?['id'];
+      return idServicioPaquete == servicio['id'];
+    });
+  }
+
   bool isSelected(Map<String, dynamic> servicio) {
     return widget.serviciosSeleccionados.any((s) => s['id'] == servicio['id']);
   }
@@ -173,7 +185,9 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.serviciosSeleccionados.isNotEmpty) ...[
+            if ((widget.serviciosPaquete != null &&
+                    widget.serviciosPaquete!.isNotEmpty) ||
+                widget.serviciosSeleccionados.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
@@ -183,6 +197,47 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.serviciosPaquete != null &&
+                          widget.serviciosPaquete!.isNotEmpty) ...[
+                        Text(
+                          "Incluidos en el paquete:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...widget.serviciosPaquete!.map((servicio) {
+                          final nombre =
+                              servicio['servicio']?['nombre'] ?? 'Servicio';
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    "- $nombre",
+                                    style: TextStyle(fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  "Incluido",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        Divider(height: 16),
+                      ],
+
                       Text(
                         "Servicios seleccionados (${widget.serviciosSeleccionados.length})",
                         style: TextStyle(
@@ -311,7 +366,8 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
               itemCount: serviciosFiltrados.length,
               itemBuilder: (context, index) {
                 final servicio = serviciosFiltrados[index];
-                final seleccionado = isSelected(servicio);
+                final servicioIncluido = incluidoPaquete(servicio);
+                final seleccionado = isSelected(servicio) || servicioIncluido;
 
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
@@ -320,15 +376,21 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => toggleServicio(servicio),
+                      onTap: servicioIncluido
+                          ? null
+                          : () => toggleServicio(servicio),
                       child: Padding(
                         padding: EdgeInsets.all(12),
                         child: Row(
                           children: [
                             Checkbox(
                               value: seleccionado,
-                              onChanged: (_) => toggleServicio(servicio),
-                              activeColor: AppColores.primary,
+                              onChanged: servicioIncluido
+                                  ? null
+                                  : (_) => toggleServicio(servicio),
+                              activeColor: servicioIncluido
+                                  ? Colors.green[700]
+                                  : AppColores.primary,
                             ),
                             Expanded(
                               child: Column(
@@ -339,15 +401,21 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: AppColores.foreground,
+                                      color: servicioIncluido
+                                          ? Colors.grey[700]
+                                          : AppColores.foreground,
                                     ),
                                   ),
                                   Text(
-                                    servicio['descripcion'],
+                                    servicioIncluido
+                                        ? "Ya incluido en tu paquete"
+                                        : servicio['descripcion'],
                                     style: TextStyle(color: Colors.grey),
                                   ),
                                   Text(
-                                    "\$${servicio['costo']}",
+                                    servicioIncluido
+                                        ? "Inlcuido en paquete"
+                                        : "\$${servicio['costo']}",
                                     style: TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.w500,
@@ -363,7 +431,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
                               ),
                               decoration: BoxDecoration(
                                 color: AppColores.primary.withValues(
-                                  alpha: 0.1,
+                                  alpha: servicioIncluido ? 0.05 : 0.1,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),

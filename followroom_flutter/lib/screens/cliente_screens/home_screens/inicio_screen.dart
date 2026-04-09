@@ -6,6 +6,7 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -15,40 +16,34 @@ class Reservacion extends StatefulWidget {
 }
 
 class _ReservacionState extends State<Reservacion> {
-  final List<Map<String, dynamic>> paquetesDB = [
-    {
-      'id': 1,
-      'nombre': 'Paquete Birthday',
-      'descripcion': 'Festeja tu cumpleaños',
-      'precio': 1500,
-      'icono': Icons.celebration,
-      'color': Colors.blue,
-    },
-    {
-      'id': 2,
-      'nombre': 'Paquete Corporativo',
-      'descripcion': 'Reuniones y conferencias',
-      'precio': 2500,
-      'icono': Icons.business,
-      'color': Colors.purple,
-    },
-    {
-      'id': 3,
-      'nombre': 'Paquete Boda',
-      'descripcion': 'El día más especial',
-      'precio': 5000,
-      'icono': Icons.groups,
-      'color': Colors.orange,
-    },
-    {
-      'id': 4,
-      'nombre': 'Paquete Graduación',
-      'descripcion': 'Celebra tu logro',
-      'precio': 3000,
-      'icono': Icons.school,
-      'color': Colors.green,
-    },
-  ];
+  final ReservacionService _serivicoReservacion = ReservacionService();
+
+  List<Map<String, dynamic>> _paquetes = [];
+
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    if (!mounted) return;
+    Future.wait([_cargarPaquetes()]);
+    setState(() {
+      _cargando = false;
+    });
+  }
+
+  Future<void> _cargarPaquetes() async {
+    List<Map<String, dynamic>> paqueteObtenidos = await _serivicoReservacion
+        .getPaquetes();
+    if (!mounted) return;
+    setState(() {
+      _paquetes = paqueteObtenidos;
+    });
+  }
 
   final bool tieneReservacion = true;
 
@@ -222,35 +217,31 @@ class _ReservacionState extends State<Reservacion> {
             SizedBox(height: 24),
             CarouselSlider(
               options: CarouselOptions(height: 290.0),
-              items: paquetesDB.map((paquete) {
+              items: _paquetes.map((paquete) {
                 return Builder(
                   builder: (BuildContext context) {
                     return Container(
                       width: MediaQuery.of(context).size.width,
                       margin: EdgeInsets.symmetric(horizontal: 5.0),
                       decoration: BoxDecoration(
-                        color: (paquete['color'] as Color).withAlpha(51),
+                        color: Colors.green,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            paquete['icono'] as IconData,
-                            size: 40,
-                            color: paquete['color'] as Color,
-                          ),
+                          Icon(Icons.storage, color: Colors.blueGrey),
                           SizedBox(height: 8),
                           Text(
-                            paquete['nombre'] as String,
+                            paquete['nombreEvento'] as String,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(paquete['descripcion'] as String),
+                          Text(paquete['descripEvento'] as String),
                           Text(
-                            '\$${paquete['precio']}',
+                            '\$${paquete['total']}',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           ElevatedButton(
@@ -258,7 +249,9 @@ class _ReservacionState extends State<Reservacion> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ReservacionProceso(),
+                                  builder: (context) => ReservacionProceso(
+                                    datosReservacion: paquete,
+                                  ),
                                 ),
                               );
                             },

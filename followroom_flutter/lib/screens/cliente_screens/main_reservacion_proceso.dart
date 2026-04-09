@@ -11,7 +11,8 @@ import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_mobiliarios_reservacion.dart';
 
 class ReservacionProceso extends StatefulWidget {
-  const ReservacionProceso({super.key});
+  final Map<String, dynamic>? datosReservacion;
+  const ReservacionProceso({super.key, this.datosReservacion});
 
   @override
   State<ReservacionProceso> createState() => _ReservacionProcesoState();
@@ -23,14 +24,24 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
   Map<String, dynamic> montajesPorSalon = {};
   Map<String, dynamic>? salonSeleccionado;
   List<Map<String, dynamic>> serviciosSeleccionados = [];
+  List<Map<String, dynamic>> serviciosPaquete = [];
   List<Map<String, dynamic>> mobiliariosSeleccionados = [];
+  List<Map<String, dynamic>> mobiliariosPaquete = [];
   List<Map<String, dynamic>> equipamientosSeleccionados = [];
+  List<Map<String, dynamic>> equipamientosPaquete = [];
 
-  final TextEditingController _nombreEventoController = TextEditingController();
-  final TextEditingController _descripcionEventoController = TextEditingController();
+  // control de paquete
+  bool _paqueteOriginal = false;
+
+  // Datos de la reservacion
+  late TextEditingController _nombreEventoController;
+  final TextEditingController _descripcionEventoController =
+      TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _horaController = TextEditingController();
-  final TextEditingController _asistentesController = TextEditingController();
+  late TextEditingController _asistentesController;
+
+  // Datos del cliente
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _apellidoPaternoController =
       TextEditingController();
@@ -43,6 +54,43 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
   final TextEditingController _coloniaController = TextEditingController();
   final TextEditingController _calleController = TextEditingController();
   final TextEditingController _numeroController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    String nombreEvento =
+        widget.datosReservacion?['nombreEvento']?.toString() ?? '';
+    String asistentesIdeales =
+        widget.datosReservacion?['estimaAsistentes']?.toString() ?? '';
+
+    _nombreEventoController = TextEditingController(text: nombreEvento);
+    _asistentesController = TextEditingController(text: asistentesIdeales);
+
+    if (widget.datosReservacion != null) {
+      datosReservacion.addAll(widget.datosReservacion!);
+
+      if (widget.datosReservacion!['montaje'] != null) {
+        salonSeleccionado = widget.datosReservacion!['montaje']['salon'];
+        montajesPorSalon = widget.datosReservacion!['montaje']['tipo_montaje'];
+        mobiliariosPaquete = List<Map<String, dynamic>>.from(
+          widget.datosReservacion!['montaje']['montaje_mobiliario'],
+        );
+      }
+
+      if (widget.datosReservacion!['reserva_servicio'] != null) {
+        serviciosPaquete = List<Map<String, dynamic>>.from(
+          widget.datosReservacion!['reserva_servicio'],
+        );
+      }
+
+      if (widget.datosReservacion!['reserva_equipa'] != null) {
+        equipamientosPaquete = List<Map<String, dynamic>>.from(
+          widget.datosReservacion!['reserva_equipa'],
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -92,7 +140,78 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
   void actualizarSalon(Map<String, dynamic>? salon) {
     setState(() {
       salonSeleccionado = salon;
+
+      if (widget.datosReservacion != null && !_paqueteOriginal) {
+        final montajeOriginal = widget.datosReservacion!['montaje'];
+        if (montajeOriginal != null) {
+          final idSalonOg = montajeOriginal['salon']['id'];
+          if (salon != null && salon['id'] != idSalonOg) {
+            _deshacerPaquete();
+          }
+        }
+      }
     });
+  }
+
+  void _deshacerPaquete() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Se ha cambiado el salon del paquete. Los elementos del paquete se cobran individualmente.",
+        ),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 4),
+      ),
+    );
+
+    void incluirElementos(List<Map<String, dynamic>> listaSeleccionado, Map<String, dynamic> itemPaquete, bool tieneCantidad) {
+
+      final elemento = itemPaquete['mobiliario'] ?? itemPaquete['equipamiento'] ?? itemPaquete['servicio'];
+
+      if (elemento == null) return;
+
+      final id = elemento['id'];
+      final indice = listaSeleccionado.indexWhere((e) => e['id'] == id);
+
+      if (indice >= 0){
+        if (tieneCantidad) {
+          listaSeleccionado[indice]['cantidad'] = (listaSeleccionado[indice]['cantidad'] as int) + (itemPaquete['cantidad'] ?? 1);
+        }
+      } else {
+        Map<String, dynamic> nuevoItem = {
+          'id': id,
+          'nombre': elemento['nombre'],
+          'costo': double.tryParse(elemento['costo'].toString()) ?? 0.0,
+        };
+
+        if (tieneCantidad) {
+          nuevoItem['cantidad'] = itemPaquete['cantidad'] ?? 1;
+        } else {
+          nuevoItem['tipo'] = elemento ['tipo_servicio'] ?? 'sin tipo';
+        }
+
+        listaSeleccionado.add(nuevoItem);
+
+      }
+
+    }
+
+    for (var mob in mobiliariosPaquete) {
+      incluirElementos(mobiliariosSeleccionados, mob, true);
+    }
+    for (var equipo in equipamientosPaquete) {
+      incluirElementos(equipamientosSeleccionados, equipo, true);
+    }
+    for (var servicio in serviciosPaquete) {
+      incluirElementos(serviciosSeleccionados, servicio, false);
+    }
+
+    mobiliariosPaquete.clear();
+    serviciosPaquete.clear();
+    equipamientosPaquete.clear();
+
+    _paqueteOriginal = true;
+
   }
 
   void actualizarMobiliarios(List<Map<String, dynamic>> mobiliarios) {
@@ -186,14 +305,17 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               onMobiliariosChanged: actualizarMobiliarios,
               mobiliariosSeleccionados: mobiliariosSeleccionados,
               salon: salonSeleccionado,
+              mobiliariosPaquete: mobiliariosPaquete,
             ),
             TabServiciosReservacion(
               onServiciosChanged: actualizarServicios,
               serviciosSeleccionados: serviciosSeleccionados,
+              serviciosPaquete: serviciosPaquete,
             ),
             TabEquipamientosReservacion(
               onEquipamientosChanged: actualizarEquipamientos,
               equipamientosSeleccionados: equipamientosSeleccionados,
+              equipamientosPaquete: equipamientosPaquete,
             ),
             TabResumen(
               datosReservacion: datosReservacion,
@@ -203,6 +325,10 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
               mobiliariosSeleccionados: mobiliariosSeleccionados,
+              datosPaquete: widget.datosReservacion,
+              mobiliariosPaquete: mobiliariosPaquete,
+              equipamientosPaquete: equipamientosPaquete,
+              serviciosPaquete: serviciosPaquete,
             ),
             TabTotalReservacion(
               datosReservacion: datosReservacion,
@@ -212,6 +338,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
               mobiliariosSeleccionados: mobiliariosSeleccionados,
+              datosPaquete: widget.datosReservacion,
             ),
           ],
         ),
