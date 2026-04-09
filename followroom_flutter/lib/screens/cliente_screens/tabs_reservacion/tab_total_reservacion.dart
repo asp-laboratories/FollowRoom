@@ -9,6 +9,7 @@ class TabTotalReservacion extends StatefulWidget {
   final Map<int, String> montajesPorSalon;
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
+  final List<Map<String, dynamic>> mobiliariosSeleccionados;
 
   const TabTotalReservacion({
     super.key,
@@ -18,6 +19,7 @@ class TabTotalReservacion extends StatefulWidget {
     required this.montajesPorSalon,
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
+    required this.mobiliariosSeleccionados,
   });
 
   @override
@@ -41,6 +43,10 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
           (equipo['precio'] as int? ?? 0) * (equipo['cantidad'] as int? ?? 1);
     }
 
+    for (var mob in widget.mobiliariosSeleccionados) {
+      total += (mob['precio'] as int? ?? 0) * (mob['cantidad'] as int? ?? 1);
+    }
+
     return total;
   }
 
@@ -56,9 +62,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColores.background2,
-        ),
+        decoration: BoxDecoration(color: AppColores.background2),
         child: Column(
           children: [
             Padding(
@@ -72,17 +76,20 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                   children: [
                     Text(
                       "Desglose de Precios",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 8),
-        
+
                     if (widget.salonSeleccionado != null) ...[
                       _buildPriceRow(
                         "Salón: ${widget.salonSeleccionado!['nombre']}",
                         "\$${widget.salonSeleccionado!['precio']}",
                       ),
                     ],
-        
+
                     if (widget.serviciosSeleccionados.isNotEmpty) ...[
                       SizedBox(height: 8),
                       Text(
@@ -105,7 +112,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                         isBold: true,
                       ),
                     ],
-        
+
                     if (widget.equipamientosSeleccionados.isNotEmpty) ...[
                       SizedBox(height: 8),
                       Text(
@@ -128,9 +135,32 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                         isBold: true,
                       ),
                     ],
-        
+
+                    if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        "Mobiliarios:",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColores.foreground,
+                        ),
+                      ),
+                      ...widget.mobiliariosSeleccionados.map(
+                        (m) => _buildPriceRow(
+                          "- ${m['nombre']} (x${m['cantidad'] ?? 1})",
+                          "\$${((m['precio'] ?? 0) as int) * ((m['cantidad'] ?? 1) as int)}",
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      _buildPriceRow(
+                        "Subtotal Mobiliarios",
+                        "\$${_calcularSubtotalMobiliarios()}",
+                        isBold: true,
+                      ),
+                    ],
+
                     Divider(height: 24),
-        
+
                     _buildPriceRow(
                       "Subtotal",
                       "\$${_calcularSubtotal()}",
@@ -149,7 +179,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
@@ -161,7 +191,10 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                   children: [
                     Text(
                       "Información de Pago",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: 12),
                     Text(
@@ -205,7 +238,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
@@ -263,7 +296,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
-        
+
             SizedBox(height: 20),
           ],
         ),
@@ -283,6 +316,14 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
       0,
       (sum, e) =>
           sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+    );
+  }
+
+  int _calcularSubtotalMobiliarios() {
+    return widget.mobiliariosSeleccionados.fold<int>(
+      0,
+      (sum, m) =>
+          sum + (((m['precio'] ?? 0) as int) * ((m['cantidad'] ?? 1) as int)),
     );
   }
 

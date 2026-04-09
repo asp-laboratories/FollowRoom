@@ -10,7 +10,9 @@ import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_total_reservacion.dart';
 
 class ReservacionProceso extends StatefulWidget {
-  const ReservacionProceso({super.key});
+  final Map<String, dynamic>? paqueteSeleccionado;
+
+  const ReservacionProceso({super.key, this.paqueteSeleccionado});
 
   @override
   State<ReservacionProceso> createState() => _ReservacionProcesoState();
@@ -23,6 +25,54 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
   Map<String, dynamic>? salonSeleccionado;
   List<Map<String, dynamic>> serviciosSeleccionados = [];
   List<Map<String, dynamic>> equipamientosSeleccionados = [];
+  Map<int, List<Map<String, dynamic>>> mobiliariosPorSalon = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _precargarPaquete();
+  }
+
+  void _precargarPaquete() {
+    if (widget.paqueteSeleccionado == null) {
+      print("No hay paquete seleccionado");
+      return;
+    }
+
+    final paquete = widget.paqueteSeleccionado!;
+    print("Paquete recibido: $paquete");
+
+    if (paquete['servicios'] != null) {
+      serviciosSeleccionados = List<Map<String, dynamic>>.from(
+        paquete['servicios'],
+      );
+      print("Servicios precargados: $serviciosSeleccionados");
+    }
+
+    if (paquete['equipamentos'] != null) {
+      equipamientosSeleccionados = List<Map<String, dynamic>>.from(
+        paquete['equipamentos'],
+      );
+      print("Equipamentos precargados: $equipamientosSeleccionados");
+    }
+
+    if (paquete['descripEvento'] != null) {
+      datosReservacion['descripcion'] = paquete['descripEvento'];
+    }
+
+    if (paquete['salon_id'] != null && paquete['salon_nombre'] != null) {
+      salonSeleccionado = {
+        'id': paquete['salon_id'],
+        'nombre': paquete['salon_nombre'],
+        'precio': paquete['salon_precio'] ?? 0,
+        'capacidad': paquete['salon_capacidad'] ?? 0,
+      };
+      montajesPorSalon[paquete['montaje_id'] ?? 0] =
+          paquete['montaje_nombre'] ?? '';
+    }
+
+    setState(() {});
+  }
 
   final TextEditingController _nombreEventoController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
@@ -103,6 +153,20 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
     });
   }
 
+  void actualizarMobiliarios(
+    int salonId,
+    List<Map<String, dynamic>> mobiliarios,
+  ) {
+    setState(() {
+      mobiliariosPorSalon[salonId] = mobiliarios;
+    });
+  }
+
+  List<Map<String, dynamic>> get mobiliariosSeleccionados {
+    if (salonSeleccionado == null) return [];
+    return mobiliariosPorSalon[salonSeleccionado!['id']] ?? [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -165,6 +229,8 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               salonSeleccionado: salonSeleccionado,
               onMontajeSelected: actualizarMontaje,
               onSalonSelected: actualizarSalon,
+              mobiliariosPorSalon: mobiliariosPorSalon,
+              onMobiliariosChanged: actualizarMobiliarios,
             ),
             TabServiciosReservacion(
               onServiciosChanged: actualizarServicios,
@@ -181,6 +247,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               montajesPorSalon: montajesPorSalon,
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
+              mobiliariosSeleccionados: mobiliariosSeleccionados,
             ),
             TabTotalReservacion(
               datosReservacion: datosReservacion,
@@ -189,6 +256,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               montajesPorSalon: montajesPorSalon,
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
+              mobiliariosSeleccionados: mobiliariosSeleccionados,
             ),
           ],
         ),

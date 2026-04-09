@@ -1,23 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
+import 'package:followroom_flutter/services/montaje_service.dart';
 
-class NavigatorMontajeReservacion extends StatelessWidget {
+class NavigatorMontajeReservacion extends StatefulWidget {
   const NavigatorMontajeReservacion({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> montajes = [
-      {'nombre': 'Auditorio', 'capacidad': 100, 'icono': Icons.meeting_room},
-      {'nombre': 'Salón Ejecutivo', 'capacidad': 50, 'icono': Icons.business},
-      {
-        'nombre': 'Sala de Conferencias',
-        'capacidad': 30,
-        'icono': Icons.groups,
-      },
-      {'nombre': 'Terraza', 'capacidad': 80, 'icono': Icons.deck},
-      {'nombre': 'Salón Modular', 'capacidad': 120, 'icono': Icons.view_module},
-    ];
+  State<NavigatorMontajeReservacion> createState() =>
+      _NavigatorMontajeReservacionState();
+}
 
+class _NavigatorMontajeReservacionState
+    extends State<NavigatorMontajeReservacion> {
+  final MontajeService _montajeService = MontajeService();
+  List<Map<String, dynamic>> tiposMontaje = [];
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarTiposMontaje();
+  }
+
+  Future<void> _cargarTiposMontaje() async {
+    try {
+      final data = await _montajeService.getTipoMontaje();
+      setState(() {
+        tiposMontaje = data;
+        _cargando = false;
+      });
+    } catch (e) {
+      print('Error al cargar tipos de montaje: $e');
+      setState(() {
+        _cargando = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Seleccionar Montaje"),
@@ -25,35 +46,41 @@ class NavigatorMontajeReservacion extends StatelessWidget {
         foregroundColor: AppColores.foreground,
       ),
       backgroundColor: AppColores.background2,
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: montajes.length,
-        itemBuilder: (context, index) {
-          final montaje = montajes[index];
-          return Card(
-            margin: EdgeInsets.only(bottom: 12),
-            elevation: 2,
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: AppColores.primary.withValues(alpha: 0.1),
-                child: Icon(
-                  montaje['icono'] as IconData,
-                  color: AppColores.primary,
-                ),
-              ),
-              title: Text(
-                montaje['nombre'] as String,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("Capacidad: ${montaje['capacidad']} personas"),
-              trailing: Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.pop(context, montaje['nombre']);
+      body: _cargando
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: tiposMontaje.length,
+              itemBuilder: (context, index) {
+                final tipo = tiposMontaje[index];
+                return Card(
+                  margin: EdgeInsets.only(bottom: 12),
+                  elevation: 2,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColores.primary.withValues(
+                        alpha: 0.1,
+                      ),
+                      child: Icon(
+                        Icons.meeting_room,
+                        color: AppColores.primary,
+                      ),
+                    ),
+                    title: Text(
+                      tipo['nombre'] ?? 'Sin nombre',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.pop(context, {
+                        'nombre': tipo['nombre'],
+                        'id': tipo['id'],
+                      });
+                    },
+                  ),
+                );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }

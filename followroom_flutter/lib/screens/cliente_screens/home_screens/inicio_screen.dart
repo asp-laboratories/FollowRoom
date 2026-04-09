@@ -6,6 +6,7 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
+import 'package:followroom_flutter/services/paquete_service.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -15,40 +16,49 @@ class Reservacion extends StatefulWidget {
 }
 
 class _ReservacionState extends State<Reservacion> {
-  final List<Map<String, dynamic>> paquetesDB = [
-    {
-      'id': 1,
-      'nombre': 'Paquete Birthday',
-      'descripcion': 'Festeja tu cumpleaños',
-      'precio': 1500,
-      'icono': Icons.celebration,
-      'color': Colors.blue,
-    },
-    {
-      'id': 2,
-      'nombre': 'Paquete Corporativo',
-      'descripcion': 'Reuniones y conferencias',
-      'precio': 2500,
-      'icono': Icons.business,
-      'color': Colors.purple,
-    },
-    {
-      'id': 3,
-      'nombre': 'Paquete Boda',
-      'descripcion': 'El día más especial',
-      'precio': 5000,
-      'icono': Icons.groups,
-      'color': Colors.orange,
-    },
-    {
-      'id': 4,
-      'nombre': 'Paquete Graduación',
-      'descripcion': 'Celebra tu logro',
-      'precio': 3000,
-      'icono': Icons.school,
-      'color': Colors.green,
-    },
-  ];
+  final PaqueteService _paqueteService = PaqueteService();
+  List<Map<String, dynamic>> paquetesDB = [];
+  bool _cargandoPaquetes = true;
+  final Color _colorBase = Colors.blue;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPaquetes();
+  }
+
+  Future<void> _cargarPaquetes() async {
+    try {
+      final data = await _paqueteService.getPaquetes();
+      setState(() {
+        paquetesDB = data.map((item) {
+          final precio = int.tryParse(item['total']?.toString() ?? '0') ?? 0;
+          return {
+            'id': item['id'],
+            'nombre': item['nombre_paquete'] ?? 'Sin nombre',
+            'descripcion': item['descripEvento'] ?? 'Sin descripción',
+            'precio': precio,
+            'icono': Icons.card_giftcard,
+            'color': _colorBase,
+            'servicios': item['servicios'] ?? [],
+            'equipamentos': item['equipamentos'] ?? [],
+            'salon_id': item['salon_id'],
+            'salon_nombre': item['salon_nombre'],
+            'salon_precio': item['salon_precio'],
+            'salon_capacidad': item['salon_capacidad'],
+            'montaje_id': item['montaje_id'],
+            'montaje_nombre': item['montaje_nombre'],
+          };
+        }).toList();
+        _cargandoPaquetes = false;
+      });
+    } catch (e) {
+      print('Error al cargar paquetes: $e');
+      setState(() {
+        _cargandoPaquetes = false;
+      });
+    }
+  }
 
   final bool tieneReservacion = true;
 
@@ -255,10 +265,13 @@ class _ReservacionState extends State<Reservacion> {
                           ),
                           ElevatedButton(
                             onPressed: () {
+                              print("Paquete seleccionado: $paquete");
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ReservacionProceso(),
+                                  builder: (context) => ReservacionProceso(
+                                    paqueteSeleccionado: paquete,
+                                  ),
                                 ),
                               );
                             },

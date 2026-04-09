@@ -9,6 +9,7 @@ class TabResumen extends StatefulWidget {
   final Map<int, String> montajesPorSalon;
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
+  final List<Map<String, dynamic>> mobiliariosSeleccionados;
 
   const TabResumen({
     super.key,
@@ -18,6 +19,7 @@ class TabResumen extends StatefulWidget {
     required this.montajesPorSalon,
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
+    required this.mobiliariosSeleccionados,
   });
 
   @override
@@ -219,6 +221,8 @@ class _TabResumenState extends State<TabResumen> {
                         _buildServiciosContainer(),
                         SizedBox(height: 16),
                         _buildEquipamientosContainer(),
+                        SizedBox(height: 16),
+                        _buildMobiliariosContainer(),
                       ],
                     ),
                   );
@@ -232,7 +236,15 @@ class _TabResumenState extends State<TabResumen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _buildServiciosContainer()),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            _buildServiciosContainer(),
+                            SizedBox(height: 16),
+                            _buildMobiliariosContainer(),
+                          ],
+                        ),
+                      ),
                       SizedBox(width: 16),
                       Expanded(child: _buildEquipamientosContainer()),
                     ],
@@ -314,6 +326,58 @@ class _TabResumenState extends State<TabResumen> {
   }
 
   Widget _buildEquipamientosContainer() {
+    final List<Widget> equiposWidgets = [];
+
+    if (widget.equipamientosSeleccionados.isEmpty) {
+      equiposWidgets.add(Text("Sin equipos", style: TextStyle(fontSize: 12)));
+    } else {
+      for (var e in widget.equipamientosSeleccionados) {
+        equiposWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    "- ${e['nombre']} (x${e['cantidad']})",
+                    style: TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      equiposWidgets.add(Divider(height: 16));
+      equiposWidgets.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Total:",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            Text(
+              "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: AppColores.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -326,11 +390,30 @@ class _TabResumenState extends State<TabResumen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
-          if (widget.equipamientosSeleccionados.isEmpty)
-            Text("Sin equipos", style: TextStyle(fontSize: 12))
+          ...equiposWidgets,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobiliariosContainer() {
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Mobiliarios",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (widget.mobiliariosSeleccionados.isEmpty)
+            Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
           else
-            ...widget.equipamientosSeleccionados.map(
-              (e) => Padding(
+            ...widget.mobiliariosSeleccionados.map(
+              (m) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -338,13 +421,13 @@ class _TabResumenState extends State<TabResumen> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre']} (x${e['cantidad']})",
+                        "- ${m['nombre']} (x${m['cantidad']})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                      "\$${((m['precio'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1)}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -354,7 +437,7 @@ class _TabResumenState extends State<TabResumen> {
                 ),
               ),
             ),
-          if (widget.equipamientosSeleccionados.isNotEmpty) ...[
+          if (widget.mobiliariosSeleccionados.isNotEmpty) ...[
             Divider(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -364,7 +447,7 @@ class _TabResumenState extends State<TabResumen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${widget.equipamientosSeleccionados.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
+                  "\$${widget.mobiliariosSeleccionados.fold(0, (sum, m) => sum + (((m['precio'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1)))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
