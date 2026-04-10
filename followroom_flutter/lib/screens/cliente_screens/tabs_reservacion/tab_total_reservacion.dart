@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class TabTotalReservacion extends StatefulWidget {
   final Map<String, String> datosReservacion;
@@ -10,6 +11,7 @@ class TabTotalReservacion extends StatefulWidget {
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
   final List<Map<String, dynamic>> mobiliariosSeleccionados;
+  final VoidCallback? onReservacionEnviada;
 
   const TabTotalReservacion({
     super.key,
@@ -20,6 +22,7 @@ class TabTotalReservacion extends StatefulWidget {
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
     required this.mobiliariosSeleccionados,
+    this.onReservacionEnviada,
   });
 
   @override
@@ -31,20 +34,23 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
     int total = 0;
 
     if (widget.salonSeleccionado != null) {
-      total += widget.salonSeleccionado!['precio'] as int? ?? 0;
+      total += (widget.salonSeleccionado!['precio'] as num?)?.toInt() ?? 0;
     }
 
     for (var servicio in widget.serviciosSeleccionados) {
-      total += servicio['precio'] as int? ?? 0;
+      total += (servicio['precio'] as num?)?.toInt() ?? 0;
     }
 
     for (var equipo in widget.equipamientosSeleccionados) {
       total +=
-          (equipo['precio'] as int? ?? 0) * (equipo['cantidad'] as int? ?? 1);
+          ((equipo['precio'] as num?)?.toInt() ?? 0) *
+          ((equipo['cantidad'] as num?)?.toInt() ?? 1);
     }
 
     for (var mob in widget.mobiliariosSeleccionados) {
-      total += (mob['precio'] as int? ?? 0) * (mob['cantidad'] as int? ?? 1);
+      total +=
+          ((mob['precio'] as num?)?.toInt() ?? 0) *
+          ((mob['cantidad'] as num?)?.toInt() ?? 1);
     }
 
     return total;
@@ -56,6 +62,149 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
 
   int _calcularTotal() {
     return _calcularSubtotal() + _calcularIVA();
+  }
+
+  String? validarReservacion() {
+    // Validar datos del evento
+    if (widget.datosReservacion['nombre'] == null ||
+        widget.datosReservacion['nombre']!.isEmpty) {
+      return "El nombre del evento es requerido";
+    }
+    if (widget.datosReservacion['fecha'] == null ||
+        widget.datosReservacion['fecha']!.isEmpty) {
+      return "La fecha del evento es requerida";
+    }
+    if (widget.datosReservacion['horario'] == null ||
+        widget.datosReservacion['horario']!.isEmpty) {
+      return "El horario del evento es requerido";
+    }
+    if (widget.datosReservacion['tipo'] == null ||
+        widget.datosReservacion['tipo']!.isEmpty) {
+      return "El tipo de evento es requerido";
+    }
+    if (widget.datosReservacion['asistentes'] == null ||
+        widget.datosReservacion['asistentes']!.isEmpty) {
+      return "El número de asistentes es requerido";
+    }
+
+    // Validar fecha no sea anterior a hoy
+    final fechaStr = widget.datosReservacion['fecha'];
+    if (fechaStr != null && fechaStr.isNotEmpty) {
+      try {
+        DateTime fechaEvento;
+        if (fechaStr.contains('/')) {
+          final partes = fechaStr.split('/');
+          if (partes.length == 3) {
+            final day = int.parse(partes[0]);
+            final month = int.parse(partes[1]);
+            final year = int.parse(partes[2]);
+            fechaEvento = DateTime(year, month, day);
+          } else {
+            return "Formato de fecha inválido";
+          }
+        } else {
+          fechaEvento = DateTime.parse(fechaStr);
+        }
+        final fechaActual = DateTime.now();
+        final fechaHoy = DateTime(
+          fechaActual.year,
+          fechaActual.month,
+          fechaActual.day,
+        );
+        if (fechaEvento.isBefore(fechaHoy)) {
+          return "No se puede seleccionar una fecha anterior a hoy";
+        }
+      } catch (e) {
+        return "Formato de fecha inválido";
+      }
+    }
+
+    // Validar datos del cliente
+    if (widget.datosCliente['nombre'] == null ||
+        widget.datosCliente['nombre']!.isEmpty) {
+      return "El nombre del cliente es requerido";
+    }
+    if (widget.datosCliente['apellidoPaterno'] == null ||
+        widget.datosCliente['apellidoPaterno']!.isEmpty) {
+      return "El apellido paterno del cliente es requerido";
+    }
+    if (widget.datosCliente['telefono'] == null ||
+        widget.datosCliente['telefono']!.isEmpty) {
+      return "El teléfono del cliente es requerido";
+    }
+
+    // Validar salón seleccionado
+    if (widget.salonSeleccionado == null) {
+      return "Debe seleccionar un salón";
+    }
+
+    // Validar montaje seleccionado
+    final salonId = widget.salonSeleccionado!['id'];
+    final montaje = widget.montajesPorSalon[salonId];
+    if (montaje == null || montaje.isEmpty) {
+      return "Debe seleccionar un montaje";
+    }
+
+    // Validar mobiliarios seleccionados
+    if (widget.mobiliariosSeleccionados.isEmpty) {
+      return "Debe seleccionar al menos un mobiliario";
+    }
+
+    return null; // Todo válido
+  }
+
+  Future<void> _enviarReservacion() async {
+    final error = validarReservacion();
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(child: CircularProgressIndicator()),
+    );
+
+    final salonId = widget.salonSeleccionado!['id'];
+    final montagemId = widget.montajesPorSalon[salonId] != null
+        ? salonId
+        : null;
+
+    final service = ReservacionService();
+    final success = await service.crearReservacion(
+      datosReservacion: widget.datosReservacion,
+      datosCliente: widget.datosCliente,
+      salonId: salonId,
+      montageId: montagemId,
+      servicios: widget.serviciosSeleccionados,
+      equipamentos: widget.equipamientosSeleccionados,
+      mobiliarios: widget.mobiliariosSeleccionados,
+    );
+
+    if (mounted) {
+      Navigator.pop(context); // Quitar loading
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Reservación enviada exitosamente"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onReservacionEnviada?.call();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error al enviar la reservación"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -125,7 +274,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                       ...widget.equipamientosSeleccionados.map(
                         (e) => _buildPriceRow(
                           "- ${e['nombre']} (x${e['cantidad'] ?? 1})",
-                          "\$${((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)}",
+                          "\$${((e['precio'] as num?)?.toInt() ?? 0) * ((e['cantidad'] as num?)?.toInt() ?? 1)}",
                         ),
                       ),
                       SizedBox(height: 4),
@@ -148,7 +297,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                       ...widget.mobiliariosSeleccionados.map(
                         (m) => _buildPriceRow(
                           "- ${m['nombre']} (x${m['cantidad'] ?? 1})",
-                          "\$${((m['precio'] ?? 0) as int) * ((m['cantidad'] ?? 1) as int)}",
+                          "\$${((m['precio'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1)}",
                         ),
                       ),
                       SizedBox(height: 4),
@@ -245,6 +394,16 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    final error = validarReservacion();
+                    if (error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -262,14 +421,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                           ElevatedButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "Reservación confirmada exitosamente",
-                                  ),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              _enviarReservacion();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColores.primary,
@@ -307,7 +459,7 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
   int _calcularSubtotalServicios() {
     return widget.serviciosSeleccionados.fold<int>(
       0,
-      (sum, s) => sum + ((s['precio'] ?? 0) as int),
+      (sum, s) => sum + ((s['precio'] as num?)?.toInt() ?? 0),
     );
   }
 
@@ -315,7 +467,9 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
     return widget.equipamientosSeleccionados.fold<int>(
       0,
       (sum, e) =>
-          sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+          sum +
+          (((e['precio'] as num?)?.toInt() ?? 0) *
+              ((e['cantidad'] as num?)?.toInt() ?? 1)),
     );
   }
 
@@ -323,7 +477,9 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
     return widget.mobiliariosSeleccionados.fold<int>(
       0,
       (sum, m) =>
-          sum + (((m['precio'] ?? 0) as int) * ((m['cantidad'] ?? 1) as int)),
+          sum +
+          (((m['precio'] as num?)?.toInt() ?? 0) *
+              ((m['cantidad'] as num?)?.toInt() ?? 1)),
     );
   }
 

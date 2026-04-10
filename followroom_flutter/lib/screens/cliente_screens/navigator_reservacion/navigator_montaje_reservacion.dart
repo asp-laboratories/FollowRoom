@@ -13,24 +13,24 @@ class NavigatorMontajeReservacion extends StatefulWidget {
 class _NavigatorMontajeReservacionState
     extends State<NavigatorMontajeReservacion> {
   final MontajeService _montajeService = MontajeService();
-  List<Map<String, dynamic>> tiposMontaje = [];
+  List<Map<String, dynamic>> montajes = [];
   bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarTiposMontaje();
+    _cargarMontajes();
   }
 
-  Future<void> _cargarTiposMontaje() async {
+  Future<void> _cargarMontajes() async {
     try {
-      final data = await _montajeService.getTipoMontaje();
+      final data = await _montajeService.getMontajes();
       setState(() {
-        tiposMontaje = data;
+        montajes = data;
         _cargando = false;
       });
     } catch (e) {
-      print('Error al cargar tipos de montaje: $e');
+      print('Error al cargar montajes: $e');
       setState(() {
         _cargando = false;
       });
@@ -50,9 +50,11 @@ class _NavigatorMontajeReservacionState
           ? Center(child: CircularProgressIndicator())
           : ListView.builder(
               padding: EdgeInsets.all(16),
-              itemCount: tiposMontaje.length,
+              itemCount: montajes.length,
               itemBuilder: (context, index) {
-                final tipo = tiposMontaje[index];
+                final tipo = montajes[index];
+                final mobiliarios = tipo['montaje_mobiliario'] as List? ?? [];
+
                 return Card(
                   margin: EdgeInsets.only(bottom: 12),
                   elevation: 2,
@@ -67,14 +69,23 @@ class _NavigatorMontajeReservacionState
                       ),
                     ),
                     title: Text(
-                      tipo['nombre'] ?? 'Sin nombre',
+                      tipo['tipo_montaje_nombre'] ??
+                          tipo['nombre'] ??
+                          'Sin nombre',
                       style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      mobiliarios.isNotEmpty
+                          ? "${mobiliarios.length} mobiliarios sugeridos"
+                          : "Sin mobiliarios",
+                      style: TextStyle(fontSize: 12),
                     ),
                     trailing: Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       Navigator.pop(context, {
-                        'nombre': tipo['nombre'],
+                        'nombre': tipo['tipo_montaje_nombre'] ?? tipo['nombre'],
                         'id': tipo['id'],
+                        'mobiliarios_sugeridos': mobiliarios,
                       });
                     },
                   ),

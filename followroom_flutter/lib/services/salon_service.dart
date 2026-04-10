@@ -42,4 +42,30 @@ class SalonService {
       rethrow;
     }
   }
+
+  Future<List<Map<String, dynamic>>> getSalonesDisponibles(String fecha) async {
+    try {
+      String fechaFormateada = fecha;
+      if (fecha.contains('/')) {
+        final partes = fecha.split('/');
+        if (partes.length == 3) {
+          fechaFormateada = '${partes[2]}-${partes[1]}-${partes[0]}';
+        }
+      }
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/disponibilidad-salones/?fecha=$fechaFormateada',
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data;
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception('Error al cargar disponibilidad de salones');
+      }
+    } catch (e) {
+      print('Error al cargar disponibilidad: $e');
+      throw Exception('Error al cargar disponibilidad de salones');
+    }
+  }
 }

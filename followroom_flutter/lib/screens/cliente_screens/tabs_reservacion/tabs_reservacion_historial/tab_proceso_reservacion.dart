@@ -2,30 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/services/historial_service.dart';
 
-class TabProcesoReservacion extends StatelessWidget {
+class TabProcesoReservacion extends StatefulWidget {
   const TabProcesoReservacion({super.key});
 
   @override
+  State<TabProcesoReservacion> createState() => _TabProcesoReservacionState();
+}
+
+class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
+  final HistorialService _historialService = HistorialService();
+  List<Map<String, dynamic>> _reservaciones = [];
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
+
+  Future<void> _cargarReservaciones() async {
+    try {
+      final datos = await _historialService.getMisReservaciones();
+      if (mounted) {
+        setState(() {
+          _reservaciones = datos.where((r) {
+            final estado = r['estado_codigo'] ?? '';
+            return estado == 'SOLIC' || estado == 'PEN' || estado == 'CONF';
+          }).toList();
+          _cargando = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargando = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> reservaciones = [
-      {
-        'id': '4',
-        'nombre': 'Boda Rodríguez',
-        'salon': 'Salón Premium',
-        'fecha': '25 de Marzo 2026',
-        'hora': '16:00 - 22:00',
-        'precio': 25000,
-      },
-      {
-        'id': '5',
-        'nombre': 'Exposición Arte',
-        'salon': 'Salón Imperial',
-        'fecha': '28 de Marzo 2026',
-        'hora': '08:00 - 17:00',
-        'precio': 18000,
-      },
-    ];
+    if (_cargando) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_reservaciones.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No tienes reservaciones en proceso',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       child: Container(
@@ -34,9 +70,9 @@ class TabProcesoReservacion extends StatelessWidget {
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           padding: EdgeInsets.all(16),
-          itemCount: reservaciones.length,
+          itemCount: _reservaciones.length,
           itemBuilder: (context, index) {
-            final r = reservaciones[index];
+            final r = _reservaciones[index];
             return Container(
               margin: EdgeInsets.only(bottom: 12),
               decoration: ContainerStyles.sombreado,
@@ -49,7 +85,7 @@ class TabProcesoReservacion extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            DetallesHistorial(idReservacion: r['id']),
+                            DetallesHistorial(idReservacion: r['id'] as int),
                       ),
                     );
                   },
@@ -63,7 +99,7 @@ class TabProcesoReservacion extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                r['nombre'],
+                                r['nombre'] ?? 'Sin título',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -90,7 +126,7 @@ class TabProcesoReservacion extends StatelessWidget {
                                   ),
                                   SizedBox(width: 4),
                                   Text(
-                                    'En Proceso',
+                                    r['estado_nombre'] ?? 'En proceso',
                                     style: TextStyle(
                                       color: Colors.orange,
                                       fontSize: 12,
@@ -112,7 +148,7 @@ class TabProcesoReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['salon'],
+                              r['salon_nombre'] ?? 'Sin salón',
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -127,42 +163,24 @@ class TabProcesoReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['fecha'],
+                              _formatearFecha(r['fecha']),
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              r['hora'],
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        if (r['precio'] != null) ...[
-                          SizedBox(height: 8),
+                        if (r['hora_inicio'] != null) ...[
+                          SizedBox(height: 4),
                           Row(
                             children: [
                               Icon(
-                                Icons.attach_money,
+                                Icons.access_time,
                                 size: 16,
                                 color: Colors.grey,
                               ),
                               SizedBox(width: 4),
                               Text(
-                                '\$${r['precio']}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColores.primary,
-                                ),
+                                '${_formatearHora(r['hora_inicio'])} - ${_formatearHora(r['hora_fin'])}',
+                                style: TextStyle(color: Colors.grey),
                               ),
                             ],
                           ),
@@ -177,5 +195,50 @@ class TabProcesoReservacion extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatearFecha(String? fecha) {
+    if (fecha == null) return 'Sin fecha';
+    try {
+      final parts = fecha.split('-');
+      if (parts.length == 3) {
+        return '${parts[2]} de ${_mes(parts[1])} de ${parts[0]}';
+      }
+    } catch (e) {}
+    return fecha;
+  }
+
+  String _formatearHora(String? hora) {
+    if (hora == null) return '';
+    try {
+      final parts = hora.split(':');
+      if (parts.length >= 2) {
+        int h = int.parse(parts[0]);
+        final m = parts[1];
+        final period = h >= 12 ? 'PM' : 'AM';
+        if (h > 12) h -= 12;
+        if (h == 0) h = 12;
+        return '$h:$m $period';
+      }
+    } catch (e) {}
+    return hora;
+  }
+
+  String _mes(String m) {
+    final meses = {
+      '01': 'Enero',
+      '02': 'Febrero',
+      '03': 'Marzo',
+      '04': 'Abril',
+      '05': 'Mayo',
+      '06': 'Junio',
+      '07': 'Julio',
+      '08': 'Agosto',
+      '09': 'Septiembre',
+      '10': 'Octubre',
+      '11': 'Noviembre',
+      '12': 'Diciembre',
+    };
+    return meses[m] ?? m;
   }
 }

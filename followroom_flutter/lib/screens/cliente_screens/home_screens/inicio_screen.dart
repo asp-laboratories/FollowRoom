@@ -7,6 +7,8 @@ import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion
 import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
 import 'package:followroom_flutter/services/paquete_service.dart';
+import 'package:followroom_flutter/services/historial_service.dart';
+import 'package:followroom_flutter/services/session_data.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -17,14 +19,18 @@ class Reservacion extends StatefulWidget {
 
 class _ReservacionState extends State<Reservacion> {
   final PaqueteService _paqueteService = PaqueteService();
+  final HistorialService _historialService = HistorialService();
   List<Map<String, dynamic>> paquetesDB = [];
   bool _cargandoPaquetes = true;
+  bool _cargandoReservacion = true;
+  Map<String, dynamic>? _reservacionProxima;
   final Color _colorBase = Colors.blue;
 
   @override
   void initState() {
     super.initState();
     _cargarPaquetes();
+    _cargarReservacionProxima();
   }
 
   Future<void> _cargarPaquetes() async {
@@ -60,7 +66,20 @@ class _ReservacionState extends State<Reservacion> {
     }
   }
 
-  final bool tieneReservacion = true;
+  Future<void> _cargarReservacionProxima() async {
+    try {
+      final reservacion = await _historialService.getReservacionProxima();
+      setState(() {
+        _reservacionProxima = reservacion;
+        _cargandoReservacion = false;
+      });
+    } catch (e) {
+      print('Error al cargar reservación próxima: $e');
+      setState(() {
+        _cargandoReservacion = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +88,7 @@ class _ReservacionState extends State<Reservacion> {
         decoration: BoxDecoration(color: AppColores.background2),
         child: Column(
           children: [
-            if (tieneReservacion)
+            if (!_cargandoReservacion && _reservacionProxima != null)
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
@@ -93,7 +112,9 @@ class _ReservacionState extends State<Reservacion> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetallesReservacionActual(),
+                            builder: (context) => DetallesReservacionActual(
+                              reservacion: _reservacionProxima,
+                            ),
                           ),
                         );
                       },

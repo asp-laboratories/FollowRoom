@@ -4,15 +4,15 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
 import 'package:followroom_flutter/services/historial_service.dart';
 
-class TabCanceladosReservacion extends StatefulWidget {
-  const TabCanceladosReservacion({super.key});
+class TabConcluidosReservacion extends StatefulWidget {
+  const TabConcluidosReservacion({super.key});
 
   @override
-  State<TabCanceladosReservacion> createState() =>
-      _TabCanceladosReservacionState();
+  State<TabConcluidosReservacion> createState() =>
+      _TabConcluidosReservacionState();
 }
 
-class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
+class _TabConcluidosReservacionState extends State<TabConcluidosReservacion> {
   final HistorialService _historialService = HistorialService();
   List<Map<String, dynamic>> _reservaciones = [];
   bool _cargando = true;
@@ -30,7 +30,7 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
         setState(() {
           _reservaciones = datos.where((r) {
             final estado = r['estado_codigo'] ?? '';
-            return estado == 'CANCEL';
+            return estado == 'CONF' || estado == 'TERMI';
           }).toList();
           _cargando = false;
         });
@@ -53,10 +53,10 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cancel_outlined, size: 64, color: Colors.grey),
+            Icon(Icons.check_circle_outline, size: 64, color: Colors.grey),
             SizedBox(height: 16),
             Text(
-              'No tienes reservaciones canceladas',
+              'No tienes reservaciones concluidas',
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           ],
@@ -114,22 +114,22 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.15),
+                                color: Colors.blue.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.cancel,
+                                    Icons.check_circle,
                                     size: 14,
-                                    color: Colors.red,
+                                    color: Colors.blue,
                                   ),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Cancelado',
+                                    'Concluido',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: Colors.blue,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),

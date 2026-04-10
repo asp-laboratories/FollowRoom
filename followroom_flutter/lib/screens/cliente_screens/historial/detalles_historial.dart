@@ -7,7 +7,7 @@ import 'package:followroom_flutter/services/ip_config.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 
 class DetallesHistorial extends StatefulWidget {
-  final String idReservacion;
+  final int idReservacion;
   final Map<String, String>? datosReservacion;
   final Map<String, String>? datosCliente;
   final Map<String, dynamic>? salonSeleccionado;
@@ -31,9 +31,10 @@ class DetallesHistorial extends StatefulWidget {
 }
 
 class _DetallesHistorialState extends State<DetallesHistorial> {
-  final bool _cargando = false;
-  final double _progreso = 0.75;
+  bool _cargando = true;
+  double _progreso = 0.75;
   bool _encuestaEnviada = false;
+  Map<String, dynamic>? _reservacion;
 
   int _calificacionPersonal = 0;
   int _calificacionEquipamiento = 0;
@@ -41,12 +42,60 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   int _calificacionSalon = 0;
   int _calificacionMobiliario = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservacion();
+  }
+
+  Future<void> _cargarReservacion() async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = 'http://${IpConfig.ip}/api';
+      final response = await dio.get('/reservacion/${widget.idReservacion}/');
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+      if (response.statusCode == 200 && mounted) {
+        setState(() {
+          _reservacion = Map<String, dynamic>.from(response.data);
+          _cargando = false;
+          // Calcular progreso según estado
+          final estado =
+              _reservacion?['estado_reserva']?['codigo'] ??
+              _reservacion?['estado_codigo'] ??
+              '';
+          switch (estado) {
+            case 'SOLIC':
+              _progreso = 0.25;
+              break;
+            case 'PEN':
+              _progreso = 0.5;
+              break;
+            case 'CONF':
+              _progreso = 0.75;
+              break;
+            case 'TERMI':
+              _progreso = 1.0;
+              break;
+            case 'CANCEL':
+              _progreso = 0.0;
+              break;
+            default:
+              _progreso = 0.75;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error al cargar reservación: $e');
+      if (mounted) {
+        setState(() => _cargando = false);
+      }
+    }
+  }
+
   bool _esReservacionTerminada() {
-    final estado = widget.datosReservacion?['estado']?.toLowerCase() ?? '';
-    return estado == 'concluido' ||
-        estado == 'finalizado' ||
-        estado == 'finalizada' ||
-        estado == 'terminado';
+    final estado = _reservacion?['estado_codigo'] ?? '';
+    return estado == 'CONF' || estado == 'TERMI';
   }
 
   void _mostrarEncuesta() {
@@ -212,7 +261,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
           'servicios': _calificacionServicios,
           'salon': _calificacionSalon,
           'mobiliario': _calificacionMobiliario,
-          'reservacion': int.tryParse(widget.idReservacion) ?? 0,
+          'reservacion': widget.idReservacion,
         },
       );
 
@@ -267,6 +316,51 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
         ),
       ),
     );
+  }
+
+  String _formatearFecha(String? fecha) {
+    if (fecha == null) return 'No definida';
+    try {
+      final parts = fecha.split('-');
+      if (parts.length == 3) {
+        return '${parts[2]} de ${_mes(parts[1])} de ${parts[0]}';
+      }
+    } catch (e) {}
+    return fecha;
+  }
+
+  String _formatearHora(String? hora) {
+    if (hora == null) return '';
+    try {
+      final parts = hora.split(':');
+      if (parts.length >= 2) {
+        int h = int.parse(parts[0]);
+        final m = parts[1];
+        final period = h >= 12 ? 'PM' : 'AM';
+        if (h > 12) h -= 12;
+        if (h == 0) h = 12;
+        return '$h:$m $period';
+      }
+    } catch (e) {}
+    return hora;
+  }
+
+  String _mes(String m) {
+    final meses = {
+      '01': 'Enero',
+      '02': 'Febrero',
+      '03': 'Marzo',
+      '04': 'Abril',
+      '05': 'Mayo',
+      '06': 'Junio',
+      '07': 'Julio',
+      '08': 'Agosto',
+      '09': 'Septiembre',
+      '10': 'Octubre',
+      '11': 'Noviembre',
+      '12': 'Diciembre',
+    };
+    return meses[m] ?? m;
   }
 
   @override
@@ -335,29 +429,36 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del evento:",
-                            widget.datosReservacion?['nombre'] ?? 'No definido',
+                            _reservacion?['nombreEvento'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Fecha:",
-                            widget.datosReservacion?['fecha'] ?? 'No definida',
+                            _formatearFecha(_reservacion?['fechaEvento']),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Horario:",
-                            widget.datosReservacion?['horario'] ??
-                                'No definido',
+                            _reservacion?['horaInicio'] != null
+                                ? '${_formatearHora(_reservacion?['horaInicio'])} - ${_formatearHora(_reservacion?['horaFin'])}'
+                                : 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de evento:",
-                            widget.datosReservacion?['tipo'] ??
+                            _reservacion?['tipo_evento']?['nombre'] ??
                                 'No seleccionado',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Asistentes:",
-                            widget.datosReservacion?['asistentes'] ?? '0',
+                            (_reservacion?['estimaAsistentes'] ?? 0).toString(),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Estado:",
+                            _reservacion?['estado_reserva']?['nombre'] ??
+                                'No definido',
                           ),
                         ],
                       ),
@@ -387,23 +488,32 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre:",
-                            widget.datosCliente?['nombre'] ?? 'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Apellido:",
-                            widget.datosCliente?['apellidoPaterno'] ??
-                                'No definido',
+                            _reservacion?['cliente']?['nombre'] != null
+                                ? '${_reservacion?['cliente']['nombre'] ?? ''} ${_reservacion?['cliente']['apellidoPaterno'] ?? ''}'
+                                      .trim()
+                                : 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Teléfono:",
-                            widget.datosCliente?['telefono'] ?? 'No definido',
+                            _reservacion?['cliente']?['telefono'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Email:",
-                            widget.datosCliente?['correoElectronico'] ??
+                            _reservacion?['cliente']?['correo_electronico'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "RFC:",
+                            _reservacion?['cliente']?['rfc'] ?? 'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Nombre fiscal:",
+                            _reservacion?['cliente']?['nombre_fiscal'] ??
                                 'No definido',
                           ),
                         ],
@@ -432,21 +542,21 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          if (widget.salonSeleccionado == null)
+                          if (_reservacion?['montaje']?['salon'] == null)
                             Text("Ningún salón seleccionado")
                           else ...[
                             _buildLabelValue(
                               "Salón:",
-                              widget.salonSeleccionado!['nombre'].toString(),
+                              _reservacion?['montaje']?['salon']?['nombre'] ??
+                                  'No definido',
                             ),
                             _buildLabelValue(
                               "Precio:",
-                              "\$${widget.salonSeleccionado!['precio']}",
+                              "\$${_reservacion?['montaje']?['costo'] ?? _reservacion?['total'] ?? 0}",
                             ),
                             _buildLabelValue(
                               "Montaje:",
-                              widget.montajesPorSalon?[widget
-                                      .salonSeleccionado!['id']] ??
+                              _reservacion?['montaje']?['tipo_montaje']?['nombre'] ??
                                   'No seleccionado',
                             ),
                           ],
@@ -471,6 +581,8 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                               _buildServiciosContainer(),
                               SizedBox(height: 16),
                               _buildEquipamientosContainer(),
+                              SizedBox(height: 16),
+                              _buildMobiliariosContainer(),
                             ],
                           ),
                         );
@@ -485,7 +597,15 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: _buildServiciosContainer()),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _buildServiciosContainer(),
+                                  SizedBox(height: 16),
+                                  _buildMobiliariosContainer(),
+                                ],
+                              ),
+                            ),
                             SizedBox(width: 16),
                             Expanded(child: _buildEquipamientosContainer()),
                           ],
@@ -519,7 +639,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text("Subtotal:"),
-                              Text("\$${_calcularSubtotal()}"),
+                              Text("\$${_reservacion?['subtotal'] ?? 0}"),
                             ],
                           ),
                           SizedBox(height: 2),
@@ -527,7 +647,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text("IVA (16%):"),
-                              Text("\$${_calcularIVA()}"),
+                              Text("\$${_reservacion?['IVA'] ?? 0}"),
                             ],
                           ),
                           Divider(height: 16),
@@ -539,7 +659,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                "\$${_calcularTotal()}",
+                                "\$${_reservacion?['total'] ?? 0}",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -562,7 +682,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   Widget _buildServiciosContainer() {
-    final servicios = widget.serviciosSeleccionados ?? [];
+    final servicios = _reservacion?['reserva_servicio'] as List? ?? [];
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -587,13 +707,13 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${s['nombre']}",
+                        "- ${s['servicio__nombre'] ?? 'Servicio'}",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${s['precio']}",
+                      "\$${s['servicio__costo'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -613,7 +733,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${servicios.fold(0, (sum, s) => sum + (s['precio'] as int))}",
+                  "\$${servicios.fold<int>(0, (sum, s) => sum + (s['servicio__costo'] as int? ?? 0))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -629,7 +749,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   Widget _buildEquipamientosContainer() {
-    final equipos = widget.equipamientosSeleccionados ?? [];
+    final equipos = _reservacion?['reserva_equipa'] as List? ?? [];
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -654,13 +774,13 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre']} (x${e['cantidad']})",
+                        "- ${e['equipamiento__nombre'] ?? 'Equipo'} (x${e['cantidad']})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                      "\$${e['equipamiento__costo'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -680,7 +800,74 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${equipos.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
+                  "\$${equipos.fold<int>(0, (sum, e) => sum + ((e['equipamiento__costo'] as int? ?? 0) * (e['cantidad'] as int? ?? 1)))}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColores.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobiliariosContainer() {
+    final mobiliarios = _reservacion?['mobiliarios'] as List? ?? [];
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Mobiliarios",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (mobiliarios.isEmpty)
+            Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
+          else
+            ...mobiliarios.map(
+              (m) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- ${m['mobiliario__nombre'] ?? 'Mobiliario'} (x${m['cantidad']})",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "\$${m['mobiliario__costo'] ?? 0}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (mobiliarios.isNotEmpty) ...[
+            Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Total:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  "\$${mobiliarios.fold<int>(0, (sum, m) => sum + ((m['mobiliario__costo'] as int? ?? 0) * (m['cantidad'] as int? ?? 1)))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

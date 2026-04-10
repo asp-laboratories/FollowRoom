@@ -4,7 +4,9 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 class DetallesReservacionActual extends StatefulWidget {
-  const DetallesReservacionActual({super.key});
+  final Map<String, dynamic>? reservacion;
+
+  const DetallesReservacionActual({super.key, this.reservacion});
 
   @override
   State<DetallesReservacionActual> createState() =>
@@ -12,7 +14,57 @@ class DetallesReservacionActual extends StatefulWidget {
 }
 
 class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
-  final bool _cargando = false;
+  bool _cargando = true;
+  Map<String, dynamic>? _reservacion;
+  double _progreso = 0.75;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservacion();
+  }
+
+  Future<void> _cargarReservacion() async {
+    if (widget.reservacion != null) {
+      setState(() {
+        _reservacion = widget.reservacion;
+        _cargando = false;
+        _calcularProgreso();
+      });
+      return;
+    }
+    setState(() {
+      _cargando = false;
+    });
+  }
+
+  void _calcularProgreso() {
+    if (_reservacion == null) return;
+    final estado = _reservacion!['estado_reserva'];
+    String codigo = '';
+    if (estado is Map) {
+      codigo = estado['codigo']?.toString() ?? '';
+    }
+    switch (codigo) {
+      case 'SOLIC':
+        _progreso = 0.25;
+        break;
+      case 'PEN':
+        _progreso = 0.5;
+        break;
+      case 'CONF':
+        _progreso = 0.75;
+        break;
+      case 'TERMI':
+        _progreso = 1.0;
+        break;
+      case 'CANCEL':
+        _progreso = 0.0;
+        break;
+      default:
+        _progreso = 0.75;
+    }
+  }
 
   Widget _buildLabelValue(String label, String value) {
     return Padding(
@@ -32,30 +84,91 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
     );
   }
 
-  final Map<String, dynamic> _datosReservacion = {
-    'nombre': 'Cumpleaños de jorge',
-    'fecha': '15 de Marzo 2026',
-    'horario': '14:00 - 18:00',
-    'tipo': 'Cumpleaños',
-    'asistentes': 100,
-    'salon': 'Salón Imperial',
-    'precioSalon': 5000,
-    'montaje': 'Herradura',
-    'cliente': 'Juan Pérez',
-    'telefono': '666 6666 66 66',
-    'email': 'juanperez@correo.com',
-    'servicios': [
-      {'nombre': 'Guardias', 'precio': 500},
-      {'nombre': 'Decoradores', 'precio': 1500},
-    ],
-    'equipos': [
-      {'nombre': 'Microfono', 'precio': 300, 'cantidad': 2},
-      {'nombre': 'Televisor', 'precio': 500, 'cantidad': 3},
-    ],
-  };
+  String _formatearFecha(String? fecha) {
+    if (fecha == null) return 'No definida';
+    try {
+      final parts = fecha.split('-');
+      if (parts.length == 3) {
+        return '${parts[2]} de ${_mes(parts[1])} de ${parts[0]}';
+      }
+    } catch (e) {}
+    return fecha;
+  }
+
+  String _formatearHora(String? hora) {
+    if (hora == null) return '';
+    try {
+      final parts = hora.split(':');
+      if (parts.length >= 2) {
+        int h = int.parse(parts[0]);
+        final m = parts[1];
+        final period = h >= 12 ? 'PM' : 'AM';
+        if (h > 12) h -= 12;
+        if (h == 0) h = 12;
+        return '$h:$m $period';
+      }
+    } catch (e) {}
+    return hora;
+  }
+
+  String _mes(String m) {
+    final meses = {
+      '01': 'Enero',
+      '02': 'Febrero',
+      '03': 'Marzo',
+      '04': 'Abril',
+      '05': 'Mayo',
+      '06': 'Junio',
+      '07': 'Julio',
+      '08': 'Agosto',
+      '09': 'Septiembre',
+      '10': 'Octubre',
+      '11': 'Noviembre',
+      '12': 'Diciembre',
+    };
+    return meses[m] ?? m;
+  }
+
+  String _getValue(
+    dynamic data,
+    String key, {
+    String defaultValue = 'No definido',
+  }) {
+    if (data == null) return defaultValue;
+    if (data is! Map) return defaultValue;
+    final value = data[key];
+    if (value == null) return defaultValue;
+    if (value is Map) return value['nombre']?.toString() ?? value.toString();
+    return value.toString();
+  }
+
+  List<dynamic> _getList(dynamic data, String key) {
+    if (data == null) return [];
+    if (data is! Map) return [];
+    final value = data[key];
+    if (value is List) return value;
+    return [];
+  }
+
+  Map<String, dynamic>? _getMap(dynamic data, String key) {
+    if (data == null) return null;
+    if (data is! Map) return null;
+    final value = data[key];
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final cliente = _getMap(_reservacion, 'cliente_datos');
+    final montageData = _getMap(_reservacion, 'montaje_datos');
+    final salon = _getMap(montageData, 'salon');
+    final tipoMontaje = _getMap(montageData, 'tipo_montaje');
+    final tipoEvento = _getMap(_reservacion, 'tipo_evento_datos');
+    final servicios = _getList(_reservacion, 'servicios');
+    final equipamentos = _getList(_reservacion, 'equipamentos');
+    final mobiliarios = _getList(_reservacion, 'mobiliarios');
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Tu Reservación'),
@@ -83,7 +196,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          _datosReservacion['nombre'],
+                          _reservacion?['nombreEvento'] ?? 'Sin título',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -92,19 +205,20 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          _datosReservacion['fecha'],
+                          _formatearFecha(_reservacion?['fechaEvento']),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[700],
                           ),
                         ),
-                        Text(
-                          _datosReservacion['horario'],
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
+                        if (_reservacion?['horaInicio'] != null)
+                          Text(
+                            '${_formatearHora(_reservacion?['horaInicio'])} - ${_formatearHora(_reservacion?['horaFin'])}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -113,12 +227,12 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                     child: CircularPercentIndicator(
                       radius: 60.0,
                       lineWidth: 10.0,
-                      percent: 0.50,
+                      percent: _progreso,
                       center: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "50%",
+                            "${(_progreso * 100).toInt()}%",
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -141,7 +255,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                     padding: const EdgeInsets.only(
                       left: 16,
                       right: 16,
-                      bottom: 16,
+                      top: 16,
                     ),
                     child: Container(
                       decoration: ContainerStyles.sombreado,
@@ -151,7 +265,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Datos del evento",
+                            "Datos de la Reservación",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -159,59 +273,39 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                           ),
                           SizedBox(height: 8),
                           _buildLabelValue(
-                            "Tipo:",
-                            _datosReservacion?['tipo'] ?? 'No definido',
+                            "Nombre del evento:",
+                            _reservacion?['nombreEvento'] ?? 'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Fecha:",
+                            _formatearFecha(_reservacion?['fechaEvento']),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Horario:",
+                            _reservacion?['horaInicio'] != null
+                                ? '${_formatearHora(_reservacion?['horaInicio'])} - ${_formatearHora(_reservacion?['horaFin'])}'
+                                : 'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Tipo de evento:",
+                            _getValue(
+                              tipoEvento,
+                              'nombre',
+                              defaultValue: 'No seleccionado',
+                            ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Asistentes:",
-                            _datosReservacion?['asistentes']?.toString() ?? '0',
+                            (_reservacion?['estimaAsistentes'] ?? 0).toString(),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: ContainerStyles.sombreado,
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Salón",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          _buildLabelValue(
-                            "Salón:",
-                            _datosReservacion?['salon'] ?? 'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Precio:",
-                            "\$${_datosReservacion?['precioSalon'] ?? 0}",
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Montaje:",
-                            _datosReservacion?['montaje'] ?? 'No seleccionado',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.only(
                       left: 16,
@@ -234,28 +328,98 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                           ),
                           SizedBox(height: 8),
                           _buildLabelValue(
-                            "Nombre:",
-                            _datosReservacion?['cliente'] ?? 'No definido',
+                            "Nombre del contacto:",
+                            _getValue(cliente, 'nombre'),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
-                            "Teléfono:",
-                            _datosReservacion?['telefono'] ?? 'No definido',
+                            "Apellido del contacto:",
+                            _getValue(cliente, 'apellidoPaterno'),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
-                            "Email:",
-                            _datosReservacion?['email'] ?? 'No definido',
+                            "Apellido materno:",
+                            _getValue(cliente, 'apelidoMaterno'),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue("RFC:", _getValue(cliente, 'rfc')),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Nombre fiscal:",
+                            _getValue(cliente, 'nombre_fiscal'),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Telefono:",
+                            _getValue(cliente, 'telefono'),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Colonia:",
+                            _getValue(cliente, 'dir_colonia'),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Calle:",
+                            _getValue(cliente, 'dir_calle'),
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Numero:",
+                            _getValue(cliente, 'dir_numero'),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: ContainerStyles.sombreado,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Salón y Montaje",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          if (salon == null)
+                            Text("Ningún salón seleccionado")
+                          else ...[
+                            _buildLabelValue(
+                              "Salón:",
+                              _getValue(salon, 'nombre'),
+                            ),
+                            _buildLabelValue(
+                              "Precio:",
+                              "\$${_reservacion?['total'] ?? 0}",
+                            ),
+                            _buildLabelValue(
+                              "Montaje:",
+                              _getValue(
+                                tipoMontaje,
+                                'nombre',
+                                defaultValue: 'No seleccionado',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final bool esPantallaChica = constraints.maxWidth < 400;
-
                       if (esPantallaChica) {
                         return Padding(
                           padding: const EdgeInsets.only(
@@ -265,14 +429,15 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                           ),
                           child: Column(
                             children: [
-                              _buildServiciosContainer(),
+                              _buildServiciosContainer(servicios),
                               SizedBox(height: 16),
-                              _buildEquipamientosContainer(),
+                              _buildEquipamientosContainer(equipamentos),
+                              SizedBox(height: 16),
+                              _buildMobiliariosContainer(mobiliarios),
                             ],
                           ),
                         );
                       }
-
                       return Padding(
                         padding: const EdgeInsets.only(
                           left: 16,
@@ -282,82 +447,32 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: _buildServiciosContainer()),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _buildServiciosContainer(servicios),
+                                  SizedBox(height: 16),
+                                  _buildMobiliariosContainer(mobiliarios),
+                                ],
+                              ),
+                            ),
                             SizedBox(width: 16),
-                            Expanded(child: _buildEquipamientosContainer()),
+                            Expanded(
+                              child: _buildEquipamientosContainer(equipamentos),
+                            ),
                           ],
                         ),
                       );
                     },
                   ),
                   SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: ContainerStyles.sombreado,
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Total de la Reservación",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Subtotal:"),
-                              Text("\$${_calcularSubtotal()}"),
-                            ],
-                          ),
-                          SizedBox(height: 5),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("IVA (16%):"),
-                              Text("\$${_calcularIVA()}"),
-                            ],
-                          ),
-                          Divider(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Total:",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                "\$${_calcularTotal()}",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: AppColores.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildServiciosContainer() {
-    final servicios = _datosReservacion?['servicios'] as List? ?? [];
+  Widget _buildServiciosContainer(List<dynamic> servicios) {
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -382,13 +497,13 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${s['nombre']} ",
+                        "- ${s['servicio__nombre'] ?? 'Servicio'}",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${s['precio']}",
+                      "\$${s['servicio__costo'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -408,7 +523,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${servicios.fold(0, (sum, s) => sum + (s['precio'] as int))}",
+                  "\$${_sumList(servicios, 'servicio__costo')}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -423,8 +538,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
     );
   }
 
-  Widget _buildEquipamientosContainer() {
-    final equipos = _datosReservacion?['equipos'] as List? ?? [];
+  Widget _buildEquipamientosContainer(List<dynamic> equipos) {
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -449,13 +563,13 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre']} (x${e['cantidad']}) ",
+                        "- ${e['equipamiento__nombre'] ?? 'Equipo'} (x${e['cantidad'] ?? 1})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
+                      "\$${e['equipamiento__costo'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -475,7 +589,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${equipos.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
+                  "\$${_sumListWithQuantity(equipos, 'equipamiento__costo', 'cantidad')}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -490,33 +604,98 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
     );
   }
 
-  int _calcularSubtotal() {
-    int serviciosTotal = 0;
-    int equiposTotal = 0;
-    int salonPrecio = _datosReservacion?['precioSalon'] as int? ?? 0;
-
-    if (_datosReservacion?['servicios'] != null) {
-      serviciosTotal = (_datosReservacion?['servicios'] as List).fold(
-        0,
-        (sum, s) => sum + (s['precio'] as int),
-      );
-    }
-
-    if (_datosReservacion?['equipos'] != null) {
-      equiposTotal = (_datosReservacion?['equipos'] as List).fold(
-        0,
-        (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)),
-      );
-    }
-
-    return serviciosTotal + equiposTotal + salonPrecio;
+  Widget _buildMobiliariosContainer(List<dynamic> mobiliarios) {
+    return Container(
+      width: double.infinity,
+      decoration: ContainerStyles.sombreado,
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Mobiliarios",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          if (mobiliarios.isEmpty)
+            Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
+          else
+            ...mobiliarios.map(
+              (m) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "- ${m['mobiliario__nombre'] ?? 'Mobiliario'} (x${m['cantidad'] ?? 1})",
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      "\$${m['mobiliario__costo'] ?? 0}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (mobiliarios.isNotEmpty) ...[
+            Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Total:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  "\$${_sumListWithQuantity(mobiliarios, 'mobiliario__costo', 'cantidad')}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColores.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
-  int _calcularIVA() {
-    return (_calcularSubtotal() * 0.16).round();
+  int _sumList(List<dynamic> list, String key) {
+    int total = 0;
+    for (var item in list) {
+      if (item is Map) {
+        final value = item[key];
+        if (value is num) {
+          total += value.toInt();
+        }
+      }
+    }
+    return total;
   }
 
-  int _calcularTotal() {
-    return _calcularSubtotal() + _calcularIVA();
+  int _sumListWithQuantity(List<dynamic> list, String costKey, String qtyKey) {
+    int total = 0;
+    for (var item in list) {
+      if (item is Map) {
+        final cost = item[costKey];
+        final qty = item[qtyKey];
+        if (cost is num && qty is num) {
+          total += cost.toInt() * qty.toInt();
+        } else if (cost is num) {
+          total += cost.toInt();
+        }
+      }
+    }
+    return total;
   }
 }

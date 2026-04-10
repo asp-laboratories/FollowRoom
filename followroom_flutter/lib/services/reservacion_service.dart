@@ -36,4 +36,114 @@ class ReservacionService {
       throw Exception('Error al cargar reservación');
     }
   }
+
+  Future<bool> crearReservacion({
+    required Map<String, String> datosReservacion,
+    required Map<String, String> datosCliente,
+    required int salonId,
+    required int? montageId,
+    required List<Map<String, dynamic>> servicios,
+    required List<Map<String, dynamic>> equipamentos,
+    required List<Map<String, dynamic>> mobiliarios,
+  }) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+
+      String fechaFormateada = datosReservacion['fecha'] ?? '';
+      print('Fecha original: $fechaFormateada');
+
+      // Try different formats
+      if (fechaFormateada.contains('/')) {
+        final partes = fechaFormateada.split('/');
+        if (partes.length == 3) {
+          // Try dd/mm/yyyy -> yyyy-mm-dd
+          final day = int.tryParse(partes[0]) ?? 0;
+          final month = int.tryParse(partes[1]) ?? 0;
+          final year = int.tryParse(partes[2]) ?? 0;
+
+          if (day > 0 && month > 0 && year > 0) {
+            fechaFormateada =
+                '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          }
+        }
+      } else if (fechaFormateada.contains('-')) {
+        // Already has dashes, ensure proper format yyyy-mm-dd
+        final partes = fechaFormateada.split('-');
+        if (partes.length == 3) {
+          // Check if it's dd-mm-yyyy and convert
+          final part0 = int.tryParse(partes[0]) ?? 0;
+          if (part0 > 31) {
+            // Already yyyy-mm-dd
+            fechaFormateada = fechaFormateada;
+          } else {
+            // Probably dd-mm-yyyy
+            fechaFormateada = '${partes[2]}-${partes[1]}-${partes[0]}';
+          }
+        }
+      }
+
+      print('Fecha formateada: $fechaFormateada');
+
+      // Format time to HH:mm
+      String formatTime(String? timeStr) {
+        if (timeStr == null || timeStr.isEmpty) return '12:00';
+        // Extract just the start time, remove AM/PM
+        final match = RegExp(r'(\d+):(\d+)').firstMatch(timeStr);
+        if (match != null) {
+          int hour = int.parse(match.group(1)!);
+          final minute = int.parse(match.group(2)!);
+          if (timeStr.contains('PM') && hour != 12) hour += 12;
+          if (timeStr.contains('AM') && hour == 12) hour = 0;
+          return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+        }
+        return '12:00';
+      }
+
+      final horaInicioStr = formatTime(datosReservacion['horario']);
+      final horaFinStr = formatTime(datosReservacion['horario']);
+
+      final data = {
+        'nombre': datosReservacion['nombre'] ?? '',
+        'descripEvento': datosReservacion['descripcion'] ?? 'Sin descripción',
+        'fechaEvento': fechaFormateada,
+        'horaInicio': horaInicioStr,
+        'horaFin': horaFinStr,
+        'estimaAsistentes':
+            int.tryParse(datosReservacion['asistentes'] ?? '0') ?? 0,
+        'cliente': datosCliente['rfc'] ?? '',
+        'trabajador': '', // Empty string instead of null
+        'tipo_evento':
+            int.tryParse(datosReservacion['tipoEventoId'] ?? '0') ?? 1,
+        'estado_reserva': 'SOLIC', // Estado solicitud para app
+        'montaje': {
+          'salon': salonId,
+          'tipo_montaje': montageId,
+          'mobiliarios': mobiliarios
+              .map((m) => {'id': m['id'], 'cantidad': m['cantidad'] ?? 1})
+              .toList(),
+        },
+        'reserva_servicio': servicios
+            .map((s) => {'servicio': s['id'], 'cantidad': 1})
+            .toList(),
+        'reserva_equipa': equipamentos
+            .map(
+              (e) => {'equipamiento': e['id'], 'cantidad': e['cantidad'] ?? 1},
+            )
+            .toList(),
+      };
+
+      print('Data being sent: $data');
+      final response = await dio.post('/reservacion/', data: data);
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error: ${e.response?.statusCode} - ${e.response?.data}');
+      }
+      print('Error al crear reservación: $e');
+      return false;
+    }
+  }
 }

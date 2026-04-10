@@ -56,6 +56,7 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
   final ClienteService _clienteService = ClienteService();
   bool _cargando = true;
   bool _esClienteNuevo = true;
+  String _tipoCliente = 'fisica';
 
   @override
   void initState() {
@@ -76,8 +77,11 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     _cargarDatosCliente();
 
     nombre.addListener(_autoSave);
+    nombre.addListener(_onNombreChanged);
     apellidoPaterno.addListener(_autoSave);
+    apellidoPaterno.addListener(_onApellidoChanged);
     apellidoMaterno.addListener(_autoSave);
+    apellidoMaterno.addListener(_onApellidoChanged);
     rfc.addListener(_autoSave);
     nombreFiscal.addListener(_autoSave);
     telefono.addListener(_autoSave);
@@ -85,6 +89,30 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     colonia.addListener(_autoSave);
     calle.addListener(_autoSave);
     numero.addListener(_autoSave);
+  }
+
+  void _onNombreChanged() {
+    if (_tipoCliente == 'fisica') {
+      setState(() {
+        final parts = <String>[];
+        if (nombre.text.isNotEmpty) parts.add(nombre.text);
+        if (apellidoPaterno.text.isNotEmpty) parts.add(apellidoPaterno.text);
+        if (apellidoMaterno.text.isNotEmpty) parts.add(apellidoMaterno.text);
+        nombreFiscal.text = parts.join(' ');
+      });
+    }
+  }
+
+  void _onApellidoChanged() {
+    if (_tipoCliente == 'fisica') {
+      setState(() {
+        final parts = <String>[];
+        if (nombre.text.isNotEmpty) parts.add(nombre.text);
+        if (apellidoPaterno.text.isNotEmpty) parts.add(apellidoPaterno.text);
+        if (apellidoMaterno.text.isNotEmpty) parts.add(apellidoMaterno.text);
+        nombreFiscal.text = parts.join(' ');
+      });
+    }
   }
 
   Future<void> _cargarDatosCliente() async {
@@ -98,7 +126,8 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
           _esClienteNuevo = false;
           nombre.text = datos['nombre'] ?? '';
           apellidoPaterno.text = datos['apellidoPaterno'] ?? '';
-          apellidoMaterno.text = datos['apelidoMaterno'] ?? '';
+          apellidoMaterno.text =
+              datos['apellidoMaterno'] ?? datos['apelidoMaterno'] ?? '';
           rfc.text = datos['rfc'] ?? '';
           nombreFiscal.text = datos['nombre_fiscal'] ?? '';
           telefono.text = datos['telefono'] ?? '';
@@ -161,8 +190,11 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
   @override
   void dispose() {
     nombre.removeListener(_autoSave);
+    nombre.removeListener(_onNombreChanged);
     apellidoPaterno.removeListener(_autoSave);
+    apellidoPaterno.removeListener(_onApellidoChanged);
     apellidoMaterno.removeListener(_autoSave);
+    apellidoMaterno.removeListener(_onApellidoChanged);
     rfc.removeListener(_autoSave);
     nombreFiscal.removeListener(_autoSave);
     telefono.removeListener(_autoSave);
@@ -195,8 +227,38 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
       'dir_colonia': colonia.text,
       'dir_calle': calle.text,
       'dir_numero': numero.text,
+      'tipoCliente': _tipoCliente,
     });
   }
+
+  void _onTipoClienteChanged(String? value) {
+    if (value != null) {
+      setState(() {
+        _tipoCliente = value;
+      });
+      _autoSave();
+    }
+  }
+
+  String get _labelNombre =>
+      _tipoCliente == 'moral' ? 'Nombre del contacto' : 'Nombre completo';
+  String get _labelNombreHint =>
+      _tipoCliente == 'moral' ? 'Ej: María López' : 'Ej: Juan Pérez García';
+  String get _labelApellidoPaterno => _tipoCliente == 'moral'
+      ? 'Primer apellido del contacto'
+      : 'Primer apellido';
+  String get _labelApellidoPaternoHint =>
+      _tipoCliente == 'moral' ? 'Ej: Pérez' : 'Ej: Pérez';
+  String get _labelApellidoMaterno => _tipoCliente == 'moral'
+      ? 'Segundo apellido del contacto'
+      : 'Segundo apellido';
+  String get _labelApellidoMaternoHint =>
+      _tipoCliente == 'moral' ? 'Ej: García' : 'Ej: García';
+  String get _labelNombreFiscal =>
+      _tipoCliente == 'moral' ? 'Nombre de la empresa' : 'Nombre fiscal';
+  String get _labelNombreFiscalHint => _tipoCliente == 'moral'
+      ? 'Ej: Empresa ABC S.A. de C.V.'
+      : 'Ej: Empresa ABC S.A. de C.V.';
 
   @override
   Widget build(BuildContext context) {
@@ -243,30 +305,55 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 10),
-                            Text("Nombre"),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    value: 'moral',
+                                    groupValue: _tipoCliente,
+                                    title: Text('Empresa'),
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    onChanged: _onTipoClienteChanged,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    value: 'fisica',
+                                    groupValue: _tipoCliente,
+                                    title: Text('Persona física'),
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    onChanged: _onTipoClienteChanged,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(_labelNombre),
                             TextField(
                               controller: nombre,
                               decoration: createAppDecoration(
                                 prefixIcon: Icon(Icons.perm_identity),
-                                hintText: 'Ingresa tu nombre',
+                                hintText: _labelNombreHint,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text("Apellidos"),
+                            Text(_labelApellidoPaterno),
                             TextField(
                               controller: apellidoPaterno,
                               decoration: createAppDecoration(
                                 prefixIcon: Icon(Icons.perm_identity),
-                                hintText: 'Ingresa tu apellido paterno',
+                                hintText: _labelApellidoPaternoHint,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text("Apellido materno"),
+                            Text(_labelApellidoMaterno),
                             TextField(
                               controller: apellidoMaterno,
                               decoration: createAppDecoration(
                                 prefixIcon: Icon(Icons.perm_identity),
-                                hintText: 'Ingresa tu apellido materno',
+                                hintText: _labelApellidoMaternoHint,
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -279,12 +366,13 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text("Nombre fiscal"),
+                            Text(_labelNombreFiscal),
                             TextField(
                               controller: nombreFiscal,
+                              readOnly: _tipoCliente == 'fisica',
                               decoration: createAppDecoration(
                                 prefixIcon: Icon(Icons.perm_identity),
-                                hintText: 'Ingresa tu nombre fiscal',
+                                hintText: _labelNombreFiscalHint,
                               ),
                             ),
                           ],

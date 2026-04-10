@@ -136,12 +136,12 @@ class _TabResumenState extends State<TabResumen> {
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "RFC:",
-                      widget.datosReservacion['rfc'] ?? 'No definido',
+                      widget.datosCliente['rfc'] ?? 'No definido',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(
                       "Nombre fiscal:",
-                      widget.datosCliente['nombreFiscal'] ?? 'No definido',
+                      widget.datosCliente['nombre_fiscal'] ?? 'No definido',
                     ),
                     SizedBox(height: 2),
                     _buildLabelValue(

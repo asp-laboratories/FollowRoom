@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/services/tipo_evento_service.dart';
 
 class TabDatosReservacion extends StatefulWidget {
   final Function(Map<String, String>) onDatosChanged;
@@ -28,12 +29,11 @@ class TabDatosReservacion extends StatefulWidget {
 
 class _TabDatosReservacionState extends State<TabDatosReservacion>
     with AutomaticKeepAliveClientMixin {
-  final List<String> tiposEvento = [
-    'Conferencia',
-    'Boda',
-    'Reunión Corporativa',
-  ];
+  final TipoEventoService _tipoEventoService = TipoEventoService();
+  List<Map<String, dynamic>> _tiposEvento = [];
+  bool _cargandoTiposEvento = true;
   String? tipoEventoSelccionado;
+  int? tipoEventoId;
 
   TimeOfDay? _horaInicio;
   TimeOfDay? _horaFin;
@@ -59,6 +59,26 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
     _fechaController.addListener(_autoSave);
     _timeController.addListener(_autoSave);
     _asistentesController.addListener(_autoSave);
+
+    _cargarTiposEvento();
+  }
+
+  Future<void> _cargarTiposEvento() async {
+    try {
+      final tipos = await _tipoEventoService.getTipoEventos();
+      if (mounted) {
+        setState(() {
+          _tiposEvento = tipos;
+          _cargandoTiposEvento = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _cargandoTiposEvento = false;
+        });
+      }
+    }
   }
 
   @override
@@ -80,6 +100,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
       'fecha': _fechaController.text,
       'horario': _timeController.text,
       'tipo': tipoEventoSelccionado ?? '',
+      'tipoEventoId': tipoEventoId?.toString() ?? '',
       'asistentes': _asistentesController.text,
     });
   }
@@ -252,17 +273,33 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
               const SizedBox(height: 16),
               const Text("Tipo de evento", style: TextEstilos.indicador),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: tipoEventoSelccionado,
-                items: tiposEvento
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() => tipoEventoSelccionado = val);
-                  _autoSave();
-                },
-                decoration: createAppDecoration(hintText: "Selecciona tipo"),
-              ),
+              _cargandoTiposEvento
+                  ? Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<int>(
+                      value: tipoEventoId,
+                      items: _tiposEvento
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e['id'] as int,
+                              child: Text(e['nombre'] ?? ''),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          tipoEventoId = val;
+                          tipoEventoSelccionado = val != null
+                              ? _tiposEvento.firstWhere(
+                                  (e) => e['id'] == val,
+                                )['nombre']
+                              : null;
+                        });
+                        _autoSave();
+                      },
+                      decoration: createAppDecoration(
+                        hintText: "Selecciona tipo",
+                      ),
+                    ),
 
               const SizedBox(height: 16),
               const Text(

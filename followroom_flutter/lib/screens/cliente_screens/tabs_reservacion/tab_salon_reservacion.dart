@@ -12,6 +12,7 @@ class TabSalon extends StatefulWidget {
   final Function(Map<String, dynamic>?) onSalonSelected;
   final Map<int, List<Map<String, dynamic>>> mobiliariosPorSalon;
   final Function(int, List<Map<String, dynamic>>) onMobiliariosChanged;
+  final String? fechaSeleccionada;
 
   const TabSalon({
     super.key,
@@ -21,6 +22,7 @@ class TabSalon extends StatefulWidget {
     required this.onSalonSelected,
     required this.mobiliariosPorSalon,
     required this.onMobiliariosChanged,
+    this.fechaSeleccionada,
   });
 
   @override
@@ -38,9 +40,25 @@ class _TabSalonState extends State<TabSalon> {
     _cargarSalones();
   }
 
+  @override
+  void didUpdateWidget(TabSalon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.fechaSeleccionada != oldWidget.fechaSeleccionada) {
+      _cargarSalones();
+    }
+  }
+
   Future<void> _cargarSalones() async {
     try {
-      final data = await _salonService.getSalonesConEstado();
+      List<Map<String, dynamic>> data;
+      if (widget.fechaSeleccionada != null &&
+          widget.fechaSeleccionada!.isNotEmpty) {
+        data = await _salonService.getSalonesDisponibles(
+          widget.fechaSeleccionada!,
+        );
+      } else {
+        data = await _salonService.getSalonesConEstado();
+      }
       setState(() {
         salonesDB = data;
         _cargando = false;
@@ -197,179 +215,180 @@ class _TabSalonState extends State<TabSalon> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: () => widget.onSalonSelected(salon),
+                        onTap: (salon['reservado'] == true)
+                            ? null
+                            : () => widget.onSalonSelected(salon),
                         child: Padding(
                           padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      salon['nombre'],
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: AppColores.foreground,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: AppColores.primary,
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  _getEstadoIcon(
-                                    salon['estado'] ?? 'Disponible',
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    salon['estado'] ?? 'Disponible',
-                                    style: TextStyle(
-                                      color: _getEstadoColor(
-                                        salon['estado'] ?? 'Disponible',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.people,
-                                    size: 16,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "${salon['capacidad'] ?? 0} personas",
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                  SizedBox(width: 16),
-                                  Icon(
-                                    Icons.attach_money,
-                                    size: 16,
-                                    color: Colors.grey,
-                                  ),
-                                  Text(
-                                    "\$${salon['precio'] ?? 0}",
-                                    style: TextStyle(
-                                      color: AppColores.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 12),
-                              OutlinedButton.icon(
-                                onPressed: () async {
-                                  final resultado =
-                                      await Navigator.push<
-                                        Map<String, dynamic>
-                                      >(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              NavigatorMontajeReservacion(),
+                          child: Opacity(
+                            opacity: (salon['reservado'] == true) ? 0.5 : 1.0,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        salon['nombre'],
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: AppColores.foreground,
                                         ),
-                                      );
-                                  if (resultado != null) {
-                                    widget.onMontajeSelected(
-                                      salonId,
-                                      resultado['nombre'] ?? '',
-                                    );
-                                    final mobiliarios =
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColores.primary,
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    _getEstadoIcon(
+                                      salon['estado'] ?? 'Disponible',
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      salon['estado'] ?? 'Disponible',
+                                      style: TextStyle(
+                                        color: _getEstadoColor(
+                                          salon['estado'] ?? 'Disponible',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.people,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "${salon['capacidad'] ?? 0} personas",
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                    SizedBox(width: 16),
+                                    Icon(
+                                      Icons.attach_money,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                    Text(
+                                      "\$${salon['precio'] ?? 0}",
+                                      style: TextStyle(
+                                        color: AppColores.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final resultado =
                                         await Navigator.push<
-                                          List<Map<String, dynamic>>
+                                          Map<String, dynamic>
                                         >(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                NavigatorMobiliarioReservacion(
-                                                  mobiliariosIniciales:
-                                                      getMobiliariosDelSalon(
-                                                        salonId,
-                                                      ),
-                                                ),
+                                                NavigatorMontajeReservacion(),
                                           ),
                                         );
-                                    if (mobiliarios != null) {
-                                      widget.onMobiliariosChanged(
+                                    if (resultado != null) {
+                                      widget.onMontajeSelected(
                                         salonId,
-                                        mobiliarios,
+                                        resultado['nombre'] ?? '',
                                       );
+                                      final mobiliariosSugeridos =
+                                          (resultado['mobiliarios_sugeridos']
+                                                  as List?)
+                                              ?.map(
+                                                (e) =>
+                                                    Map<String, dynamic>.from(
+                                                      e,
+                                                    ),
+                                              )
+                                              .toList() ??
+                                          [];
+
+                                      final mobiliarios =
+                                          await Navigator.push<
+                                            List<Map<String, dynamic>>
+                                          >(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  NavigatorMobiliarioReservacion(
+                                                    mobiliariosIniciales:
+                                                        getMobiliariosDelSalon(
+                                                          salonId,
+                                                        ),
+                                                    mobiliariosSugeridos:
+                                                        mobiliariosSugeridos,
+                                                  ),
+                                            ),
+                                          );
+                                      if (mobiliarios != null) {
+                                        widget.onMobiliariosChanged(
+                                          salonId,
+                                          mobiliarios,
+                                        );
+                                      }
                                     }
-                                  }
-                                },
-                                icon: Icon(Icons.grid_view),
-                                label: Text(montaje ?? "Seleccionar montaje"),
-                              ),
-                              if (mobiliariosDelSalon.isNotEmpty) ...[
-                                SizedBox(height: 8),
-                                Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Mobiliarios seleccionados",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () =>
-                                                widget.onMobiliariosChanged(
-                                                  salonId,
-                                                  [],
-                                                ),
-                                            child: Icon(
-                                              Icons.close,
-                                              size: 16,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      ...mobiliariosDelSalon.map(
-                                        (m) => Text(
-                                          "${m['nombre']} x${m['cantidad']}",
-                                          style: TextStyle(fontSize: 11),
-                                        ),
-                                      ),
-                                      Text(
-                                        "Total: \$${mobiliariosDelSalon.fold<int>(0, (sum, m) => sum + ((m['precio'] as int? ?? 0) * (m['cantidad'] as int? ?? 1)))}",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11,
-                                          color: AppColores.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  },
+                                  icon: Icon(Icons.grid_view),
+                                  label: Text(montaje ?? "Seleccionar montaje"),
                                 ),
+                                if (mobiliariosDelSalon.isNotEmpty) ...[
+                                  SizedBox(height: 8),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Mobiliarios seleccionados",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                        ...mobiliariosDelSalon.map(
+                                          (m) => Text(
+                                            "${m['nombre']} x${m['cantidad']}",
+                                            style: TextStyle(fontSize: 11),
+                                          ),
+                                        ),
+                                        Text(
+                                          "Total: \$${mobiliariosDelSalon.fold<int>(0, (sum, m) => sum + ((m['precio'] as int? ?? 0) * (m['cantidad'] as int? ?? 1)))}",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                            color: AppColores.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),

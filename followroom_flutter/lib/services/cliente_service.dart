@@ -16,14 +16,15 @@ class ClienteService {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
       final response = await dio.get(
-        '/datos-cliente/',
-        queryParameters: {'correo': email},
+        '/perfil/',
+        queryParameters: {'email': email},
       );
 
       if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        if (data.isNotEmpty) {
-          return Map<String, dynamic>.from(data.first);
+        final data = Map<String, dynamic>.from(response.data);
+        if (data['tipo_usuario'] == 'cliente' ||
+            data['tipo_usuario'] == 'cliente_sin_datos') {
+          return data;
         }
       }
       return null;
