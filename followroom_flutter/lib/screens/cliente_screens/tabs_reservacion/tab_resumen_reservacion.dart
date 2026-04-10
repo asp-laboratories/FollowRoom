@@ -174,13 +174,9 @@ class _TabResumenState extends State<TabResumen> {
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: widget.salonOcupado ? Colors.red.shade100 : null,
-                  border: widget.salonOcupado
-                      ? Border.all(color: Colors.red, width: 2)
-                      : null,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: widget.salonOcupado
+                    ? ContainerStyles.estadoOcupado
+                    : ContainerStyles.sombreado,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

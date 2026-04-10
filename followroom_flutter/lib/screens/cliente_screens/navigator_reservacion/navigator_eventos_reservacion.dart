@@ -33,7 +33,7 @@ class _NavigatorEventosReservacionState
           '${fechaSeleccionada.year}-${fechaSeleccionada.month.toString().padLeft(2, '0')}-${fechaSeleccionada.day.toString().padLeft(2, '0')}';
 
       final resultados = await Future.wait([
-        _disponibilidadService.getDisponibilidadSalones(fechaStr),
+        _disponibilidadService.getReservacionesFecha(fechaStr),
         _disponibilidadService.getEstadosSalones(fechaStr),
       ]);
 
@@ -45,7 +45,7 @@ class _NavigatorEventosReservacionState
           return {
             'id': item['id'],
             'salon': item['salon_nombre'],
-            'salonId': item['id'],
+            'salonId': item['salon_id'],
             'fecha': DateTime.parse(item['fechaEvento']),
             'horaInicio': int.parse(
               item['horaInicio'].toString().split(':')[0],

@@ -60,11 +60,12 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
           _reservacion = Map<String, dynamic>.from(response.data);
           _cargando = false;
           // Calcular progreso según estado
-          final estado =
-              _reservacion?['estado_reserva']?['codigo'] ??
-              _reservacion?['estado_codigo'] ??
-              '';
-          switch (estado) {
+          final estado = _reservacion?['estado_reserva_datos'];
+          String codigo = '';
+          if (estado is Map) {
+            codigo = estado['codigo']?.toString() ?? '';
+          }
+          switch (codigo) {
             case 'SOLIC':
               _progreso = 0.25;
               break;
@@ -94,8 +95,9 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   bool _esReservacionTerminada() {
-    final estado = _reservacion?['estado_codigo'] ?? '';
-    return estado == 'CONF' || estado == 'TERMI';
+    return _getValue(_reservacion?['estado_reserva_datos'], 'codigo') ==
+            'CONF' ||
+        _getValue(_reservacion?['estado_reserva_datos'], 'codigo') == 'TERMI';
   }
 
   void _mostrarEncuesta() {
@@ -318,6 +320,36 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
     );
   }
 
+  String _getValue(
+    dynamic data,
+    String key, {
+    String defaultValue = 'No definido',
+  }) {
+    if (data == null) return defaultValue;
+    if (data is! Map) return defaultValue;
+    final value = data[key];
+    if (value == null) return defaultValue;
+    if (value is Map) return value['nombre']?.toString() ?? value.toString();
+    return value.toString();
+  }
+
+  Map<String, dynamic>? _getMap(dynamic data, String key) {
+    if (data == null) return null;
+    if (data is! Map) return null;
+    final value = data[key];
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
+  List<dynamic> _getList(dynamic data, String key) {
+    if (data == null) return [];
+    if (data is int || data is double || data is String) return [];
+    if (data is! Map) return [];
+    final value = data[key];
+    if (value is List) return value;
+    return [];
+  }
+
   String _formatearFecha(String? fecha) {
     if (fecha == null) return 'No definida';
     try {
@@ -446,8 +478,11 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de evento:",
-                            _reservacion?['tipo_evento']?['nombre'] ??
-                                'No seleccionado',
+                            _getValue(
+                              _reservacion?['tipo_evento_datos'],
+                              'nombre',
+                              defaultValue: 'No seleccionado',
+                            ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
@@ -457,8 +492,11 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Estado:",
-                            _reservacion?['estado_reserva']?['nombre'] ??
-                                'No definido',
+                            _getValue(
+                              _reservacion?['estado_reserva_datos'],
+                              'nombre',
+                              defaultValue: 'No definido',
+                            ),
                           ),
                         ],
                       ),
@@ -488,33 +526,53 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre:",
-                            _reservacion?['cliente']?['nombre'] != null
-                                ? '${_reservacion?['cliente']['nombre'] ?? ''} ${_reservacion?['cliente']['apellidoPaterno'] ?? ''}'
-                                      .trim()
-                                : 'No definido',
+                            _getValue(
+                                  _reservacion?['cliente_datos'],
+                                  'nombre',
+                                  defaultValue: 'No definido',
+                                ) +
+                                ' ' +
+                                _getValue(
+                                  _reservacion?['cliente_datos'],
+                                  'apellidoPaterno',
+                                  defaultValue: '',
+                                ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Teléfono:",
-                            _reservacion?['cliente']?['telefono'] ??
-                                'No definido',
+                            _getValue(
+                              _reservacion?['cliente_datos'],
+                              'telefono',
+                              defaultValue: 'No definido',
+                            ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Email:",
-                            _reservacion?['cliente']?['correo_electronico'] ??
-                                'No definido',
+                            _getValue(
+                              _reservacion?['cliente_datos'],
+                              'correo_electronico',
+                              defaultValue: 'No definido',
+                            ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "RFC:",
-                            _reservacion?['cliente']?['rfc'] ?? 'No definido',
+                            _getValue(
+                              _reservacion?['cliente_datos'],
+                              'rfc',
+                              defaultValue: 'No definido',
+                            ),
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Nombre fiscal:",
-                            _reservacion?['cliente']?['nombre_fiscal'] ??
-                                'No definido',
+                            _getValue(
+                              _reservacion?['cliente_datos'],
+                              'nombre_fiscal',
+                              defaultValue: 'No definido',
+                            ),
                           ),
                         ],
                       ),
@@ -542,22 +600,34 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          if (_reservacion?['montaje']?['salon'] == null)
+                          if (_getMap(_reservacion, 'montaje_datos') == null)
                             Text("Ningún salón seleccionado")
                           else ...[
                             _buildLabelValue(
                               "Salón:",
-                              _reservacion?['montaje']?['salon']?['nombre'] ??
-                                  'No definido',
+                              _getValue(
+                                _getMap(
+                                  _getMap(_reservacion, 'montaje_datos'),
+                                  'salon',
+                                ),
+                                'nombre',
+                                defaultValue: 'No definido',
+                              ),
                             ),
                             _buildLabelValue(
                               "Precio:",
-                              "\$${_reservacion?['montaje']?['costo'] ?? _reservacion?['total'] ?? 0}",
+                              "\$${_reservacion?['total'] ?? 0}",
                             ),
                             _buildLabelValue(
                               "Montaje:",
-                              _reservacion?['montaje']?['tipo_montaje']?['nombre'] ??
-                                  'No seleccionado',
+                              _getValue(
+                                _getMap(
+                                  _getMap(_reservacion, 'montaje_datos'),
+                                  'tipo_montaje',
+                                ),
+                                'nombre',
+                                defaultValue: 'No seleccionado',
+                              ),
                             ),
                           ],
                         ],
@@ -682,7 +752,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   Widget _buildServiciosContainer() {
-    final servicios = _reservacion?['reserva_servicio'] as List? ?? [];
+    final servicios = _getList(_reservacion, 'servicios');
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -749,7 +819,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   Widget _buildEquipamientosContainer() {
-    final equipos = _reservacion?['reserva_equipa'] as List? ?? [];
+    final equipos = _getList(_reservacion, 'equipamentos');
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -816,7 +886,11 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   Widget _buildMobiliariosContainer() {
-    final mobiliarios = _reservacion?['mobiliarios'] as List? ?? [];
+    final mobiliariosList = _getList(
+      _getMap(_reservacion, 'montaje_datos'),
+      'montaje_mobiliario',
+    );
+
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
@@ -829,10 +903,10 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
-          if (mobiliarios.isEmpty)
+          if (mobiliariosList.isEmpty)
             Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
           else
-            ...mobiliarios.map(
+            ...mobiliariosList.map(
               (m) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
@@ -841,13 +915,13 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${m['mobiliario__nombre'] ?? 'Mobiliario'} (x${m['cantidad']})",
+                        "- ${m['nombre'] ?? 'Mobiliario'} (x${m['cantidad']})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${m['mobiliario__costo'] ?? 0}",
+                      "\$${m['costo'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -857,7 +931,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                 ),
               ),
             ),
-          if (mobiliarios.isNotEmpty) ...[
+          if (mobiliariosList.isNotEmpty) ...[
             Divider(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -867,7 +941,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${mobiliarios.fold<int>(0, (sum, m) => sum + ((m['mobiliario__costo'] as int? ?? 0) * (m['cantidad'] as int? ?? 1)))}",
+                  "\$${mobiliariosList.fold<int>(0, (sum, m) => sum + ((m['costo'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
