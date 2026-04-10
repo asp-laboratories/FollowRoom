@@ -12,6 +12,7 @@ class TabTotalReservacion extends StatefulWidget {
   final List<Map<String, dynamic>> equipamientosSeleccionados;
   final List<Map<String, dynamic>> mobiliariosSeleccionados;
   final VoidCallback? onReservacionEnviada;
+  final bool salonOcupado;
 
   const TabTotalReservacion({
     super.key,
@@ -23,6 +24,7 @@ class TabTotalReservacion extends StatefulWidget {
     required this.equipamientosSeleccionados,
     required this.mobiliariosSeleccionados,
     this.onReservacionEnviada,
+    this.salonOcupado = false,
   });
 
   @override
@@ -448,6 +450,31 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                 ),
               ),
             ),
+
+            if (widget.salonOcupado)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    border: Border.all(color: Colors.red, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.red),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'El salón seleccionado no está disponible para la fecha elegida. La reservación se creará en espera de confirmación.',
+                          style: TextStyle(color: Colors.red.shade700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             SizedBox(height: 20),
           ],

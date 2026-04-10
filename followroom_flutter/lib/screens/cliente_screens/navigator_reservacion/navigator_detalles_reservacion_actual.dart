@@ -306,6 +306,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.only(
                       left: 16,

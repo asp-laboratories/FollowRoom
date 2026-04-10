@@ -10,6 +10,7 @@ class TabResumen extends StatefulWidget {
   final List<Map<String, dynamic>> serviciosSeleccionados;
   final List<Map<String, dynamic>> equipamientosSeleccionados;
   final List<Map<String, dynamic>> mobiliariosSeleccionados;
+  final bool salonOcupado;
 
   const TabResumen({
     super.key,
@@ -20,6 +21,7 @@ class TabResumen extends StatefulWidget {
     required this.serviciosSeleccionados,
     required this.equipamientosSeleccionados,
     required this.mobiliariosSeleccionados,
+    this.salonOcupado = false,
   });
 
   @override
@@ -172,21 +174,56 @@ class _TabResumenState extends State<TabResumen> {
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12),
-                decoration: ContainerStyles.sombreado,
+                decoration: BoxDecoration(
+                  color: widget.salonOcupado ? Colors.red.shade100 : null,
+                  border: widget.salonOcupado
+                      ? Border.all(color: Colors.red, width: 2)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Salón y Montaje",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          "Salón y Montaje",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        if (widget.salonOcupado) ...[
+                          SizedBox(width: 8),
+                          Icon(Icons.warning, color: Colors.red, size: 18),
+                        ],
+                      ],
                     ),
                     SizedBox(height: 8),
                     if (widget.salonSeleccionado == null)
                       Text("Ningún salón seleccionado")
                     else ...[
+                      if (widget.salonOcupado) ...[
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          margin: EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'SALÓN OCUPADO - NO DISPONIBLE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                       _buildLabelValue(
                         "Salón:",
                         widget.salonSeleccionado!['nombre'].toString(),

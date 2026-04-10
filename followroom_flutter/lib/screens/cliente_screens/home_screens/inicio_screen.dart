@@ -6,6 +6,7 @@ import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
+import 'package:followroom_flutter/screens/cliente_screens/reservar_paquete_screen.dart';
 import 'package:followroom_flutter/services/paquete_service.dart';
 import 'package:followroom_flutter/services/historial_service.dart';
 import 'package:followroom_flutter/services/session_data.dart';
@@ -69,8 +70,28 @@ class _ReservacionState extends State<Reservacion> {
   Future<void> _cargarReservacionProxima() async {
     try {
       final reservacion = await _historialService.getReservacionProxima();
+
+      bool tieneConfirmada = false;
+      if (reservacion != null) {
+        final estado = reservacion['estado_reserva_datos'];
+        if (estado is Map) {
+          final codigo = estado['codigo']?.toString() ?? '';
+          print('Reservación próxima - Estado código: $codigo');
+          if (codigo == 'CONF') {
+            tieneConfirmada = true;
+            print('Tengo reservación CONFIRMADA');
+          } else {
+            print(
+              'Reservación con estado: $codigo (no es CONF, no se mostrará)',
+            );
+          }
+        }
+      } else {
+        print('No hay reservación próxima');
+      }
+
       setState(() {
-        _reservacionProxima = reservacion;
+        _reservacionProxima = tieneConfirmada ? reservacion : null;
         _cargandoReservacion = false;
       });
     } catch (e) {
@@ -252,53 +273,221 @@ class _ReservacionState extends State<Reservacion> {
             ),
             SizedBox(height: 24),
             CarouselSlider(
-              options: CarouselOptions(height: 290.0),
+              options: CarouselOptions(
+                height: 320.0,
+                enlargeCenterPage: true,
+                viewportFraction: 0.85,
+                autoPlay: true,
+                autoPlayInterval: Duration(seconds: 5),
+                autoPlayAnimationDuration: Duration(milliseconds: 800),
+              ),
               items: paquetesDB.map((paquete) {
                 return Builder(
                   builder: (BuildContext context) {
                     return Container(
-                      width: MediaQuery.of(context).size.width,
-                      margin: EdgeInsets.symmetric(horizontal: 5.0),
+                      margin: EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: (paquete['color'] as Color).withAlpha(51),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            paquete['icono'] as IconData,
-                            size: 40,
-                            color: paquete['color'] as Color,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            paquete['nombre'] as String,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(paquete['descripcion'] as String),
-                          Text(
-                            '\$${paquete['precio']}',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              print("Paquete seleccionado: $paquete");
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ReservacionProceso(
-                                    paqueteSeleccionado: paquete,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text("Ver más"),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(26),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
                         ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: (paquete['color'] as Color)
+                                          .withAlpha(26),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      paquete['icono'] as IconData,
+                                      size: 32,
+                                      color: paquete['color'] as Color,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          paquete['nombre'] as String,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'Paquete especial',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColores.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '\$${paquete['precio']}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Incluye:',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      paquete['descripcion'] as String,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black87,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (paquete['salon_nombre'] != null) ...[
+                                      SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            size: 12,
+                                            color: Colors.grey,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Salón: ${paquete['salon_nombre']}',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ReservacionProceso(
+                                                  paqueteSeleccionado: paquete,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 10,
+                                        ),
+                                        side: BorderSide(
+                                          color: AppColores.primary,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Ver más",
+                                        style: TextStyle(
+                                          color: AppColores.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ReservarPaqueteScreen(
+                                                  paquete: paquete,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColores.primary,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text("Reservar"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
