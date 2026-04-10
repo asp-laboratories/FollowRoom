@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:buttons_tabbar/buttons_tabbar.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/mobiliario_service.dart';
+import 'package:followroom_flutter/services/equipamiento_service.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
+import 'package:followroom_flutter/services/session_data.dart';
 
 class SolicitudesScreen extends StatefulWidget {
   const SolicitudesScreen({super.key});
@@ -11,171 +15,363 @@ class SolicitudesScreen extends StatefulWidget {
 }
 
 class _SolicitudesScreenState extends State<SolicitudesScreen> {
-  final List<String> tiposMobiliario = ['oficina', 'eventos', 'infantil'];
-  final List<String> tiposEquipamiento = ['audio', 'video', 'iluminacion'];
-  String? tipoMobiliarioSeleccionado;
-  String? tipoEquipamientoSeleccionado;
+  final MobiliarioService _mobiliarioService = MobiliarioService();
+  final EquipamientoService _equipamientoService = EquipamientoService();
+  final ReservacionService _reservacionService = ReservacionService();
 
-  List<Map<String, dynamic>> mobiliario = [];
-  List<Map<String, dynamic>> equipamiento = [];
+  List<Map<String, dynamic>> _mobiliario = [];
+  List<Map<String, dynamic>> _equipamiento = [];
+  List<Map<String, dynamic>> _servicios = [];
+  List<Map<String, dynamic>> _tiposMobiliario = [];
+  List<Map<String, dynamic>> _tiposEquipamiento = [];
+  List<Map<String, dynamic>> _tiposServicio = [];
+  List<Map<String, dynamic>> _reservacionesActivas = [];
+
+  String? _tipoMobiliarioSeleccionado;
+  String? _tipoEquipamientoSeleccionado;
+  String? _tipoServicioSeleccionado;
+
+  bool _loading = true;
+  bool _noReservacionesActivas = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    cargarDatos();
+    _cargarDatos();
   }
 
-  Future<void> cargarDatos() async {
-    await Future.delayed(const Duration(seconds: 1));
+  Future<void> _cargarDatos() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
 
-    setState(() {
-      mobiliario = [
-        {
-          "nombre": "Silla",
-          "descripcion": "Silla de oficina cómoda",
-          "cantidad": 0,
-          "tipo": "oficina",
-          "precio": 50,
-        },
-        {
-          "nombre": "Mesa",
-          "descripcion": "Mesa de trabajo rectangular",
-          "cantidad": 0,
-          "tipo": "oficina",
-          "precio": 150,
-        },
-        {
-          "nombre": "Silla Tiffany",
-          "descripcion": "Silla elegante para eventos",
-          "cantidad": 0,
-          "tipo": "eventos",
-          "precio": 80,
-        },
-        {
-          "nombre": "Mesa Redonda",
-          "descripcion": "Mesa para banquetes",
-          "cantidad": 0,
-          "tipo": "eventos",
-          "precio": 200,
-        },
-        {
-          "nombre": "Mesa Infantil",
-          "descripcion": "Mesa pequeña para niños",
-          "cantidad": 0,
-          "tipo": "infantil",
-          "precio": 100,
-        },
-        {
-          "nombre": "Silla Plastica",
-          "descripcion": "Silla resistente para niños",
-          "cantidad": 0,
-          "tipo": "infantil",
-          "precio": 30,
-        },
-      ];
+      final email = SessionData.email;
+      if (email == null) {
+        setState(() {
+          _error = 'No hay sesión activa';
+          _loading = false;
+        });
+        return;
+      }
 
-      equipamiento = [
-        {
-          "nombre": "Proyector",
-          "descripcion": "Proyector HD de alta definición",
-          "cantidad": 0,
-          "tipo": "video",
-          "precio": 500,
-        },
-        {
-          "nombre": "Pantalla",
-          "descripcion": "Pantalla de proyección 100\"",
-          "cantidad": 0,
-          "tipo": "video",
-          "precio": 300,
-        },
-        {
-          "nombre": "Bocina",
-          "descripcion": "Bocina amplificadora de sonido",
-          "cantidad": 0,
-          "tipo": "audio",
-          "precio": 400,
-        },
-        {
-          "nombre": "Micrófono",
-          "descripcion": "Micrófono inalámbrico",
-          "cantidad": 0,
-          "tipo": "audio",
-          "precio": 200,
-        },
-        {
-          "nombre": "Foco LED",
-          "descripcion": "Iluminación LEDRGB",
-          "cantidad": 0,
-          "tipo": "iluminacion",
-          "precio": 150,
-        },
-        {
-          "nombre": "Luz Estroboscópica",
-          "descripcion": "Luz estroboscópica para eventos",
-          "cantidad": 0,
-          "tipo": "iluminacion",
-          "precio": 250,
-        },
-      ];
-    });
-  }
+      final results = await Future.wait([
+        _mobiliarioService.getMobiliarios(),
+        _equipamientoService.getEquipamientos(),
+        _equipamientoService.getServicios(),
+        _mobiliarioService.getTiposMobil(),
+        _equipamientoService.getServicios(),
+        _reservacionService.getMisReservaciones(email),
+      ]);
 
-  List<Map<String, dynamic>> get mobiliarioFiltrado {
-    if (tipoMobiliarioSeleccionado == null ||
-        tipoMobiliarioSeleccionado == 'todos') {
-      return mobiliario;
+      final mobiliariosAPI = (results[0] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final equipamentosAPI = (results[1] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final serviciosAPI = (results[2] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final tiposMobiliarioAPI = (results[3] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final tiposServicioAPI = (results[4] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final reservaciones = (results[5] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      print('Reservaciones obtenidas: $reservaciones');
+
+      final reservacionesActivas = reservaciones.where((r) {
+        final estado = r['estado_codigo']?.toString().toUpperCase();
+        print('Reservacion ${r['id']}: estado_codigo = $estado');
+        return estado == 'SOLIC' ||
+            estado == 'PEN' ||
+            estado == 'CONF' ||
+            estado == 'CON' ||
+            estado == 'PROC';
+      }).toList();
+
+      setState(() {
+        _mobiliario = mobiliariosAPI.map((m) => {...m, 'cantidad': 0}).toList();
+        _equipamiento = equipamentosAPI
+            .map((e) => {...e, 'cantidad': 0})
+            .toList();
+        _servicios = serviciosAPI
+            .map((s) => {...s, 'seleccionado': false})
+            .toList();
+        _tiposMobiliario = tiposMobiliarioAPI;
+        _tiposEquipamiento = [
+          {'id': 1, 'nombre': 'audio'},
+          {'id': 2, 'nombre': 'video'},
+          {'id': 3, 'nombre': 'iluminacion'},
+        ];
+        _tiposServicio = tiposServicioAPI;
+        _reservacionesActivas = reservacionesActivas;
+        _noReservacionesActivas = reservacionesActivas.isEmpty;
+        print(
+          'Reservaciones activas encontradas: ${reservacionesActivas.length}',
+        );
+        print('IDs: ${reservacionesActivas.map((r) => r['id']).toList()}');
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Error al cargar datos: $e';
+        _loading = false;
+      });
     }
-    return mobiliario
-        .where((m) => m['tipo'] == tipoMobiliarioSeleccionado)
+  }
+
+  List<Map<String, dynamic>> get _mobiliarioFiltrado {
+    if (_tipoMobiliarioSeleccionado == null ||
+        _tipoMobiliarioSeleccionado == 'todos') {
+      return _mobiliario;
+    }
+    return _mobiliario
+        .where((m) => m['tipo_nombre'] == _tipoMobiliarioSeleccionado)
         .toList();
   }
 
-  List<Map<String, dynamic>> get equipamientoFiltrado {
-    if (tipoEquipamientoSeleccionado == null ||
-        tipoEquipamientoSeleccionado == 'todos') {
-      return equipamiento;
+  List<Map<String, dynamic>> get _equipamientoFiltrado {
+    if (_tipoEquipamientoSeleccionado == null ||
+        _tipoEquipamientoSeleccionado == 'todos') {
+      return _equipamiento;
     }
-    return equipamiento
-        .where((e) => e['tipo'] == tipoEquipamientoSeleccionado)
-        .toList();
+    return _equipamiento.where((e) {
+      final tipoId = e['tipo_equipa'];
+      final tipoNombre =
+          e['tipo_nombre']?.toString().toLowerCase() ??
+          e['tipo_equipa']?.toString().toLowerCase() ??
+          '';
+
+      print(
+        'Equipamiento: ${e['nombre']}, tipo_equipa: $tipoId, tipo_nombre: $tipoNombre, filtro: $_tipoEquipamientoSeleccionado',
+      );
+
+      if (_tipoEquipamientoSeleccionado == 'audio') {
+        return tipoNombre.contains('audio');
+      }
+      if (_tipoEquipamientoSeleccionado == 'video') {
+        return tipoNombre.contains('video');
+      }
+      if (_tipoEquipamientoSeleccionado == 'iluminacion') {
+        return tipoNombre.contains('ilumin');
+      }
+      return true;
+    }).toList();
   }
 
-  void actualizarCantidad(
+  List<Map<String, dynamic>> get _serviciosFiltrados {
+    if (_tipoServicioSeleccionado == null ||
+        _tipoServicioSeleccionado == 'todos') {
+      return _servicios;
+    }
+    return _servicios.where((s) {
+      final tipoId = s['tipo_servicio'];
+      final tipoNombre = s['tipo_servicio']?.toString().toLowerCase() ?? '';
+
+      print(
+        'Servicio: ${s['nombre']}, tipo_servicio: $tipoId, filtro: $_tipoServicioSeleccionado',
+      );
+
+      return tipoId.toString() == _tipoServicioSeleccionado ||
+          tipoNombre.contains(_tipoServicioSeleccionado!.toLowerCase());
+    }).toList();
+  }
+
+  void _actualizarCantidad(
     List<Map<String, dynamic>> lista,
     int index,
     int nuevaCantidad,
   ) {
     if (nuevaCantidad < 0) return;
-
     setState(() {
-      lista[index]["cantidad"] = nuevaCantidad;
+      lista[index]['cantidad'] = nuevaCantidad;
     });
   }
 
-  int getCantidad(List<Map<String, dynamic>> lista, int index) {
-    return lista[index]["cantidad"];
+  void _toggleServicio(int index) {
+    setState(() {
+      _servicios[index]['seleccionado'] = !_servicios[index]['seleccionado'];
+    });
   }
 
-  List<Map<String, dynamic>> getSeleccionados() {
+  List<Map<String, dynamic>> get _seleccionados {
     return [
-      ...mobiliario.where((e) => e["cantidad"] > 0),
-      ...equipamiento.where((e) => e["cantidad"] > 0),
+      ..._mobiliario.where((e) => (e['cantidad'] as int) > 0),
+      ..._equipamiento.where((e) => (e['cantidad'] as int) > 0),
+      ..._servicios.where((e) => e['seleccionado'] == true),
     ];
   }
 
-  void mostrarResumen() {
-    final seleccionados = getSeleccionados();
+  double get _total {
+    double total = 0;
+    for (var m in _mobiliario) {
+      total +=
+          (m['cantidad'] as int) *
+          ((m['precio'] ?? m['costo'] ?? 0) as num).toDouble();
+    }
+    for (var e in _equipamiento) {
+      total += (e['cantidad'] as int) * ((e['costo'] ?? 0) as num).toDouble();
+    }
+    for (var s in _servicios.where((e) => e['seleccionado'] == true)) {
+      total += ((s['costo'] ?? 0) as num).toDouble();
+    }
+    return total;
+  }
+
+  void _mostrarDialogoReservacion() {
+    if (_seleccionados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay elementos seleccionados')),
+      );
+      return;
+    }
+
+    if (_reservacionesActivas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay reservaciones activas')),
+      );
+      return;
+    }
+
+    int? reservacionIdSeleccionada;
+
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecciona la reservación',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ..._reservacionesActivas.map((r) {
+                    return RadioListTile<int>(
+                      value: r['id'],
+                      groupValue: reservacionIdSeleccionada,
+                      onChanged: (value) {
+                        setModalState(() {
+                          reservacionIdSeleccionada = value;
+                        });
+                      },
+                      title: Text(r['nombre'] ?? 'Reservación ${r['id']}'),
+                      subtitle: Text(
+                        '${r['fecha'] ?? ''} - ${r['salon_nombre'] ?? ''}',
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColores.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      onPressed: reservacionIdSeleccionada != null
+                          ? () =>
+                                _confirmarSolicitud(reservacionIdSeleccionada!)
+                          : null,
+                      child: const Text('Confirmar'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmarSolicitud(int reservacionId) async {
+    Navigator.pop(context);
+
+    final mobiliarios = _mobiliario
+        .where((m) => (m['cantidad'] as int) > 0)
+        .map((m) => {'id': m['id'], 'cantidad': m['cantidad']})
+        .toList();
+
+    final equipamentos = _equipamiento
+        .where((e) => (e['cantidad'] as int) > 0)
+        .map((e) => {'id': e['id'], 'cantidad': e['cantidad']})
+        .toList();
+
+    final servicios = _servicios
+        .where((s) => s['seleccionado'] == true)
+        .map((s) => {'id': s['id']})
+        .toList();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final success = await _reservacionService.agregarExtrasAReservacion(
+      reservacionId: reservacionId,
+      mobiliarios: mobiliarios,
+      equipamentos: equipamentos,
+      servicios: servicios,
+    );
+
+    if (mounted) {
+      Navigator.pop(context);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Solicitud extra enviada correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        setState(() {
+          for (var m in _mobiliario) m['cantidad'] = 0;
+          for (var e in _equipamiento) e['cantidad'] = 0;
+          for (var s in _servicios) s['seleccionado'] = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al enviar solicitud'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _mostrarResumen() {
+    final seleccionados = _seleccionados;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         if (seleccionados.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(20),
-            child: Center(child: Text("No hay solicitudes seleccionadas")),
+            child: Center(child: Text('No hay solicitudes seleccionadas')),
           );
         }
         return Padding(
@@ -184,21 +380,26 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "Resumen de solicitud",
+                'Resumen de solicitud',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               ...seleccionados.map(
                 (e) => ListTile(
-                  title: Text(e["nombre"]),
-                  subtitle: Text(e["descripcion"]),
-                  trailing: Text("x${e["cantidad"]}"),
+                  title: Text(e['nombre']),
+                  subtitle: Text(e['descripcion'] ?? e['descripEvento'] ?? ''),
+                  trailing: e['cantidad'] != null
+                      ? Text('x${e['cantidad']}')
+                      : const Icon(Icons.check, color: Colors.green),
                 ),
               ),
               const Divider(),
               Text(
-                "Total de items: ${seleccionados.fold<int>(0, (sum, e) => sum + (e["cantidad"] as int))}",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                'Total: \$${_total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
@@ -208,8 +409,9 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
+                  _mostrarDialogoReservacion();
                 },
-                child: const Text("Confirmar"),
+                child: const Text('Seleccionar Reservación'),
               ),
             ],
           ),
@@ -220,8 +422,54 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _cargarDatos,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_noReservacionesActivas) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.event_busy, size: 80, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              const Text(
+                'No tienes reservaciones activas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Para solicitar mobiliarios, equipamiento o servicios extras, necesitas tener una reservación confirmada o en proceso.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           ButtonsTabBar(
@@ -236,18 +484,22 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               fontWeight: FontWeight.bold,
             ),
             radius: 50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             tabs: const [
               Tab(text: "Mobiliario"),
               Tab(text: "Equipamiento"),
+              Tab(text: "Servicios"),
             ],
           ),
           Expanded(
             child: TabBarView(
-              children: [_buildMobiliarioLista(), _buildEquipamientoLista()],
+              children: [
+                _buildMobiliarioLista(),
+                _buildEquipamientoLista(),
+                _buildServiciosLista(),
+              ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -258,8 +510,11 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                onPressed: mostrarResumen,
-                child: const Text("Solicitar", style: TextStyle(fontSize: 16)),
+                onPressed: _mostrarResumen,
+                child: Text(
+                  'Solicitar (Total: \$${_total.toStringAsFixed(2)})',
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ),
@@ -271,7 +526,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   Widget _buildMobiliarioLista() {
     return SingleChildScrollView(
       child: Container(
-        decoration: BoxDecoration(color: AppColores.background2),
+        decoration: const BoxDecoration(color: AppColores.background2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -280,34 +535,34 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               child: Container(
                 decoration: ContainerStyles.sombreado,
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Text(
-                      "Filtrar:",
+                    const Text(
+                      'Filtrar:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButton<String>(
-                        value: tipoMobiliarioSeleccionado,
-                        hint: Text("Todos"),
+                        value: _tipoMobiliarioSeleccionado,
+                        hint: const Text('Todos'),
                         isExpanded: true,
                         items: [
-                          DropdownMenuItem(
+                          const DropdownMenuItem(
                             value: 'todos',
-                            child: Text("Todos"),
+                            child: Text('Todos'),
                           ),
-                          ...tiposMobiliario.map(
+                          ..._tiposMobiliario.map(
                             (value) => DropdownMenuItem(
-                              value: value,
-                              child: Text(value),
+                              value: value['nombre'],
+                              child: Text(value['nombre'] ?? ''),
                             ),
                           ),
                         ],
                         onChanged: (String? nuevoValor) {
                           setState(() {
-                            tipoMobiliarioSeleccionado = nuevoValor;
+                            _tipoMobiliarioSeleccionado = nuevoValor;
                           });
                         },
                       ),
@@ -319,27 +574,24 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                "Catálogo de mobiliario:",
+                'Catálogo de mobiliario:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16),
-              itemCount: mobiliarioFiltrado.length,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: _mobiliarioFiltrado.length,
               itemBuilder: (context, index) {
-                final item = mobiliarioFiltrado[index];
-                final cantidad = getCantidad(
-                  mobiliario,
-                  mobiliario.indexOf(item),
-                );
+                final item = _mobiliarioFiltrado[index];
+                final cantidad = item['cantidad'] as int;
 
                 return Container(
-                  margin: EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
                   child: Padding(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         Expanded(
@@ -347,16 +599,16 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                item["nombre"],
-                                style: TextStyle(
+                                item['nombre'] ?? '',
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   color: AppColores.foreground,
                                 ),
                               ),
                               Text(
-                                item["descripcion"],
-                                style: TextStyle(
+                                item['descripcion'] ?? '',
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
@@ -364,7 +616,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.symmetric(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 2,
                                     ),
@@ -375,18 +627,20 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      item["tipo"],
-                                      style: TextStyle(
+                                      item['tipo_nombre'] ??
+                                          item['tipo_movil']?.toString() ??
+                                          '',
+                                      style: const TextStyle(
                                         color: AppColores.primary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    '\$${item["precio"]}',
-                                    style: TextStyle(
+                                    '\$${item['precio'] ?? item['costo'] ?? 0}',
+                                    style: const TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -401,11 +655,16 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                           children: [
                             IconButton(
                               onPressed: cantidad > 0
-                                  ? () => actualizarCantidad(
-                                      mobiliario,
-                                      mobiliario.indexOf(item),
-                                      cantidad - 1,
-                                    )
+                                  ? () {
+                                      final originalIndex = _mobiliario.indexOf(
+                                        item,
+                                      );
+                                      _actualizarCantidad(
+                                        _mobiliario,
+                                        originalIndex,
+                                        cantidad - 1,
+                                      );
+                                    }
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
@@ -415,18 +674,21 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                               ),
                             ),
                             Text(
-                              "$cantidad",
-                              style: TextStyle(
+                              '$cantidad',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
                             IconButton(
-                              onPressed: () => actualizarCantidad(
-                                mobiliario,
-                                mobiliario.indexOf(item),
-                                cantidad + 1,
-                              ),
+                              onPressed: () {
+                                final originalIndex = _mobiliario.indexOf(item);
+                                _actualizarCantidad(
+                                  _mobiliario,
+                                  originalIndex,
+                                  cantidad + 1,
+                                );
+                              },
                               icon: Icon(
                                 Icons.add_circle_outline,
                                 color: AppColores.primary,
@@ -449,7 +711,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   Widget _buildEquipamientoLista() {
     return SingleChildScrollView(
       child: Container(
-        decoration: BoxDecoration(color: AppColores.background2),
+        decoration: const BoxDecoration(color: AppColores.background2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -458,34 +720,34 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               child: Container(
                 decoration: ContainerStyles.sombreado,
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Text(
-                      "Filtrar:",
+                    const Text(
+                      'Filtrar:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButton<String>(
-                        value: tipoEquipamientoSeleccionado,
-                        hint: Text("Todos"),
+                        value: _tipoEquipamientoSeleccionado,
+                        hint: const Text('Todos'),
                         isExpanded: true,
                         items: [
-                          DropdownMenuItem(
+                          const DropdownMenuItem(
                             value: 'todos',
-                            child: Text("Todos"),
+                            child: Text('Todos'),
                           ),
-                          ...tiposEquipamiento.map(
+                          ..._tiposEquipamiento.map(
                             (value) => DropdownMenuItem(
-                              value: value,
-                              child: Text(value),
+                              value: value['nombre'],
+                              child: Text(value['nombre'] ?? ''),
                             ),
                           ),
                         ],
                         onChanged: (String? nuevoValor) {
                           setState(() {
-                            tipoEquipamientoSeleccionado = nuevoValor;
+                            _tipoEquipamientoSeleccionado = nuevoValor;
                           });
                         },
                       ),
@@ -497,27 +759,33 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                "Catálogo de equipamiento:",
+                'Catálogo de equipamiento:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16),
-              itemCount: equipamientoFiltrado.length,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: _equipamientoFiltrado.length,
               itemBuilder: (context, index) {
-                final item = equipamientoFiltrado[index];
-                final cantidad = getCantidad(
-                  equipamiento,
-                  equipamiento.indexOf(item),
-                );
+                final item = _equipamientoFiltrado[index];
+                final cantidad = item['cantidad'] as int;
+
+                String tipoNombre = '';
+                final tipoId = item['tipo_equipa'];
+                if (tipoId == 1)
+                  tipoNombre = 'audio';
+                else if (tipoId == 2)
+                  tipoNombre = 'video';
+                else if (tipoId == 3)
+                  tipoNombre = 'iluminacion';
 
                 return Container(
-                  margin: EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
                   child: Padding(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         Expanded(
@@ -525,16 +793,16 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                item["nombre"],
-                                style: TextStyle(
+                                item['nombre'] ?? '',
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   color: AppColores.foreground,
                                 ),
                               ),
                               Text(
-                                item["descripcion"],
-                                style: TextStyle(
+                                item['descripcion'] ?? '',
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
@@ -542,7 +810,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.symmetric(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 2,
                                     ),
@@ -553,18 +821,18 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      item["tipo"],
-                                      style: TextStyle(
+                                      tipoNombre,
+                                      style: const TextStyle(
                                         color: AppColores.primary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    '\$${item["precio"]}',
-                                    style: TextStyle(
+                                    '\$${item['costo'] ?? 0}',
+                                    style: const TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -579,11 +847,15 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                           children: [
                             IconButton(
                               onPressed: cantidad > 0
-                                  ? () => actualizarCantidad(
-                                      equipamiento,
-                                      equipamiento.indexOf(item),
-                                      cantidad - 1,
-                                    )
+                                  ? () {
+                                      final originalIndex = _equipamiento
+                                          .indexOf(item);
+                                      _actualizarCantidad(
+                                        _equipamiento,
+                                        originalIndex,
+                                        cantidad - 1,
+                                      );
+                                    }
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
@@ -593,18 +865,23 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                               ),
                             ),
                             Text(
-                              "$cantidad",
-                              style: TextStyle(
+                              '$cantidad',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
                             IconButton(
-                              onPressed: () => actualizarCantidad(
-                                equipamiento,
-                                equipamiento.indexOf(item),
-                                cantidad + 1,
-                              ),
+                              onPressed: () {
+                                final originalIndex = _equipamiento.indexOf(
+                                  item,
+                                );
+                                _actualizarCantidad(
+                                  _equipamiento,
+                                  originalIndex,
+                                  cantidad + 1,
+                                );
+                              },
                               icon: Icon(
                                 Icons.add_circle_outline,
                                 color: AppColores.primary,
@@ -613,6 +890,110 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                           ],
                         ),
                       ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiciosLista() {
+    return SingleChildScrollView(
+      child: Container(
+        decoration: const BoxDecoration(color: AppColores.background2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: ContainerStyles.sombreado,
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Filtrar:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        value: _tipoServicioSeleccionado,
+                        hint: const Text('Todos'),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem(
+                            value: 'todos',
+                            child: Text('Todos'),
+                          ),
+                          ..._tiposServicio.map(
+                            (value) => DropdownMenuItem(
+                              value: value['id'].toString(),
+                              child: Text(value['nombre'] ?? ''),
+                            ),
+                          ),
+                        ],
+                        onChanged: (String? nuevoValor) {
+                          setState(() {
+                            _tipoServicioSeleccionado = nuevoValor;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Catálogo de servicios:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: _serviciosFiltrados.length,
+              itemBuilder: (context, index) {
+                final item = _serviciosFiltrados[index];
+                final seleccionado = item['seleccionado'] as bool;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: ContainerStyles.sombreado,
+                  child: ListTile(
+                    leading: Checkbox(
+                      value: seleccionado,
+                      onChanged: (value) {
+                        final originalIndex = _servicios.indexOf(item);
+                        _toggleServicio(originalIndex);
+                      },
+                      activeColor: AppColores.primary,
+                    ),
+                    title: Text(
+                      item['nombre'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColores.foreground,
+                      ),
+                    ),
+                    subtitle: Text(
+                      item['descripcion'] ?? '',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    trailing: Text(
+                      '\$${item['costo'] ?? 0}',
+                      style: const TextStyle(
+                        color: AppColores.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 );

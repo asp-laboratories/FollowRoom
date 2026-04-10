@@ -1,184 +1,443 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/solicitudes_extra_service.dart';
 
-class AlmacenistaSolicitudesScreen extends StatelessWidget {
-  AlmacenistaSolicitudesScreen({super.key});
+class AlmacenistaSolicitudesScreen extends StatefulWidget {
+  const AlmacenistaSolicitudesScreen({super.key});
 
-  List reservaciones = [
-    {
-      'nombre': "Reservacion 1",
-      'descripcion': "Evento de prueba",
-      'solicitudesEquipos': [
-        {'nomre': "Microfono", 'cantidad': 1, 'completado': false},
-        {'nomre': "Television", 'cantidad': 2, 'completado': false},
-      ],
-      'solicitudesMobiles': [
-        {'nomre': "Silla metalica", 'cantidad': 2, 'completado': false},
-        {'nomre': "Mesa circular", 'cantidad': 1, 'completado': false},
-        {'nomre': "Taburete", 'cantidad': 3, 'completado': false},
-      ],
-    },
-  ];
+  @override
+  State<AlmacenistaSolicitudesScreen> createState() =>
+      _AlmacenistaSolicitudesScreenState();
+}
+
+class _AlmacenistaSolicitudesScreenState
+    extends State<AlmacenistaSolicitudesScreen> {
+  final SolicitudesExtraService _service = SolicitudesExtraService();
+
+  List<Map<String, dynamic>> _reservaciones = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarSolicitudes();
+  }
+
+  Future<void> _cargarSolicitudes() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final solicitudes = await _service.getSolicitudesExtra();
+      setState(() {
+        _reservaciones = solicitudes;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Error al cargar solicitudes: $e';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        decoration: BoxDecoration(color: AppColores.background2),
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          itemCount: reservaciones.length,
-          itemBuilder: (context, index) {
-            final item = reservaciones[index];
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: ContainerStyles.sombreado,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Solicitudes(evento: item),
-                      ),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item['nombre'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColores.foreground,
-                                ),
-                              ),
-                            ),
-                            const Icon(Icons.arrow_forward_ios, size: 16),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item['descripcion'],
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColores.foreground.withValues(alpha: 0.6),
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _cargarSolicitudes,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_reservaciones.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                size: 80,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay solicitudes extras',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No hay reservaciones con solicitudes extras pendientes.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _cargarSolicitudes,
+      child: SingleChildScrollView(
+        child: Container(
+          decoration: const BoxDecoration(color: AppColores.background2),
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            itemCount: _reservaciones.length,
+            itemBuilder: (context, index) {
+              final item = _reservaciones[index];
+              final totalItems =
+                  ((item['mobiliarios_extra'] as List?)?.length ?? 0) +
+                  ((item['equipamiento_extra'] as List?)?.length ?? 0);
+              final pendientes =
+                  ((item['mobiliarios_extra'] as List?)
+                          ?.where((m) => m['completado'] != true)
+                          ?.length ??
+                      0) +
+                  ((item['equipamiento_extra'] as List?)
+                          ?.where((e) => e['completado'] != true)
+                          ?.length ??
+                      0);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: ContainerStyles.sombreado,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SolicitudesDetalle(
+                            reservacion: item,
+                            onActualizar: _cargarSolicitudes,
                           ),
                         ),
-                      ],
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item['nombre'] ?? 'Reservación ${item['id']}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColores.foreground,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: pendientes > 0
+                                      ? Colors.orange.withValues(alpha: 0.2)
+                                      : Colors.green.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  pendientes > 0
+                                      ? '$pendientes pendientes'
+                                      : 'Completado',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: pendientes > 0
+                                        ? Colors.orange
+                                        : Colors.green,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: AppColores.foreground.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                item['fecha'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColores.foreground.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Icon(
+                                Icons.location_on,
+                                size: 14,
+                                color: AppColores.foreground.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                item['salon_nombre'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColores.foreground.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Cliente: ${item['cliente_nombre'] ?? 'N/A'}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColores.foreground.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.inventory_2,
+                                size: 16,
+                                color: AppColores.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$totalItems items extras',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColores.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Spacer(),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: AppColores.primary,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-class GenerarChecklists extends StatefulWidget {
-  final List objetos;
-  const GenerarChecklists({super.key, required this.objetos});
+class SolicitudesDetalle extends StatefulWidget {
+  final Map<String, dynamic> reservacion;
+  final VoidCallback onActualizar;
+
+  const SolicitudesDetalle({
+    super.key,
+    required this.reservacion,
+    required this.onActualizar,
+  });
 
   @override
-  State<GenerarChecklists> createState() => _GenerarChecklistsState();
+  State<SolicitudesDetalle> createState() => _SolicitudesDetalleState();
 }
 
-class _GenerarChecklistsState extends State<GenerarChecklists> {
+class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
+  final SolicitudesExtraService _service = SolicitudesExtraService();
+
+  late List<Map<String, dynamic>> _mobiliarios;
+  late List<Map<String, dynamic>> _equipamientos;
+  bool _guardando = false;
+
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: widget.objetos.map((item) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: CheckboxListTile(
-            value: item['completado'],
-            activeColor: AppColores.primary,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(item['nomre']),
-                Text(
-                  "x${item['cantidad']}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColores.primary,
-                  ),
-                ),
-              ],
-            ),
-            onChanged: (bool? value) {
-              setState(() {
-                item['completado'] = value ?? false;
-              });
-            },
-          ),
-        );
-      }).toList(),
+  void initState() {
+    super.initState();
+    _mobiliarios = List<Map<String, dynamic>>.from(
+      (widget.reservacion['mobiliarios_extra'] as List?) ?? [],
+    );
+    _equipamientos = List<Map<String, dynamic>>.from(
+      (widget.reservacion['equipamiento_extra'] as List?) ?? [],
     );
   }
-}
 
-class Solicitudes extends StatelessWidget {
-  final Map evento;
+  Future<void> _guardarCambios() async {
+    setState(() => _guardando = true);
 
-  const Solicitudes({super.key, required this.evento});
+    final mobiliariosActualizados = _mobiliarios
+        .map((m) => {'id': m['id'], 'completado': m['completado'] ?? false})
+        .toList();
+    final equipamentosActualizados = _equipamientos
+        .map((e) => {'id': e['id'], 'completado': e['completado'] ?? false})
+        .toList();
+
+    final success = await _service.completarItems(
+      reservacionId: widget.reservacion['id'],
+      mobiliarios: mobiliariosActualizados,
+      equipamentos: equipamentosActualizados,
+    );
+
+    if (mounted) {
+      setState(() => _guardando = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cambios guardados correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onActualizar();
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al guardar cambios'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final nombreReservacion = widget.reservacion['nombre'] ?? 'Reservación';
+
     return Scaffold(
       backgroundColor: AppColores.background2,
       appBar: AppBar(
-        title: const Text("Solicitudes"),
+        title: Text(nombreReservacion),
         backgroundColor: AppColores.background2,
       ),
       body: SingleChildScrollView(
         child: Container(
-          decoration: BoxDecoration(color: AppColores.background2),
+          decoration: const BoxDecoration(color: AppColores.background2),
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  evento['nombre'],
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                decoration: ContainerStyles.sombreado,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nombreReservacion,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.reservacion['fecha'] ?? '',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.reservacion['salon_nombre'] ?? '',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.person, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.reservacion['cliente_nombre'] ?? '',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
               _seccion(
-                titulo: "Mobiliario",
+                titulo: 'Mobiliario Extra',
                 icono: Icons.chair,
-                child: GenerarChecklists(objetos: evento['solicitudesMobiles']),
+                items: _mobiliarios,
+                onToggle: (index, value) {
+                  setState(() {
+                    _mobiliarios[index]['completado'] = value;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               _seccion(
-                titulo: "Equipamiento",
+                titulo: 'Equipamiento Extra',
                 icono: Icons.devices,
-                child: GenerarChecklists(objetos: evento['solicitudesEquipos']),
+                items: _equipamientos,
+                onToggle: (index, value) {
+                  setState(() {
+                    _equipamientos[index]['completado'] = value;
+                  });
+                },
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -189,8 +448,17 @@ class Solicitudes extends StatelessWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
-                  onPressed: () {},
-                  child: const Text("Completar Registro"),
+                  onPressed: _guardando ? null : _guardarCambios,
+                  child: _guardando
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Confirmar Entrega'),
                 ),
               ),
             ],
@@ -203,8 +471,34 @@ class Solicitudes extends StatelessWidget {
   Widget _seccion({
     required String titulo,
     required IconData icono,
-    required Widget child,
+    required List<Map<String, dynamic>> items,
+    required Function(int, bool) onToggle,
   }) {
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: ContainerStyles.sombreado,
+        child: Row(
+          children: [
+            Icon(icono, color: AppColores.primary),
+            const SizedBox(width: 8),
+            Text(
+              titulo,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const Spacer(),
+            Text(
+              'Sin solicitudes',
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: ContainerStyles.sombreado,
@@ -222,10 +516,73 @@ class Solicitudes extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
+              const Spacer(),
+              Text(
+                '${items.length} items',
+                style: const TextStyle(
+                  color: AppColores.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          child,
+          ...items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            final completado = item['completado'] ?? false;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: completado
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: completado
+                    ? Border.all(color: Colors.green.withValues(alpha: 0.3))
+                    : null,
+              ),
+              child: CheckboxListTile(
+                value: completado,
+                activeColor: Colors.green,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item['nombre'] ?? '',
+                        style: TextStyle(
+                          decoration: completado
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: completado
+                              ? Colors.grey
+                              : AppColores.foreground,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'x${item['cantidad'] ?? 0}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: completado ? Colors.green : AppColores.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: Text(
+                  item['descripcion'] ?? '',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                ),
+                onChanged: (bool? value) {
+                  onToggle(index, value ?? false);
+                },
+              ),
+            );
+          }),
         ],
       ),
     );

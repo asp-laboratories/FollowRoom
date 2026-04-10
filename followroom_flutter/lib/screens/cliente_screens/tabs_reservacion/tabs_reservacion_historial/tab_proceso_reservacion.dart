@@ -29,7 +29,12 @@ class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
         setState(() {
           _reservaciones = datos.where((r) {
             final estado = r['estado_codigo'] ?? '';
-            return estado == 'SOLIC' || estado == 'PEN' || estado == 'CONF';
+            // Incluir: SOLIC (solicitud), PEN (pendiente), CONF (confirmada), CON (confirmada legacy), PROC (en proceso)
+            return estado == 'SOLIC' ||
+                estado == 'PEN' ||
+                estado == 'CONF' ||
+                estado == 'CON' ||
+                estado == 'PROC';
           }).toList();
           _cargando = false;
         });

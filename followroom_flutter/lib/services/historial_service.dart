@@ -19,6 +19,8 @@ class HistorialService {
         queryParameters: {'email': email},
       );
 
+      print('API reservacion-proxima response: ${response.data}');
+
       if (response.statusCode == 200 && response.data['reservacion'] != null) {
         return Map<String, dynamic>.from(response.data['reservacion']);
       }
@@ -42,6 +44,8 @@ class HistorialService {
         '/mis-reservaciones/',
         queryParameters: {'email': email},
       );
+
+      print('API mis-reservaciones response: ${response.data}');
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data['reservaciones'] ?? [];

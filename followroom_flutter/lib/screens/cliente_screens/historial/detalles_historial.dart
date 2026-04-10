@@ -803,7 +803,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${servicios.fold<int>(0, (sum, s) => sum + (s['servicio__costo'] as int? ?? 0))}",
+                  "\$${servicios.fold<num>(0, (sum, s) => sum + ((s['servicio__costo'] as num?)?.toInt() ?? 0))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -870,7 +870,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${equipos.fold<int>(0, (sum, e) => sum + ((e['equipamiento__costo'] as int? ?? 0) * (e['cantidad'] as int? ?? 1)))}",
+                  "\$${equipos.fold<num>(0, (sum, e) => sum + (((e['equipamiento__costo'] as num?)?.toInt() ?? 0) * ((e['cantidad'] as num?)?.toInt() ?? 1)))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -941,7 +941,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${mobiliariosList.fold<int>(0, (sum, m) => sum + ((m['costo'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1))}",
+                  "\$${mobiliariosList.fold<num>(0, (sum, m) => sum + ((m['costo'] as num?)?.toInt() ?? 0) * ((m['cantidad'] as num?)?.toInt() ?? 1))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

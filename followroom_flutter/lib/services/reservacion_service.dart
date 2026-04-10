@@ -146,4 +146,64 @@ class ReservacionService {
       return false;
     }
   }
+
+  Future<bool> agregarExtrasAReservacion({
+    required int reservacionId,
+    List<Map<String, dynamic>> mobiliarios = const [],
+    List<Map<String, dynamic>> equipamentos = const [],
+    List<Map<String, dynamic>> servicios = const [],
+  }) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+
+      final data = {
+        if (mobiliarios.isNotEmpty)
+          'mobiliarios': mobiliarios
+              .map((m) => {'id': m['id'], 'cantidad': m['cantidad'] ?? 1})
+              .toList(),
+        if (equipamentos.isNotEmpty)
+          'reserva_equipa': equipamentos
+              .map((e) => {'id': e['id'], 'cantidad': e['cantidad'] ?? 1})
+              .toList(),
+        if (servicios.isNotEmpty)
+          'reserva_servicio': servicios.map((s) => {'id': s['id']}).toList(),
+      };
+
+      print('Enviando extras a reservación $reservacionId: $data');
+      final response = await dio.patch(
+        '/reservacion/$reservacionId/',
+        data: data,
+      );
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+      return response.statusCode == 200;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error: ${e.response?.statusCode} - ${e.response?.data}');
+      }
+      print('Error al agregar extras: $e');
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMisReservaciones(String email) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/mis-reservaciones/',
+        queryParameters: {'email': email},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data['reservaciones'] ?? [];
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception('Error al cargar mis reservaciones');
+      }
+    } catch (e) {
+      print('Error al cargar mis reservaciones: $e');
+      throw Exception('Error al cargar mis reservaciones');
+    }
+  }
 }

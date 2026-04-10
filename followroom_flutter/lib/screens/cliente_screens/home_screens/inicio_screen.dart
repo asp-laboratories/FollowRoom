@@ -72,18 +72,18 @@ class _ReservacionState extends State<Reservacion> {
     try {
       final reservacion = await _historialService.getReservacionProxima();
 
-      bool tieneConfirmada = false;
+      bool tieneActiva = false;
       if (reservacion != null) {
         final estado = reservacion['estado_reserva_datos'];
         if (estado is Map) {
           final codigo = estado['codigo']?.toString() ?? '';
           print('Reservación próxima - Estado código: $codigo');
-          if (codigo == 'CONF') {
-            tieneConfirmada = true;
-            print('Tengo reservación CONFIRMADA');
+          if (codigo == 'CONF' || codigo == 'CON' || codigo == 'PROC') {
+            tieneActiva = true;
+            print('Tengo reservación ACTIVA: $codigo');
           } else {
             print(
-              'Reservación con estado: $codigo (no es CONF, no se mostrará)',
+              'Reservación con estado: $codigo (no es CONF, CON ni PROC, no se mostrará)',
             );
           }
         }
@@ -92,7 +92,7 @@ class _ReservacionState extends State<Reservacion> {
       }
 
       setState(() {
-        _reservacionProxima = tieneConfirmada ? reservacion : null;
+        _reservacionProxima = tieneActiva ? reservacion : null;
         _cargandoReservacion = false;
       });
     } catch (e) {
