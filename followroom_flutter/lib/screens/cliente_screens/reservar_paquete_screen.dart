@@ -262,7 +262,9 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
               equipamientosSeleccionados: List<Map<String, dynamic>>.from(
                 widget.paquete['equipamentos'] ?? [],
               ),
-              mobiliariosSeleccionados: [],
+              mobiliariosSeleccionados: List<Map<String, dynamic>>.from(
+                widget.paquete['mobiliarios'] ?? [],
+              ),
               salonOcupado: salonOcupado,
             ),
             TabTotalReservacion(
@@ -276,7 +278,9 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
               equipamientosSeleccionados: List<Map<String, dynamic>>.from(
                 widget.paquete['equipamentos'] ?? [],
               ),
-              mobiliariosSeleccionados: [],
+              mobiliariosSeleccionados: List<Map<String, dynamic>>.from(
+                widget.paquete['mobiliarios'] ?? [],
+              ),
               onReservacionEnviada: _confirmarReservacion,
               salonOcupado: salonOcupado,
             ),

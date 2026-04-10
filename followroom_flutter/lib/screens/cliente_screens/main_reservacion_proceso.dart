@@ -56,6 +56,14 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
       print("Equipamentos precargados: $equipamientosSeleccionados");
     }
 
+    if (paquete['mobiliarios'] != null) {
+      mobiliariosPorSalon[paquete['salon_id'] ?? 0] =
+          List<Map<String, dynamic>>.from(paquete['mobiliarios']);
+      print(
+        "Mobiliarios precargados: ${mobiliariosPorSalon[paquete['salon_id'] ?? 0]}",
+      );
+    }
+
     if (paquete['descripEvento'] != null) {
       datosReservacion['descripcion'] = paquete['descripEvento'];
     }

@@ -49,6 +49,7 @@ class _ReservacionState extends State<Reservacion> {
             'color': _colorBase,
             'servicios': item['servicios'] ?? [],
             'equipamentos': item['equipamentos'] ?? [],
+            'mobiliarios': item['mobiliarios'] ?? [],
             'salon_id': item['salon_id'],
             'salon_nombre': item['salon_nombre'],
             'salon_precio': item['salon_precio'],
