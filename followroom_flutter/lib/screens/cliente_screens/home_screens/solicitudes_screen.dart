@@ -6,6 +6,7 @@ import 'package:followroom_flutter/services/mobiliario_service.dart';
 import 'package:followroom_flutter/services/equipamiento_service.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 import 'package:followroom_flutter/services/session_data.dart';
+import 'package:followroom_flutter/services/solicitudes_extra_service.dart';
 
 class SolicitudesScreen extends StatefulWidget {
   const SolicitudesScreen({super.key});
@@ -18,6 +19,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   final MobiliarioService _mobiliarioService = MobiliarioService();
   final EquipamientoService _equipamientoService = EquipamientoService();
   final ReservacionService _reservacionService = ReservacionService();
+  final SolicitudesExtraService _solicitudesExtraService =
+      SolicitudesExtraService();
 
   List<Map<String, dynamic>> _mobiliario = [];
   List<Map<String, dynamic>> _equipamiento = [];
@@ -26,6 +29,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   List<Map<String, dynamic>> _tiposEquipamiento = [];
   List<Map<String, dynamic>> _tiposServicio = [];
   List<Map<String, dynamic>> _reservacionesActivas = [];
+  List<Map<String, dynamic>> _misSolicitudesExtra = [];
 
   String? _tipoMobiliarioSeleccionado;
   String? _tipoEquipamientoSeleccionado;
@@ -64,6 +68,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         _mobiliarioService.getTiposMobil(),
         _equipamientoService.getServicios(),
         _reservacionService.getMisReservaciones(email),
+        _solicitudesExtraService.getMisSolicitudesExtra(email),
       ]);
 
       final mobiliariosAPI = (results[0] as List)
@@ -84,8 +89,42 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
       final reservaciones = (results[5] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
+      final misSolicitudesExtra = (results[6] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      // Crear conjuntos de IDs ya solicitados para evitar duplicados
+      final Set<int> serviciosSolicitados = {};
+      final Map<int, int> mobiliariosCantidad = {};
+      final Map<int, int> equipamentosCantidad = {};
+
+      for (var solicitud in misSolicitudesExtra) {
+        for (var s in (solicitud['servicios_extra'] as List?) ?? []) {
+          serviciosSolicitados.add(s['servicio_id'] as int);
+        }
+        for (var m in (solicitud['mobiliarios_extra'] as List?) ?? []) {
+          mobiliariosCantidad[m['mobiliario_id'] as int] = m['cantidad'] as int;
+        }
+        for (var e in (solicitud['equipamiento_extra'] as List?) ?? []) {
+          equipamentosCantidad[e['equipamiento_id'] as int] =
+              e['cantidad'] as int;
+        }
+      }
 
       print('Reservaciones obtenidas: $reservaciones');
+      print('Mis solicitudes extra: $misSolicitudesExtra');
+
+      print('Servicios ya solicitados: $serviciosSolicitados');
+      print('Mobiliarios solicitados: $mobiliariosCantidad');
+      print('Equipamientos solicitados: $equipamentosCantidad');
+
+      // Imprimir detalle de cada solicitud
+      for (var solicitud in misSolicitudesExtra) {
+        print('Solicitud reservación ${solicitud["reservacion_id"]}:');
+        print('  Mobiliarios extra: ${solicitud["mobiliarios_extra"]}');
+        print('  Equipamiento extra: ${solicitud["equipamiento_extra"]}');
+        print('  Servicios extra: ${solicitud["servicios_extra"]}');
+      }
 
       final reservacionesActivas = reservaciones.where((r) {
         final estado = r['estado_codigo']?.toString().toUpperCase();
@@ -98,13 +137,30 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
       }).toList();
 
       setState(() {
-        _mobiliario = mobiliariosAPI.map((m) => {...m, 'cantidad': 0}).toList();
-        _equipamiento = equipamentosAPI
-            .map((e) => {...e, 'cantidad': 0})
-            .toList();
-        _servicios = serviciosAPI
-            .map((s) => {...s, 'seleccionado': false})
-            .toList();
+        _mobiliario = mobiliariosAPI.map((m) {
+          final id = m['id'] as int;
+          return {
+            ...m,
+            'cantidad': mobiliariosCantidad[id] ?? 0,
+            'ya_solicitado': mobiliariosCantidad.containsKey(id),
+          };
+        }).toList();
+        _equipamiento = equipamentosAPI.map((e) {
+          final id = e['id'] as int;
+          return {
+            ...e,
+            'cantidad': equipamentosCantidad[id] ?? 0,
+            'ya_solicitado': equipamentosCantidad.containsKey(id),
+          };
+        }).toList();
+        _servicios = serviciosAPI.map((s) {
+          final id = s['id'] as int;
+          return {
+            ...s,
+            'seleccionado': false,
+            'ya_solicitado': serviciosSolicitados.contains(id),
+          };
+        }).toList();
         _tiposMobiliario = tiposMobiliarioAPI;
         _tiposEquipamiento = [
           {'id': 1, 'nombre': 'audio'},
@@ -113,6 +169,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         ];
         _tiposServicio = tiposServicioAPI;
         _reservacionesActivas = reservacionesActivas;
+        _misSolicitudesExtra = misSolicitudesExtra;
         _noReservacionesActivas = reservacionesActivas.isEmpty;
         print(
           'Reservaciones activas encontradas: ${reservacionesActivas.length}',
@@ -586,6 +643,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               itemBuilder: (context, index) {
                 final item = _mobiliarioFiltrado[index];
                 final cantidad = item['cantidad'] as int;
+                final yaSolicitado = item['ya_solicitado'] as bool? ?? false;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -598,13 +656,42 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                item['nombre'] ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: AppColores.foreground,
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item['nombre'] ?? '',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: yaSolicitado
+                                            ? Colors.grey
+                                            : AppColores.foreground,
+                                      ),
+                                    ),
+                                  ),
+                                  if (yaSolicitado)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'x$cantidad',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               Text(
                                 item['descripcion'] ?? '',
@@ -654,7 +741,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: cantidad > 0
+                              onPressed: (cantidad > 0 && !yaSolicitado)
                                   ? () {
                                       final originalIndex = _mobiliario.indexOf(
                                         item,
@@ -668,30 +755,37 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
-                                color: cantidad > 0
+                                color: (cantidad > 0 && !yaSolicitado)
                                     ? AppColores.primary
                                     : Colors.grey,
                               ),
                             ),
                             Text(
                               '$cantidad',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                color: yaSolicitado ? Colors.grey : null,
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                final originalIndex = _mobiliario.indexOf(item);
-                                _actualizarCantidad(
-                                  _mobiliario,
-                                  originalIndex,
-                                  cantidad + 1,
-                                );
-                              },
+                              onPressed: yaSolicitado
+                                  ? null
+                                  : () {
+                                      final originalIndex = _mobiliario.indexOf(
+                                        item,
+                                      );
+                                      _actualizarCantidad(
+                                        _mobiliario,
+                                        originalIndex,
+                                        cantidad + 1,
+                                      );
+                                    },
                               icon: Icon(
                                 Icons.add_circle_outline,
-                                color: AppColores.primary,
+                                color: yaSolicitado
+                                    ? Colors.grey
+                                    : AppColores.primary,
                               ),
                             ),
                           ],
@@ -771,6 +865,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               itemBuilder: (context, index) {
                 final item = _equipamientoFiltrado[index];
                 final cantidad = item['cantidad'] as int;
+                final yaSolicitado = item['ya_solicitado'] as bool? ?? false;
 
                 String tipoNombre = '';
                 final tipoId = item['tipo_equipa'];
@@ -792,13 +887,42 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                item['nombre'] ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: AppColores.foreground,
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item['nombre'] ?? '',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: yaSolicitado
+                                            ? Colors.grey
+                                            : AppColores.foreground,
+                                      ),
+                                    ),
+                                  ),
+                                  if (yaSolicitado)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'x$cantidad',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               Text(
                                 item['descripcion'] ?? '',
@@ -846,7 +970,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: cantidad > 0
+                              onPressed: (cantidad > 0 && !yaSolicitado)
                                   ? () {
                                       final originalIndex = _equipamiento
                                           .indexOf(item);
@@ -859,32 +983,36 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
-                                color: cantidad > 0
+                                color: (cantidad > 0 && !yaSolicitado)
                                     ? AppColores.primary
                                     : Colors.grey,
                               ),
                             ),
                             Text(
                               '$cantidad',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                color: yaSolicitado ? Colors.grey : null,
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                final originalIndex = _equipamiento.indexOf(
-                                  item,
-                                );
-                                _actualizarCantidad(
-                                  _equipamiento,
-                                  originalIndex,
-                                  cantidad + 1,
-                                );
-                              },
+                              onPressed: yaSolicitado
+                                  ? null
+                                  : () {
+                                      final originalIndex = _equipamiento
+                                          .indexOf(item);
+                                      _actualizarCantidad(
+                                        _equipamiento,
+                                        originalIndex,
+                                        cantidad + 1,
+                                      );
+                                    },
                               icon: Icon(
                                 Icons.add_circle_outline,
-                                color: AppColores.primary,
+                                color: yaSolicitado
+                                    ? Colors.grey
+                                    : AppColores.primary,
                               ),
                             ),
                           ],
@@ -964,25 +1092,59 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
               itemBuilder: (context, index) {
                 final item = _serviciosFiltrados[index];
                 final seleccionado = item['seleccionado'] as bool;
+                final yaSolicitado = item['ya_solicitado'] as bool? ?? false;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
                   child: ListTile(
+                    enabled: !yaSolicitado,
                     leading: Checkbox(
-                      value: seleccionado,
-                      onChanged: (value) {
-                        final originalIndex = _servicios.indexOf(item);
-                        _toggleServicio(originalIndex);
-                      },
+                      value: yaSolicitado ? true : seleccionado,
+                      onChanged: yaSolicitado
+                          ? null
+                          : (value) {
+                              final originalIndex = _servicios.indexOf(item);
+                              _toggleServicio(originalIndex);
+                            },
                       activeColor: AppColores.primary,
                     ),
-                    title: Text(
-                      item['nombre'] ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColores.foreground,
-                      ),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item['nombre'] ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: yaSolicitado
+                                  ? Colors.grey
+                                  : AppColores.foreground,
+                              decoration: yaSolicitado
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        if (yaSolicitado)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Ya solicitado',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     subtitle: Text(
                       item['descripcion'] ?? '',

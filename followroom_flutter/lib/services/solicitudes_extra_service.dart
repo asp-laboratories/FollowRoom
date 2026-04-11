@@ -21,6 +21,28 @@ class SolicitudesExtraService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getMisSolicitudesExtra(
+    String email,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/mis-solicitudes-extra/',
+        queryParameters: {'email': email},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data['solicitudes'] ?? [];
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception('Error al cargar mis solicitudes extra');
+      }
+    } catch (e) {
+      print('Error al cargar mis solicitudes extra: $e');
+      throw Exception('Error al cargar mis solicitudes extra');
+    }
+  }
+
   Future<bool> completarItems({
     required int reservacionId,
     List<Map<String, dynamic>> mobiliarios = const [],
