@@ -139,22 +139,18 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
       setState(() {
         _mobiliario = mobiliariosAPI.map((m) {
           final id = m['id'] as int;
-          final cantidadPrev = mobiliariosCantidad[id] ?? 0;
           return {
             ...m,
-            'cantidad': cantidadPrev,
-            'cantidad_original': cantidadPrev,
-            'ya_solicitado': cantidadPrev > 0,
+            'cantidad': mobiliariosCantidad[id] ?? 0,
+            'ya_solicitado': mobiliariosCantidad.containsKey(id),
           };
         }).toList();
         _equipamiento = equipamentosAPI.map((e) {
           final id = e['id'] as int;
-          final cantidadPrev = equipamentosCantidad[id] ?? 0;
           return {
             ...e,
-            'cantidad': cantidadPrev,
-            'cantidad_original': cantidadPrev,
-            'ya_solicitado': cantidadPrev > 0,
+            'cantidad': equipamentosCantidad[id] ?? 0,
+            'ya_solicitado': equipamentosCantidad.containsKey(id),
           };
         }).toList();
         _servicios = serviciosAPI.map((s) {
@@ -265,18 +261,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
 
   List<Map<String, dynamic>> get _seleccionados {
     return [
-      ..._mobiliario.where(
-        (e) =>
-            (e['cantidad'] as int) > 0 &&
-            (!e['ya_solicitado'] ||
-                (e['cantidad'] as int) != (e['cantidad_original'] as int)),
-      ),
-      ..._equipamiento.where(
-        (e) =>
-            (e['cantidad'] as int) > 0 &&
-            (!e['ya_solicitado'] ||
-                (e['cantidad'] as int) != (e['cantidad_original'] as int)),
-      ),
+      ..._mobiliario.where((e) => (e['cantidad'] as int) > 0),
+      ..._equipamiento.where((e) => (e['cantidad'] as int) > 0),
       ..._servicios.where((e) => e['seleccionado'] == true),
     ];
   }
@@ -377,22 +363,12 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
     Navigator.pop(context);
 
     final mobiliarios = _mobiliario
-        .where(
-          (m) =>
-              (m['cantidad'] as int) > 0 &&
-              (!m['ya_solicitado'] ||
-                  (m['cantidad'] as int) != (m['cantidad_original'] as int)),
-        )
+        .where((m) => (m['cantidad'] as int) > 0)
         .map((m) => {'id': m['id'], 'cantidad': m['cantidad']})
         .toList();
 
     final equipamentos = _equipamiento
-        .where(
-          (e) =>
-              (e['cantidad'] as int) > 0 &&
-              (!e['ya_solicitado'] ||
-                  (e['cantidad'] as int) != (e['cantidad_original'] as int)),
-        )
+        .where((e) => (e['cantidad'] as int) > 0)
         .map((e) => {'id': e['id'], 'cantidad': e['cantidad']})
         .toList();
 
@@ -469,41 +445,9 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                 (e) => ListTile(
                   title: Text(e['nombre']),
                   subtitle: Text(e['descripcion'] ?? e['descripEvento'] ?? ''),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (e['ya_solicitado'] == true &&
-                          (e['cantidad'] as int) !=
-                              (e['cantidad_original'] as int))
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'ACT',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      if (e['ya_solicitado'] == true &&
-                          (e['cantidad'] as int) ==
-                              (e['cantidad_original'] as int))
-                        const SizedBox()
-                      else
-                        e['cantidad'] != null
-                            ? Text('x${e['cantidad']}')
-                            : const Icon(Icons.check, color: Colors.green),
-                    ],
-                  ),
+                  trailing: e['cantidad'] != null
+                      ? Text('x${e['cantidad']}')
+                      : const Icon(Icons.check, color: Colors.green),
                 ),
               ),
               const Divider(),
@@ -791,29 +735,21 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         Row(
                           children: [
                             IconButton(
                               onPressed: cantidad > 0
                                   ? () {
-                                      final originalIndex = _mobiliario.indexOf(
-                                        item,
-                                      );
-                                      _actualizarCantidad(
-                                        _mobiliario,
-                                        originalIndex,
-                                        cantidad - 1,
-                                      );
+                                      final originalIndex = _mobiliario.indexOf(item);
+                                      _actualizarCantidad(_mobiliario, originalIndex, cantidad - 1);
                                     }
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
-                                color: cantidad > 0
-                                    ? AppColores.primary
-                                    : Colors.grey,
+                                color: cantidad > 0 ? AppColores.primary : Colors.grey,
                               ),
                             ),
                             Text(
@@ -826,13 +762,9 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                             IconButton(
                               onPressed: () {
                                 final originalIndex = _mobiliario.indexOf(item);
-                                _actualizarCantidad(
-                                  _mobiliario,
-                                  originalIndex,
-                                  cantidad + 1,
-                                );
+                                _actualizarCantidad(_mobiliario, originalIndex, cantidad + 1);
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.add_circle_outline,
                                 color: AppColores.primary,
                               ),
@@ -1019,7 +951,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: cantidad > 0
+                              onPressed: (cantidad > 0 && !yaSolicitado)
                                   ? () {
                                       final originalIndex = _equipamiento
                                           .indexOf(item);
@@ -1032,32 +964,36 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   : null,
                               icon: Icon(
                                 Icons.remove_circle_outline,
-                                color: cantidad > 0
+                                color: (cantidad > 0 && !yaSolicitado)
                                     ? AppColores.primary
                                     : Colors.grey,
                               ),
                             ),
                             Text(
                               '$cantidad',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                color: yaSolicitado ? Colors.grey : null,
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                final originalIndex = _equipamiento.indexOf(
-                                  item,
-                                );
-                                _actualizarCantidad(
-                                  _equipamiento,
-                                  originalIndex,
-                                  cantidad + 1,
-                                );
-                              },
-                              icon: const Icon(
+                              onPressed: yaSolicitado
+                                  ? null
+                                  : () {
+                                      final originalIndex = _equipamiento
+                                          .indexOf(item);
+                                      _actualizarCantidad(
+                                        _equipamiento,
+                                        originalIndex,
+                                        cantidad + 1,
+                                      );
+                                    },
+                              icon: Icon(
                                 Icons.add_circle_outline,
-                                color: AppColores.primary,
+                                color: yaSolicitado
+                                    ? Colors.grey
+                                    : AppColores.primary,
                               ),
                             ),
                           ],
