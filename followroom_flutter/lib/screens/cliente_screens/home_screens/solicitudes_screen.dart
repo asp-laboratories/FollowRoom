@@ -425,11 +425,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
           ),
         );
 
-        setState(() {
-          for (var m in _mobiliario) m['cantidad'] = 0;
-          for (var e in _equipamiento) e['cantidad'] = 0;
-          for (var s in _servicios) s['seleccionado'] = false;
-        });
+        _cargarDatos();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

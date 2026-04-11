@@ -83,42 +83,11 @@ class _PantallaDetallesCoordinadorState
 
       if (!mounted) return;
 
+      print('DEBUG - Datos recibidos: $data');
+
       setState(() {
-        _datosCompletos = {
-          'descripcionEvento':
-              data['descripEvento'] ?? data['nombreEvento'] ?? '',
-          'invitados': data['estimaAsistentes'] ?? 0,
-          'fechaEvento': data['fechaEvento'] ?? '',
-          'horaInicio': data['horaInicio'] ?? '',
-          'horaFin': data['horaFin'] ?? '',
-          'cliente': data['cliente_nombre'] ?? '',
-          'tipoCliente': data['cliente_tipo'] ?? '',
-          'telefono': data['cliente_telefono'] ?? '',
-          'email': data['cliente_email'] ?? '',
-          'tipoMontaje': data['montaje_tipo'] ?? '',
-          'nombreSalon': data['salon_nombre'] ?? '',
-          'estado': data['estado_nombre'] ?? '',
-          'tipoEvento': data['tipo_evento_nombre'] ?? '',
-          'subtotal': data['subtotal'] ?? 0,
-          'IVA': data['IVA'] ?? 0,
-          'precioTotal': data['total'] ?? 0,
-          'servicios': (data['servicios'] as List? ?? [])
-              .map(
-                (s) => {'nombre': s['nombre'] ?? '', 'precio': s['costo'] ?? 0},
-              )
-              .toList(),
-          'equipamentos': (data['equipamentos'] as List? ?? [])
-              .map(
-                (e) => {
-                  'nombre': e['equipamiento__nombre'] ?? '',
-                  'precio': e['costo'] ?? 0,
-                  'cantidad': e['cantidad'] ?? 1,
-                },
-              )
-              .toList(),
-        };
-        _precioController.text = (_datosCompletos?['precioTotal'] ?? 0)
-            .toString();
+        _datosCompletos = data;
+        _precioController.text = (_datosCompletos?['total'] ?? 0).toString();
         _cargando = false;
       });
 
@@ -139,25 +108,36 @@ class _PantallaDetallesCoordinadorState
   }
 
   int _calcularSubtotal() {
-    int serviciosTotal = 0;
-    int equiposTotal = 0;
+    num serviciosTotal = 0;
+    num equiposTotal = 0;
 
     if (_datosCompletos?['servicios'] != null) {
-      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<int>(
+      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<num>(
         0,
-        (sum, s) => sum + ((s['precio'] ?? 0) as int),
+        (sum, s) => sum + ((s['precio'] ?? 0) as num),
       );
     }
 
     if (_datosCompletos?['equipamentos'] != null) {
-      equiposTotal = (_datosCompletos?['equipamentos'] as List).fold<int>(
+      equiposTotal = (_datosCompletos?['equipamentos'] as List).fold<num>(
         0,
         (sum, e) =>
-            sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+            sum + (((e['precio'] ?? 0) as num) * ((e['cantidad'] ?? 1) as num)),
       );
     }
 
-    return serviciosTotal + equiposTotal;
+    if (_datosCompletos?['mobiliarios'] != null) {
+      final mobiliariosTotal = (_datosCompletos?['mobiliarios'] as List)
+          .fold<num>(
+            0,
+            (sum, m) =>
+                sum +
+                (((m['precio'] ?? 0) as num) * ((m['cantidad'] ?? 1) as num)),
+          );
+      equiposTotal += mobiliariosTotal;
+    }
+
+    return (serviciosTotal + equiposTotal).toInt();
   }
 
   int _calcularIVA() {
@@ -167,7 +147,7 @@ class _PantallaDetallesCoordinadorState
   void _actualizarPrecio() {
     final nuevoPrecio = int.tryParse(_precioController.text) ?? 0;
     setState(() {
-      _datosCompletos?['precioTotal'] = nuevoPrecio;
+      _datosCompletos?['total'] = nuevoPrecio;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Precio actualizado a \$$nuevoPrecio')),
@@ -262,7 +242,8 @@ class _PantallaDetallesCoordinadorState
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del evento:",
-                            _datosCompletos?['descripcionEvento'] ??
+                            _datosCompletos?['descripEvento'] ??
+                                _datosCompletos?['nombreEvento'] ??
                                 'No definido',
                           ),
                           SizedBox(height: 2),
@@ -278,12 +259,14 @@ class _PantallaDetallesCoordinadorState
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de evento:",
-                            _datosCompletos?['tipoEvento'] ?? 'No definido',
+                            _datosCompletos?['tipo_evento_datos']?['nombre'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Asistentes:",
-                            (_datosCompletos?['invitados'] ?? 0).toString(),
+                            (_datosCompletos?['estimaAsistentes'] ?? 0)
+                                .toString(),
                           ),
                         ],
                       ),
@@ -312,23 +295,26 @@ class _PantallaDetallesCoordinadorState
                           ),
                           SizedBox(height: 8),
                           _buildLabelValue(
-                            "Nombre:",
-                            _datosCompletos?['cliente'] ?? 'No definido',
+                            "Nombre del contacto:",
+                            _datosCompletos?['cliente_datos']?['nombre'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
-                            "Tipo:",
-                            _datosCompletos?['tipoCliente'] ?? 'No definido',
+                            "Tipo de cliente:",
+                            _datosCompletos?['cliente_tipo'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
-                            "Teléfono:",
-                            _datosCompletos?['telefono'] ?? 'No definido',
+                            "Teléfono del contacto:",
+                            _datosCompletos?['cliente_datos']?['telefono'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
-                            "Email:",
-                            _datosCompletos?['email'] ?? 'No definido',
+                            "Correo electrónico:",
+                            _datosCompletos?['cliente_datos']?['correo_electronico'] ??
+                                'No definido',
                           ),
                         ],
                       ),
@@ -358,12 +344,13 @@ class _PantallaDetallesCoordinadorState
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Salón:",
-                            _datosCompletos?['nombreSalon'] ?? 'Ningún salón',
+                            _datosCompletos?['montaje_datos']?['salon']?['nombre'] ??
+                                'Ningún salón',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Montaje:",
-                            _datosCompletos?['tipoMontaje'] ??
+                            _datosCompletos?['montaje_datos']?['tipo_montaje']?['nombre'] ??
                                 'No seleccionado',
                           ),
                         ],
@@ -561,10 +548,10 @@ class _PantallaDetallesCoordinadorState
                             children: [
                               _buildLabelValue(
                                 "Total:",
-                                "\$${_datosCompletos?['precioTotal'] ?? 0}",
+                                "\${_datosCompletos?['total'] ?? 0}",
                               ),
                               Text(
-                                "\$${_datosCompletos?['precioTotal'] ?? 0}",
+                                "\${_datosCompletos?['total'] ?? 0}",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -627,13 +614,13 @@ class _PantallaDetallesCoordinadorState
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${s['nombre'] ?? 'Sin nombre'}",
+                        "- ${s['servicio__nombre'] ?? s['nombre'] ?? 'Sin nombre'}",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${s['precio'] ?? 0}",
+                      "\$${s['servicio__costo'] ?? s['costo'] ?? s['precio'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -695,13 +682,13 @@ class _PantallaDetallesCoordinadorState
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre'] ?? 'Sin nombre'} (x${e['cantidad'] ?? 1})",
+                        "- ${e['equipamiento__nombre'] ?? e['nombre'] ?? 'Sin nombre'} (x${e['cantidad'] ?? 1})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)}",
+                      "\$${((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0) * (e['cantidad'] ?? 1)).toStringAsFixed(2)}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,

@@ -6,6 +6,9 @@ import 'package:followroom_flutter/screens/coordinador_screens/inicio_coordinado
 import 'package:followroom_flutter/screens/coordinador_screens/solicitudes_cliente.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
+import 'package:torch_light/torch_light.dart';
+import 'package:ambient_light/ambient_light.dart';
+import 'dart:async';
 
 class NavegacionBarra extends StatefulWidget {
   const NavegacionBarra({super.key});
@@ -19,6 +22,108 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
   bool _navegacionBarra = false;
 
   final PageController _controladorPagina = PageController();
+
+  bool _taAbiertoDialogo = false;
+  final AmbientLight _cantidadLuz = AmbientLight();
+  DateTime? _ultimaAlertaSilenciada;
+  bool _linternaPrendida = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checaLuz();
+    });
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _checaLuz();
+      }
+    });
+  }
+
+  void _checaLuz() async {
+    if (_ultimaAlertaSilenciada != null) {
+      final diferencia = DateTime.now().difference(_ultimaAlertaSilenciada!);
+      if (diferencia.inMinutes < 5) {
+        return;
+      }
+    }
+    double? nivelLuz = await _cantidadLuz.currentAmbientLight();
+    if (nivelLuz != null && nivelLuz < 5 && !_taAbiertoDialogo && mounted) {
+      _mostrarAlerta();
+    }
+  }
+
+  void _mostrarAlerta() {
+    _taAbiertoDialogo = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("⚠️ Ambiente oscuro detectado"),
+        content: const Text(
+          "El nivel de luz es muy bajo. "
+          "Para evitar accidentes, te recomendamos:\n\n"
+          "• Encender la linterna del dispositivo\n"
+          "• Tener precaución al movilizar equipos\n"
+          "• Solicitar ayuda si es necesario",
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _silenciarAlerta5Minutos();
+            },
+            child: const Text("Silenciar 5 min"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _prenderLinterna();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColores.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("🔦 Linterna"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColores.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Entendido"),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _taAbiertoDialogo = false;
+    });
+  }
+
+  void _silenciarAlerta5Minutos() {
+    _ultimaAlertaSilenciada = DateTime.now();
+  }
+
+  Future<void> _prenderLinterna() async {
+    try {
+      bool linterna = await TorchLight.isTorchAvailable();
+      if (linterna && !_linternaPrendida) {
+        await TorchLight.enableTorch();
+        setState(() => _linternaPrendida = true);
+      } else if (_linternaPrendida) {
+        await TorchLight.disableTorch();
+        setState(() => _linternaPrendida = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Linterna no disponible")));
+      }
+    }
+  }
 
   final List<Widget> _pantallas = [
     const InicioCoordinador(),

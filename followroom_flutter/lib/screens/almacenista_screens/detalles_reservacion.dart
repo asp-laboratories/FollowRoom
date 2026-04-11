@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 import 'dart:async';
 import 'detalles_montaje.dart';
 
@@ -14,6 +15,8 @@ class PantallaDetalles extends StatefulWidget {
 }
 
 class _PantallaDetallesState extends State<PantallaDetalles> {
+  final ReservacionService _reservacionService = ReservacionService();
+
   bool _cargando = true;
   String _puntos = ".";
   Timer? _timerPuntos;
@@ -59,41 +62,32 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
   }
 
   Future<void> _descargarDatos() async {
-    // Logica pa recibir los datos de la base de datos
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final idReservacion = int.tryParse(widget.idReservacion);
+      if (idReservacion == null) {
+        throw Exception('ID de reservación inválido');
+      }
 
-    final datoPruebas = {
-      'descripcionEvento': "fiesta pa mi sobrino q cumple 18",
-      'invitados': 100,
-      'fechaEvento': "18-12-2027",
-      'horainicio': "12:00 AM",
-      'cliente': 'Mi papa',
-      'tipoCliente': "Persona fisica",
-      'telefono': "666 6666 66 66",
-      'email': "mimamamemima@hotmail.com",
-      'tipoMontaje': "Herradura",
-      'nombreSalon': "paquito",
-      'servicios': [
-        {'nombre': 'Guardias'},
-        {'nombre': "Decoradores"},
-        {'nombre': "Meseros"},
-        {'nombre': "Limpieza"},
-      ],
-      'equipos': [
-        {'nombre': "Microfono"},
-        {'nombre': "Equipo Audiovisual"},
-        {'nombre': "Televisor"},
-      ],
-    };
+      final data = await _reservacionService.getDetalleReservacion(
+        idReservacion,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _datosCompletos = datoPruebas;
-      _cargando = false;
-    });
+      setState(() {
+        _datosCompletos = data;
+        _cargando = false;
+      });
 
-    _timerPuntos?.cancel();
+      _timerPuntos?.cancel();
+    } catch (e) {
+      print('Error al descargar datos: $e');
+      if (!mounted) return;
+
+      setState(() {
+        _cargando = false;
+      });
+    }
   }
 
   @override
@@ -151,7 +145,8 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del evento:",
-                            _datosCompletos?['descripcionEvento'] ??
+                            _datosCompletos?['nombreEvento'] ??
+                                _datosCompletos?['descripEvento'] ??
                                 'No definido',
                           ),
                           SizedBox(height: 2),
@@ -162,18 +157,20 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Hora:",
-                            _datosCompletos?['horainicio'] ?? 'No definida',
+                            _datosCompletos?['horaInicio'] ?? 'No definida',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de evento:",
-                            _datosCompletos?['tipoMontaje'] ??
+                            _datosCompletos?['montaje_tipo'] ??
+                                _datosCompletos?['tipo_evento_nombre'] ??
                                 'No seleccionado',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Asistentes:",
-                            (_datosCompletos?['invitados'] ?? 0).toString(),
+                            (_datosCompletos?['estimaAsistentes'] ?? 0)
+                                .toString(),
                           ),
                         ],
                       ),
@@ -204,47 +201,53 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del contacto:",
-                            _datosCompletos?['cliente'] ?? 'No definido',
+                            _datosCompletos?['cliente_nombre'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de cliente:",
-                            _datosCompletos?['tipoCliente'] ?? 'No definido',
+                            _datosCompletos?['cliente_tipo'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Telefono del contacto:",
-                            _datosCompletos?['telefono'] ?? 'No definido',
+                            _datosCompletos?['cliente_telefono'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Correo electronico del contacto:",
-                            _datosCompletos?['email'] ?? 'No definido',
+                            _datosCompletos?['cliente_email'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "RFC:",
-                            _datosCompletos?['rfc'] ?? 'No definido',
+                            _datosCompletos?['cliente_rfc'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Nombre fiscal:",
-                            _datosCompletos?['nombreFiscal'] ?? 'No definido',
+                            _datosCompletos?['cliente_nombre_fiscal'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Colonia:",
-                            _datosCompletos?['colonia'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['dir_colonia'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Calle:",
-                            _datosCompletos?['calle'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['dir_calle'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Numero:",
-                            _datosCompletos?['numero'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['dir_numero']
+                                    ?.toString() ??
+                                'No definido',
                           ),
                         ],
                       ),
@@ -419,13 +422,13 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${s['nombre'] ?? 'Sin nombre'}",
+                        "- ${s['servicio__nombre'] ?? s['nombre'] ?? 'Sin nombre'}",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${s['precio'] ?? 0}",
+                      "\$${s['servicio__costo'] ?? s['costo'] ?? s['precio'] ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -474,11 +477,11 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
-          if (_datosCompletos?['equipos'] == null ||
-              (_datosCompletos?['equipos'] as List).isEmpty)
+          if (_datosCompletos?['equipamentos'] == null ||
+              (_datosCompletos?['equipamentos'] as List).isEmpty)
             Text("Sin equipos", style: TextStyle(fontSize: 12))
           else
-            ...(_datosCompletos?['equipos'] as List).map(
+            ...(_datosCompletos?['equipamentos'] as List).map(
               (e) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
@@ -487,13 +490,13 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                   children: [
                     Flexible(
                       child: Text(
-                        "- ${e['nombre'] ?? 'Sin nombre'} (x${e['cantidad'] ?? 1})",
+                        "- ${e['equipamiento__nombre'] ?? e['nombre'] ?? 'Sin nombre'} (x${e['cantidad'] ?? 1})",
                         style: TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      "\$${((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)}",
+                      "\$${((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0) * (e['cantidad'] ?? 1)).toStringAsFixed(2)}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -503,8 +506,8 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                 ),
               ),
             ),
-          if (_datosCompletos?['equipos'] != null &&
-              (_datosCompletos?['equipos'] as List).isNotEmpty) ...[
+          if (_datosCompletos?['equipamentos'] != null &&
+              (_datosCompletos?['equipamentos'] as List).isNotEmpty) ...[
             Divider(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -514,7 +517,7 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${(_datosCompletos?['equipos'] as List).fold<int>(0, (sum, e) => sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
+                  "\$${(_datosCompletos?['equipamentos'] as List).fold<num>(0, (sum, e) => sum + ((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0) * (e['cantidad'] ?? 1))).toStringAsFixed(2)}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -530,25 +533,28 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
   }
 
   int _calcularSubtotal() {
-    int serviciosTotal = 0;
-    int equiposTotal = 0;
+    num serviciosTotal = 0;
+    num equiposTotal = 0;
 
     if (_datosCompletos?['servicios'] != null) {
-      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<int>(
+      serviciosTotal = (_datosCompletos?['servicios'] as List).fold<num>(
         0,
-        (sum, s) => sum + ((s['precio'] ?? 0) as int),
+        (sum, s) =>
+            sum + (s['servicio__costo'] ?? s['costo'] ?? s['precio'] ?? 0),
       );
     }
 
-    if (_datosCompletos?['equipos'] != null) {
-      equiposTotal = (_datosCompletos?['equipos'] as List).fold<int>(
+    if (_datosCompletos?['equipamentos'] != null) {
+      equiposTotal = (_datosCompletos?['equipamentos'] as List).fold<num>(
         0,
         (sum, e) =>
-            sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)),
+            sum +
+            ((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0) *
+                (e['cantidad'] ?? 1)),
       );
     }
 
-    return serviciosTotal + equiposTotal;
+    return (serviciosTotal + equiposTotal).toInt();
   }
 
   int _calcularIVA() {

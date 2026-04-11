@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/detalles_reservacion.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/subnavbar_almacenista.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class InicioAlmacenista extends StatefulWidget {
   const InicioAlmacenista({super.key});
@@ -12,99 +13,82 @@ class InicioAlmacenista extends StatefulWidget {
   State<InicioAlmacenista> createState() => _InicioAlmacenistaState();
 }
 
-class Reservacion {
-  final int idReservacion;
-  final String titulo;
-  final String fecha;
-  final String hora;
-  final String salon;
-  final String montaje;
-  final bool equipos;
-  final bool servicos;
-  final String estado;
-
-  Reservacion({
-    required this.idReservacion,
-    required this.titulo,
-    required this.fecha,
-    required this.hora,
-    required this.salon,
-    required this.montaje,
-    required this.equipos,
-    required this.servicos,
-    required this.estado,
-  });
-}
-
 class _InicioAlmacenistaState extends State<InicioAlmacenista> {
-  int _actualIndice = 0;
+  final ReservacionService _reservacionService = ReservacionService();
 
-  List<Reservacion> reservaciones = [
-    Reservacion(
-      idReservacion: 1,
-      titulo: "Reservacion 2",
-      fecha: "ayer",
-      hora: "12:00",
-      salon: "Federico",
-      montaje: "menotaje en T",
-      equipos: true,
-      servicos: true,
-      estado: "Por Hacer",
-    ),
-    Reservacion(
-      idReservacion: 2,
-      titulo: "Reservacon 1",
-      fecha: "antier",
-      hora: "13:00",
-      salon: "peluche",
-      montaje: "banmquete",
-      equipos: false,
-      servicos: false,
-      estado: "Concluido",
-    ),
-    Reservacion(
-      idReservacion: 3,
-      titulo: "Reservacion 43",
-      fecha: "manana",
-      hora: "14:00",
-      salon: "Federica",
-      montaje: "Enbestida",
-      equipos: false,
-      servicos: true,
-      estado: "Amueblando",
-    ),
-    Reservacion(
-      idReservacion: 5,
-      titulo: "Reser5acion 43",
-      fecha: "manana",
-      hora: "14:00",
-      salon: "Federica",
-      montaje: "Enbestida",
-      equipos: false,
-      servicos: true,
-      estado: "Finalziando",
-    ),
-  ];
+  int _actualIndice = 0;
+  bool _cargando = true;
+  List<Map<String, dynamic>> _reservaciones = [];
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
+
+  Future<void> _cargarReservaciones() async {
+    try {
+      setState(() {
+        _cargando = true;
+        _error = null;
+      });
+
+      final datos = await _reservacionService.getTodasReservaciones();
+
+      setState(() {
+        _reservaciones = datos;
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _cargando = false;
+        _error = 'Error al cargar reservaciones: $e';
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _reservacionesFiltradas {
+    if (_reservaciones.isEmpty) return [];
+
+    String estadoCodigo;
+    if (_actualIndice == 0) {
+      estadoCodigo = 'PROC';
+    } else if (_actualIndice == 1) {
+      estadoCodigo = 'CON';
+    } else {
+      estadoCodigo = 'TERMI';
+    }
+
+    return _reservaciones.where((r) {
+      final codigo = r['estado_codigo']?.toString() ?? '';
+      return codigo == estadoCodigo;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    String estadoBuscado = "";
-
-    if (_actualIndice == 0) {
-      estadoBuscado = "Por Hacer";
-    } else if (_actualIndice == 2) {
-      estadoBuscado = "Finalziando";
-    } else {
-      estadoBuscado = "demas";
+    if (_cargando) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final reservacionesFinales = reservaciones.where((res) {
-      if (estadoBuscado != "demas") {
-        return res.estado == estadoBuscado;
-      } else {
-        return res.estado != "Por Hacer" || res.estado == "Finalziando";
-      }
-    }).toList();
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _cargarReservaciones,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final reservacionesMostrar = _reservacionesFiltradas;
 
     return SingleChildScrollView(
       child: Container(
@@ -128,9 +112,9 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              itemCount: reservacionesFinales.length,
+              itemCount: reservacionesMostrar.length,
               itemBuilder: (context, index) {
-                final itemActual = reservacionesFinales[index];
+                final itemActual = reservacionesMostrar[index];
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -144,8 +128,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => PantallaDetalles(
-                              idReservacion: itemActual.idReservacion
-                                  .toString(),
+                              idReservacion: itemActual['id'].toString(),
                             ),
                           ),
                         );
@@ -165,7 +148,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.titulo,
+                                  itemActual['nombreEvento'] ?? 'Sin título',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.normal,
@@ -190,7 +173,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.fecha,
+                                  itemActual['fechaEvento'] ?? 'Sin fecha',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
@@ -211,7 +194,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.hora,
+                                  itemActual['horaInicio'] ?? 'Sin hora',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
@@ -230,7 +213,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.salon,
+                                  itemActual['salon_nombre'] ?? 'Sin salón',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
@@ -245,7 +228,7 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.montaje,
+                                  itemActual['montaje_tipo'] ?? 'Sin montaje',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
@@ -263,7 +246,9 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                     fontSize: 12,
                                   ),
                                 ),
-                                itemActual.equipos
+                                (itemActual['equipamientos'] as List?)
+                                            ?.isNotEmpty ==
+                                        true
                                     ? const Icon(
                                         Icons.check,
                                         color: Colors.green,
@@ -281,7 +266,9 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                                     fontSize: 12,
                                   ),
                                 ),
-                                itemActual.servicos
+                                (itemActual['servicios'] as List?)
+                                            ?.isNotEmpty ==
+                                        true
                                     ? const Icon(
                                         Icons.check,
                                         color: Colors.green,

@@ -58,6 +58,12 @@ class _AlmacenState extends State<Almacen> {
 
   final AmbientLight _cantidadLuz = AmbientLight();
   void _checaLuz() async {
+    if (_ultimaAlertaSilenciada != null) {
+      final diferencia = DateTime.now().difference(_ultimaAlertaSilenciada!);
+      if (diferencia.inMinutes < 5) {
+        return;
+      }
+    }
     double? nivelLuz = await _cantidadLuz.currentAmbientLight();
     print("hay un total de: $nivelLuz");
     if (nivelLuz! < 5 && !_taAbiertoDialogo) {
@@ -71,25 +77,51 @@ class _AlmacenState extends State<Almacen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text("E we no hay luz"),
+        title: const Text("⚠️ Ambiente oscuro detectado"),
         content: const Text(
-          "E we si q hay poca luz, deberias prender la linterna.",
+          "El nivel de luz en el almacén es muy bajo. "
+          "Para evitar accidentes, te recomendamos:\n\n"
+          "• Encender la linterna del dispositivo\n"
+          "•Tener precaución al movilizar equipos\n"
+          "• Solicitar ayuda si es necesario",
         ),
-        actions: [
+        actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Ta bien"),
+            onPressed: () {
+              Navigator.pop(context);
+              _silenciarAlerta5Minutos();
+            },
+            child: const Text("Silenciar 5 min"),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Ta bien"),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _prenderLinterna();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColores.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("🔦 Linterna"),
           ),
-          TextButton(onPressed: _prenderLinterna, child: const Text("Ta bien")),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColores.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Entendido"),
+          ),
         ],
       ),
     ).then((_) {
       _taAbiertoDialogo = false;
     });
+  }
+
+  DateTime? _ultimaAlertaSilenciada;
+  void _silenciarAlerta5Minutos() {
+    _ultimaAlertaSilenciada = DateTime.now();
   }
 
   bool _linternaPrendida = false;

@@ -4,7 +4,7 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/detalles_reservacion_coordinador.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/subnavbar_coordinador.dart';
-// import 'package:followroom_flutter/services/reservacion_service.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class InicioCoordinador extends StatefulWidget {
   const InicioCoordinador({super.key});
@@ -13,165 +13,111 @@ class InicioCoordinador extends StatefulWidget {
   State<InicioCoordinador> createState() => _InicioCoordinadorState();
 }
 
-class Reservacion {
-  final int idReservacion;
-  final String titulo;
-  final String fecha;
-  final String hora;
-  final String salon;
-  final String montaje;
-  final bool equipos;
-  final bool servicos;
-  final String estado;
-
-  Reservacion({
-    required this.idReservacion,
-    required this.titulo,
-    required this.fecha,
-    required this.hora,
-    required this.salon,
-    required this.montaje,
-    required this.equipos,
-    required this.servicos,
-    required this.estado,
-  });
-}
-
 class _InicioCoordinadorState extends State<InicioCoordinador> {
+  final ReservacionService _reservacionService = ReservacionService();
+
   int _actualIndice = 0;
-  // final ReservacionService _reservacionService = ReservacionService();
-  // List<Map<String, dynamic>> reservaciones = [];
-  // bool _cargando = true;
+  bool _cargando = true;
+  List<Map<String, dynamic>> _reservaciones = [];
+  String? _error;
 
-  List<Reservacion> reservaciones = [
-    Reservacion(
-      idReservacion: 1,
-      titulo: "Reservacion 2",
-      fecha: "ayer",
-      hora: "12:00",
-      salon: "Federico",
-      montaje: "montaje en T",
-      equipos: true,
-      servicos: true,
-      estado: "Por Hacer",
-    ),
-    Reservacion(
-      idReservacion: 2,
-      titulo: "Reservacion 1",
-      fecha: "antier",
-      hora: "13:00",
-      salon: "peluche",
-      montaje: "banquete",
-      equipos: false,
-      servicos: false,
-      estado: "Concluido",
-    ),
-    Reservacion(
-      idReservacion: 3,
-      titulo: "Reservacion 43",
-      fecha: "manana",
-      hora: "14:00",
-      salon: "Federica",
-      montaje: "Escenario",
-      equipos: false,
-      servicos: true,
-      estado: "Amueblando",
-    ),
-    Reservacion(
-      idReservacion: 5,
-      titulo: "Reservacion 43",
-      fecha: "manana",
-      hora: "14:00",
-      salon: "Federica",
-      montaje: "Escenario",
-      equipos: false,
-      servicos: true,
-      estado: "Finalizando",
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _cargarReservaciones();
-  // }
+  Future<void> _cargarReservaciones() async {
+    try {
+      setState(() {
+        _cargando = true;
+        _error = null;
+      });
 
-  // Future<void> _cargarReservaciones() async {
-  //   setState(() => _cargando = true);
-  //   try {
-  //     final data = await _reservacionService.getListaReservaciones();
-  //     setState(() {
-  //       reservaciones = data.map((item) {
-  //         return {
-  //           'id': item['id'],
-  //           'titulo': item['nombreEvento'] ?? 'Sin título',
-  //           'fecha': item['fechaEvento'] ?? '',
-  //           'hora': item['horaInicio'] ?? '',
-  //           'horaFin': item['horaFin'] ?? '',
-  //           'salon': item['salon_nombre'] ?? 'Sin salón',
-  //           'montaje': item['montaje_tipo'] ?? 'Sin montaje',
-  //           'equipos': (item['equipamentos'] as List? ?? []).isNotEmpty,
-  //           'servicios': (item['servicios'] as List? ?? []).isNotEmpty,
-  //           'estado': item['estado_nombre'] ?? 'Sin estado',
-  //         };
-  //       }).toList();
-  //       _cargando = false;
-  //     });
-  //   } catch (e) {
-  //     setState(() => _cargando = false);
-  //   }
-  // }
+      final datos = await _reservacionService.getTodasReservaciones();
+
+      setState(() {
+        _reservaciones = datos;
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _cargando = false;
+        _error = 'Error al cargar reservaciones: $e';
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _reservacionesFiltradas {
+    if (_reservaciones.isEmpty) return [];
+
+    String estadoCodigo;
+    if (_actualIndice == 0) {
+      estadoCodigo = 'PROC';
+    } else if (_actualIndice == 1) {
+      estadoCodigo = 'CON';
+    } else {
+      estadoCodigo = 'TERMI';
+    }
+
+    return _reservaciones.where((r) {
+      final codigo = r['estado_codigo']?.toString() ?? '';
+      return codigo == estadoCodigo;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    String estadoBuscado = "";
-
-    if (_actualIndice == 0) {
-      estadoBuscado = "Por Hacer";
-    } else if (_actualIndice == 2) {
-      estadoBuscado = "Finalizando";
-    } else {
-      estadoBuscado = "demas";
+    if (_cargando) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final reservacionesFinales = reservaciones.where((res) {
-      if (estadoBuscado != "demas") {
-        return res.estado == estadoBuscado;
-      } else {
-        return res.estado != "Por Hacer" || res.estado == "Finalizando";
-      }
-    }).toList();
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _cargarReservaciones,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final reservacionesMostrar = _reservacionesFiltradas;
 
     return SingleChildScrollView(
       child: Container(
         decoration: BoxDecoration(color: AppColores.background2),
         child: Column(
           children: [
-            Textos(
-              texts: ['Por Hacer', 'En Marcha', 'Concluidos'],
-              seleccionActual: _actualIndice,
-              alSeleccionar: (int nuevoIndice) {
-                setState(() {
-                  _actualIndice = nuevoIndice;
-                });
-              },
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Textos(
+                texts: const ['Por Hacer', 'En Marcha', 'Concluidos'],
+                seleccionActual: _actualIndice,
+                alSeleccionar: (int nuevoIndice) {
+                  setState(() {
+                    _actualIndice = nuevoIndice;
+                  });
+                },
+              ),
             ),
             const SizedBox(width: 24),
-            // _cargando
-            //     ? Center(
-            //         child: CircularProgressIndicator(color: AppColores.primary),
-            //       )
-            //     :
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16),
-              itemCount: reservacionesFinales.length,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: reservacionesMostrar.length,
               itemBuilder: (context, index) {
-                final itemActual = reservacionesFinales[index];
+                final itemActual = reservacionesMostrar[index];
 
                 return Container(
-                  margin: EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: ContainerStyles.sombreado,
                   child: Material(
                     color: Colors.transparent,
@@ -182,14 +128,13 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => PantallaDetallesCoordinador(
-                              idReservacion: itemActual.idReservacion
-                                  .toString(),
+                              idReservacion: itemActual['id'].toString(),
                             ),
                           ),
                         );
                       },
                       child: Padding(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,8 +148,8 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.titulo,
-                                  style: TextStyle(
+                                  itemActual['nombreEvento'] ?? 'Sin título',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.normal,
                                     color: AppColores.foreground,
@@ -212,15 +157,15 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.calendar_month_outlined,
                                   color: AppColores.foreground,
                                   size: 16,
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
                                   "Fecha: ",
                                   style: TextEstilos.labelCard.copyWith(
@@ -228,20 +173,20 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.fecha,
-                                  style: TextStyle(
+                                  itemActual['fechaEvento'] ?? 'Sin fecha',
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
                                     color: AppColores.foreground,
                                   ),
                                 ),
-                                SizedBox(width: 16),
-                                Icon(
+                                const SizedBox(width: 16),
+                                const Icon(
                                   Icons.alarm,
                                   color: AppColores.foreground,
                                   size: 16,
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
                                   "Hora: ",
                                   style: TextEstilos.labelCard.copyWith(
@@ -249,8 +194,8 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.hora,
-                                  style: TextStyle(
+                                  itemActual['horaInicio'] ?? 'Sin hora',
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
                                     color: AppColores.foreground,
@@ -258,7 +203,7 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Text(
@@ -268,14 +213,14 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.salon,
-                                  style: TextStyle(
+                                  itemActual['salon_nombre'] ?? 'Sin salón',
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
                                     color: AppColores.foreground,
                                   ),
                                 ),
-                                SizedBox(width: 16),
+                                const SizedBox(width: 16),
                                 Text(
                                   "Montaje: ",
                                   style: TextEstilos.labelCard.copyWith(
@@ -283,8 +228,8 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                   ),
                                 ),
                                 Text(
-                                  itemActual.montaje,
-                                  style: TextStyle(
+                                  itemActual['montaje_tipo'] ?? 'Sin montaje',
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
                                     color: AppColores.foreground,
@@ -292,7 +237,7 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Text(
@@ -301,51 +246,51 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
                                     fontSize: 12,
                                   ),
                                 ),
-                                itemActual.equipos
-                                    ? Icon(
+                                (itemActual['equipamentos'] as List?)
+                                            ?.isNotEmpty ==
+                                        true
+                                    ? const Icon(
                                         Icons.check,
                                         color: Colors.green,
                                         size: 16,
                                       )
-                                    : Icon(
+                                    : const Icon(
                                         Icons.close,
                                         color: Colors.red,
                                         size: 16,
                                       ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
+                                const SizedBox(width: 16),
                                 Text(
                                   "Servicios: ",
                                   style: TextEstilos.labelCard.copyWith(
                                     fontSize: 12,
                                   ),
                                 ),
-                                itemActual.servicos
-                                    ? Icon(
+                                (itemActual['servicios'] as List?)
+                                            ?.isNotEmpty ==
+                                        true
+                                    ? const Icon(
                                         Icons.check,
                                         color: Colors.green,
                                         size: 16,
                                       )
-                                    : Icon(
+                                    : const Icon(
                                         Icons.close,
                                         color: Colors.red,
                                         size: 16,
                                       ),
-                                Spacer(),
-                                Text(
-                                  "Ver detalles",
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColores.foreground.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
                               ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Click para ver detalles del evento",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColores.foreground.withValues(
+                                  alpha: 0.9,
+                                ),
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
                           ],
                         ),
