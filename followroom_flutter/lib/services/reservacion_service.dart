@@ -223,4 +223,43 @@ class ReservacionService {
       throw Exception('Error al cargar mis reservaciones');
     }
   }
+
+  Future<Map<String, dynamic>> updateChecklist(
+    int reservacionId,
+    String tipo,
+    Map<String, bool> checklist,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.post(
+        '/reservacion/$reservacionId/checklist/',
+        data: {'tipo': tipo, 'checklist': checklist},
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al actualizar checklist');
+      }
+    } catch (e) {
+      print('Error al actualizar checklist: $e');
+      throw Exception('Error al actualizar checklist');
+    }
+  }
+
+  Future<Map<String, dynamic>> getProgresoReservacion(int reservacionId) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/reservacion/$reservacionId/progreso/');
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al obtener progreso');
+      }
+    } catch (e) {
+      print('Error al obtener progreso: $e');
+      throw Exception('Error al obtener progreso');
+    }
+  }
 }

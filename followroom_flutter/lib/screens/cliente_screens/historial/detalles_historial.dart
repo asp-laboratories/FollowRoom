@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:dio/dio.dart';
 import 'package:followroom_flutter/services/ip_config.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 
 class DetallesHistorial extends StatefulWidget {
@@ -31,8 +32,9 @@ class DetallesHistorial extends StatefulWidget {
 }
 
 class _DetallesHistorialState extends State<DetallesHistorial> {
+  final ReservacionService _reservacionService = ReservacionService();
   bool _cargando = true;
-  double _progreso = 0.75;
+  double _progreso = 0.0;
   bool _encuestaEnviada = false;
   Map<String, dynamic>? _reservacion;
 
@@ -52,37 +54,52 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
     try {
       var dio = Dio();
       dio.options.baseUrl = 'http://${IpConfig.ip}/api';
-      final response = await dio.get('/reservacion/${widget.idReservacion}/');
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
-      if (response.statusCode == 200 && mounted) {
+
+      // Fetch both endpoints in parallel
+      final results = await Future.wait([
+        dio.get('/reservacion/${widget.idReservacion}/'),
+        _reservacionService.getProgresoReservacion(widget.idReservacion),
+      ]);
+
+      final response = results[0] as dynamic;
+      final progresoData = results[1] as Map<String, dynamic>;
+
+      print('Progreso data: $progresoData');
+      if (mounted) {
         setState(() {
           _reservacion = Map<String, dynamic>.from(response.data);
           _cargando = false;
-          // Calcular progreso según estado
-          final estado = _reservacion?['estado_reserva_datos'];
-          String codigo = '';
-          if (estado is Map) {
-            codigo = estado['codigo']?.toString() ?? '';
-          }
-          switch (codigo) {
-            case 'SOLIC':
-              _progreso = 0.25;
-              break;
-            case 'PEN':
-              _progreso = 0.5;
-              break;
-            case 'CONF':
-              _progreso = 0.75;
-              break;
-            case 'TERMI':
-              _progreso = 1.0;
-              break;
-            case 'CANCEL':
-              _progreso = 0.0;
-              break;
-            default:
-              _progreso = 0.75;
+
+          final progresoValor = progresoData['progreso_checklist'];
+          if (progresoValor != null &&
+              progresoValor is num &&
+              progresoValor.toDouble() > 0) {
+            _progreso = progresoValor.toDouble();
+          } else {
+            final estado = _reservacion?['estado_reserva_datos'];
+            String codigo = '';
+            if (estado is Map) {
+              codigo = estado['codigo']?.toString() ?? '';
+            }
+            switch (codigo) {
+              case 'SOLIC':
+                _progreso = 0.25;
+                break;
+              case 'PEN':
+                _progreso = 0.5;
+                break;
+              case 'CON':
+                _progreso = 0.75;
+                break;
+              case 'TERMI':
+                _progreso = 1.0;
+                break;
+              case 'CANCEL':
+                _progreso = 0.0;
+                break;
+              default:
+                _progreso = 0.0;
+            }
           }
         });
       }

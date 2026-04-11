@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class Detalles extends StatefulWidget {
   final String numeroReservacion;
@@ -12,7 +13,10 @@ class Detalles extends StatefulWidget {
 }
 
 class _DetallesState extends State<Detalles> {
+  final ReservacionService _reservacionService = ReservacionService();
+
   List<Map<String, dynamic>> _mobiliarios = [];
+  Map<String, bool> _checklistAlmacenista = {};
   bool _isLoading = true;
 
   @override
@@ -22,58 +26,97 @@ class _DetallesState extends State<Detalles> {
   }
 
   Future<void> _cargarMobiliarios() async {
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      _mobiliarios = [
-        {
-          'nomre': "Mesa",
-          'caracteristicas': ["rojo", 'madera'],
-          'descripcion': "Mesa para banquetes",
-          'tipoMobiliario': "Mesa",
-          'completado': false,
-          'icono': Icons.table_restaurant,
-        },
-        {
-          'nomre': "Silla",
-          'caracteristicas': ["azul", 'madera'],
-          'descripcion': "Silla para banquetes",
-          'tipoMobiliario': "silla",
-          'completado': true,
-          'icono': Icons.chair,
-        },
-        {
-          'nomre': "Taburete",
-          'caracteristicas': ["cafe", 'madera'],
-          'descripcion': "Taburete para banquetes",
-          'tipoMobiliario': "taburete",
-          'completado': false,
-          'icono': Icons.event_seat,
-        },
-        {
-          'nomre': "Mesa Redonda",
-          'caracteristicas': ["blanco", 'madera'],
-          'descripcion': "Mesa para banquetes",
-          'tipoMobiliario': "Mesa",
-          'completado': true,
-          'icono': Icons.table_restaurant,
-        },
-        {
-          'nomre': "Podium",
-          'caracteristicas': ["negro", "madera", "plegable", "regulable"],
-          'descripcion': "Podium para presentaciones",
-          'tipoMobiliario': "Podium",
-          'completado': false,
-          'icono': Icons.mic,
-        },
-      ];
-      _isLoading = false;
-    });
+    try {
+      final data = await _reservacionService.getDetalleReservacion(
+        int.parse(widget.numeroReservacion),
+      );
+
+      // Cargar mobiliarios desde montage_datos
+      final montageMobiliarios =
+          data['montaje_datos']?['montaje_mobiliario'] as List? ?? [];
+
+      // Cargar checklist existente
+      final checklistData =
+          data['checklist_almacenista'] as Map<String, dynamic>? ?? {};
+      _checklistAlmacenista = checklistData.map(
+        (k, v) => MapEntry(k, v == true || v == 'true'),
+      );
+
+      // Convertir mobiliarios al formato necesario
+      _mobiliarios = montageMobiliarios.map((m) {
+        final id = m['id'].toString();
+        return {
+          'id': id,
+          'nombre': m['nombre'] ?? 'Sin nombre',
+          'cantidad': m['cantidad'] ?? 1,
+          'completado': _checklistAlmacenista[id] ?? false,
+          'icono': _getIconForMobiliario(m['nombre'] ?? ''),
+        };
+      }).toList();
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error al cargar mobiliarios: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  IconData _getIconForMobiliario(String nombre) {
+    final nombreLower = nombre.toLowerCase();
+    if (nombreLower.contains('mesa')) return Icons.table_restaurant;
+    if (nombreLower.contains('silla')) return Icons.chair;
+    if (nombreLower.contains('taburete')) return Icons.event_seat;
+    if (nombreLower.contains('podio') || nombreLower.contains('podium'))
+      return Icons.mic;
+    return Icons.inventory_2;
+  }
+
+  bool _puedeMarcar(int index) {
+    if (index == 0) return true;
+    // Solo puede marcar si el anterior está completado
+    return _mobiliarios[index - 1]['completado'] == true;
   }
 
   void _toggleCompletado(int index) {
+    if (!_puedeMarcar(index)) return;
+
+    final mobiliario = _mobiliarios[index];
+    final id = mobiliario['id'].toString();
+    final nuevoValor = !(mobiliario['completado'] as bool);
+
     setState(() {
-      _mobiliarios[index]['completado'] = !_mobiliarios[index]['completado'];
+      _mobiliarios[index]['completado'] = nuevoValor;
+      _checklistAlmacenista[id] = nuevoValor;
     });
+  }
+
+  Future<void> _guardarChecklist() async {
+    try {
+      final result = await _reservacionService.updateChecklist(
+        int.parse(widget.numeroReservacion),
+        'almacenista',
+        _checklistAlmacenista,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Checklist guardado correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+      }
+    }
   }
 
   @override
@@ -223,18 +266,9 @@ class _DetallesState extends State<Detalles> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "$completados de $total elementos completados",
-                              ),
-                              backgroundColor: AppColores.primary,
-                            ),
-                          );
-                        },
+                        onPressed: _guardarChecklist,
                         icon: const Icon(Icons.save),
-                        label: const Text("Guardar Estado"),
+                        label: const Text("Guardar Checklist"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColores.primary,
                           foregroundColor: Colors.white,
@@ -255,16 +289,23 @@ class _DetallesState extends State<Detalles> {
   Widget _buildMobiliarioCard(int index) {
     final mobiliario = _mobiliarios[index];
     final isCompleted = mobiliario['completado'] == true;
+    final puedeMarcar = _puedeMarcar(index);
+    final isDisabled = !puedeMarcar && !isCompleted;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isCompleted
             ? Colors.green.withValues(alpha: 0.1)
+            : isDisabled
+            ? Colors.grey.withValues(alpha: 0.1)
             : AppColores.backgroundComponent,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isCompleted
               ? Colors.green.withValues(alpha: 0.5)
+              : isDisabled
+              ? Colors.grey.withValues(alpha: 0.3)
               : AppColores.primary.withValues(alpha: 0.2),
           width: isCompleted ? 2 : 1,
         ),
@@ -282,7 +323,7 @@ class _DetallesState extends State<Detalles> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _toggleCompletado(index),
+          onTap: isDisabled ? null : () => _toggleCompletado(index),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -310,8 +351,8 @@ class _DetallesState extends State<Detalles> {
                         children: [
                           Expanded(
                             child: Text(
-                              mobiliario['nomre']?.toString().toUpperCase() ??
-                                  '',
+                              mobiliario['nombre']?.toString().toUpperCase() ??
+                                  'Sin nombre',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -437,7 +478,7 @@ class _DetallesState extends State<Detalles> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mobiliario['nomre'] ?? '',
+                        mobiliario['nombre'] ?? 'Sin nombre',
                         style: TextStyle(
                           color: AppColores.foreground,
                           fontSize: 16,
@@ -450,7 +491,7 @@ class _DetallesState extends State<Detalles> {
                         ),
                       ),
                       Text(
-                        mobiliario['tipoMobiliario']?.toString() ?? '',
+                        "Cantidad: ${mobiliario['cantidad'] ?? 1}",
                         style: TextStyle(
                           color: AppColores.foreground.withValues(alpha: 0.6),
                           fontSize: 12,

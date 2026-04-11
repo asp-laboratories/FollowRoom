@@ -201,7 +201,14 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del contacto:",
-                            _datosCompletos?['cliente_nombre'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['nombre'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Apellido:",
+                            _datosCompletos?['cliente_datos']?['apellidoPaterno'] ??
+                                '',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
@@ -211,23 +218,25 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Telefono del contacto:",
-                            _datosCompletos?['cliente_telefono'] ??
+                            _datosCompletos?['cliente_datos']?['telefono'] ??
                                 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Correo electronico del contacto:",
-                            _datosCompletos?['cliente_email'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['correo_electronico'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "RFC:",
-                            _datosCompletos?['cliente_rfc'] ?? 'No definido',
+                            _datosCompletos?['cliente_datos']?['rfc'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Nombre fiscal:",
-                            _datosCompletos?['cliente_nombre_fiscal'] ??
+                            _datosCompletos?['cliente_datos']?['nombre_fiscal'] ??
                                 'No definido',
                           ),
                           SizedBox(height: 2),
@@ -301,13 +310,13 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                             SizedBox(height: 8),
                             _buildLabelValue(
                               "Salón:",
-                              _datosCompletos?['nombreSalon'] ??
+                              _datosCompletos?['montaje_datos']?['salon']?['nombre'] ??
                                   'Ningún salón seleccionado',
                             ),
                             SizedBox(height: 2),
                             _buildLabelValue(
                               "Tipo de montaje:",
-                              _datosCompletos?['tipoMontaje'] ??
+                              _datosCompletos?['montaje_datos']?['tipo_montaje']?['nombre'] ??
                                   'No seleccionado',
                             ),
                           ],

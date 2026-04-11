@@ -47,14 +47,24 @@ class _PantallaDetallesCoordinadorState
   }
 
   final List<Map<String, bool>> _checklist = [
-    {'Confirmar reservación': false},
-    {'Verificar pago': false},
-    {'Contactar cliente': false},
-    {'Asignar salón': false},
-    {'Asignar montaje': false},
-    {'Confirmar servicios': false},
-    {'Confirmar equipamentos': false},
+    {'Firma de contrato / Aceptación de términos': false},
+    {'Anticipo recibido (primer pago)': false},
+    {'Trabajadores asignados': false},
+    {'Definición del montaje': false},
+    {'Servicios adicionales definidos': false},
+    {'Equipamiento requerido definido': false},
+    {'Montaje de mobiliario completado': false},
+    {'Orden de Servicio (BEO) distribuida': false},
+    {'Checklist de Montaje': false},
+    {'Prueba de Equipos': false},
+    {'Recepción del Cliente': false},
+    {'Liquidación de Saldo': false},
+    {'Evento en curso': false},
+    {'Cierre de Inventario': false},
   ];
+
+  Map<String, bool> _checklistCoordinador = {};
+  double _progresoChecklist = 0.0;
 
   @override
   void initState() {
@@ -85,6 +95,14 @@ class _PantallaDetallesCoordinadorState
 
       print('DEBUG - Datos recibidos: $data');
 
+      // Cargar checklist desde API
+      final checklistData =
+          data['checklist_coordinador'] as Map<String, dynamic>? ?? {};
+      _checklistCoordinador = checklistData.map(
+        (k, v) => MapEntry(k, v == true || v == 'true'),
+      );
+      _progresoChecklist = (data['progreso_checklist'] ?? 0.0).toDouble();
+
       setState(() {
         _datosCompletos = data;
         _precioController.text = (_datosCompletos?['total'] ?? 0).toString();
@@ -103,6 +121,51 @@ class _PantallaDetallesCoordinadorState
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error al cargar: $e')));
+      }
+    }
+  }
+
+  bool _puedeMarcarChecklist(String key) {
+    final keys = _checklist.map((e) => e.keys.first).toList();
+    final index = keys.indexOf(key);
+    if (index <= 0) return true;
+    // Solo puede marcar si el anterior está completado
+    final anteriorKey = keys[index - 1];
+    return _checklistCoordinador[anteriorKey] == true;
+  }
+
+  Future<void> _guardarChecklist() async {
+    try {
+      final result = await _reservacionService.updateChecklist(
+        int.parse(widget.idReservacion),
+        'coordinador',
+        _checklistCoordinador,
+      );
+
+      if (mounted) {
+        final checklistFromServer =
+            result['checklist_coordinador'] as Map<String, dynamic>? ?? {};
+        setState(() {
+          _checklistCoordinador = checklistFromServer.map(
+            (k, v) => MapEntry(k, v == true || v == 'true'),
+          );
+          _progresoChecklist = (result['progreso_checklist'] ?? 0.0).toDouble();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Checklist guardado correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -203,19 +266,18 @@ class _PantallaDetallesCoordinadorState
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _scrollToBottom,
-                          icon: Icon(Icons.arrow_downward),
-                          label: Text("Ir abajo"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColores.primary,
-                            foregroundColor: Colors.white,
-                          ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _scrollToBottom,
+                        icon: Icon(Icons.arrow_downward),
+                        label: Text("Ir abajo"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColores.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   SizedBox(height: 5),
@@ -301,6 +363,12 @@ class _PantallaDetallesCoordinadorState
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
+                            "Apellido:",
+                            _datosCompletos?['cliente_datos']?['apellidoPaterno'] ??
+                                '',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
                             "Tipo de cliente:",
                             _datosCompletos?['cliente_tipo'] ?? 'No definido',
                           ),
@@ -314,6 +382,37 @@ class _PantallaDetallesCoordinadorState
                           _buildLabelValue(
                             "Correo electrónico:",
                             _datosCompletos?['cliente_datos']?['correo_electronico'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "RFC:",
+                            _datosCompletos?['cliente_datos']?['rfc'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Nombre fiscal:",
+                            _datosCompletos?['cliente_datos']?['nombre_fiscal'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Colonia:",
+                            _datosCompletos?['cliente_datos']?['dir_colonia'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Calle:",
+                            _datosCompletos?['cliente_datos']?['dir_calle'] ??
+                                'No definido',
+                          ),
+                          SizedBox(height: 2),
+                          _buildLabelValue(
+                            "Número:",
+                            _datosCompletos?['cliente_datos']?['dir_numero']
+                                    ?.toString() ??
                                 'No definido',
                           ),
                         ],
@@ -426,21 +525,85 @@ class _PantallaDetallesCoordinadorState
                             ),
                           ),
                           SizedBox(height: 8),
+                          // Mostrar progreso
+                          Container(
+                            padding: EdgeInsets.all(8),
+                            margin: EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: AppColores.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Progreso:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  '${(_progresoChecklist * 100).toInt()}%',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColores.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           ...List.generate(_checklist.length, (index) {
                             final item = _checklist[index];
                             final key = item.keys.first;
+                            // El item #9 "Checklist de Montaje" (índice 8) se marca automáticamente desde almacenista
+                            final esItemMontaje = index == 8;
+                            final puedeMarcar = esItemMontaje
+                                ? false
+                                : _puedeMarcarChecklist(key);
                             return CheckboxListTile(
-                              title: Text(key),
-                              value: item[key],
-                              onChanged: (value) {
-                                setState(() {
-                                  _checklist[index][key] = value ?? false;
-                                });
-                              },
+                              title: Text(
+                                key,
+                                style: TextStyle(
+                                  color: esItemMontaje
+                                      ? Colors.grey
+                                      : !puedeMarcar &&
+                                            !(_checklistCoordinador[key] ??
+                                                false)
+                                      ? Colors.grey
+                                      : null,
+                                ),
+                              ),
+                              value: _checklistCoordinador[key] ?? false,
+                              onChanged: puedeMarcar
+                                  ? (value) {
+                                      setState(() {
+                                        _checklistCoordinador[key] =
+                                            value ?? false;
+                                      });
+                                    }
+                                  : null,
                               controlAffinity: ListTileControlAffinity.leading,
                               dense: true,
                             );
                           }),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _guardarChecklist,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColores.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              icon: const Icon(Icons.save),
+                              label: const Text('Guardar Checklist'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -567,19 +730,18 @@ class _PantallaDetallesCoordinadorState
                   SizedBox(height: 5),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _scrollToTop,
-                          icon: Icon(Icons.arrow_upward),
-                          label: Text("Ir arriba"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColores.primary,
-                            foregroundColor: Colors.white,
-                          ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _scrollToTop,
+                        icon: Icon(Icons.arrow_upward),
+                        label: Text("Ir arriba"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColores.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
