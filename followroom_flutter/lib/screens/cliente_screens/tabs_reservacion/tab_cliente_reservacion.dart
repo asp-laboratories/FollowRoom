@@ -98,7 +98,7 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
           _esClienteNuevo = false;
           nombre.text = datos['nombre'] ?? '';
           apellidoPaterno.text = datos['apellidoPaterno'] ?? '';
-          apellidoMaterno.text = datos['apelidoMaterno'] ?? '';
+          apellidoMaterno.text = datos['apellidoMaterno'] ?? '';
           rfc.text = datos['rfc'] ?? '';
           nombreFiscal.text = datos['nombre_fiscal'] ?? '';
           telefono.text = datos['telefono'] ?? '';
@@ -121,7 +121,7 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     await _clienteService.guardarDatosCliente({
       'nombre': nombre.text,
       'apellidoPaterno': apellidoPaterno.text,
-      'apelidoMaterno': apellidoMaterno.text,
+      'apellidoMaterno': apellidoMaterno.text,
       'rfc': rfc.text,
       'nombre_fiscal': nombreFiscal.text,
       'telefono': telefono.text,
@@ -187,7 +187,7 @@ class _TabClienteReservacionState extends State<TabClienteReservacion>
     widget.onDatosChanged({
       'nombre': nombre.text,
       'apellidoPaterno': apellidoPaterno.text,
-      'apelidoMaterno': apellidoMaterno.text,
+      'apellidoMaterno': apellidoMaterno.text,
       'rfc': rfc.text,
       'nombre_fiscal': nombreFiscal.text,
       'telefono': telefono.text,

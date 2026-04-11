@@ -1,39 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/services/encuesta_service.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:dio/dio.dart';
-import 'package:followroom_flutter/services/ip_config.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/modificacino_reservacion.dart';
 
 class DetallesHistorial extends StatefulWidget {
-  final String idReservacion;
-  final Map<String, String>? datosReservacion;
-  final Map<String, String>? datosCliente;
-  final Map<String, dynamic>? salonSeleccionado;
-  final Map<int, String>? montajesPorSalon;
-  final List<Map<String, dynamic>>? serviciosSeleccionados;
-  final List<Map<String, dynamic>>? equipamientosSeleccionados;
+  final int idReservacion;
 
-  const DetallesHistorial({
-    super.key,
-    required this.idReservacion,
-    this.datosReservacion,
-    this.datosCliente,
-    this.salonSeleccionado,
-    this.montajesPorSalon,
-    this.serviciosSeleccionados,
-    this.equipamientosSeleccionados,
-  });
+  const DetallesHistorial({super.key, required this.idReservacion});
 
   @override
   State<DetallesHistorial> createState() => _DetallesHistorialState();
 }
 
 class _DetallesHistorialState extends State<DetallesHistorial> {
-  final bool _cargando = false;
-  final double _progreso = 0.75;
+  final ReservacionService _servicioReservacion = ReservacionService();
+  final EncuestaService _servicioEncuesta = EncuestaService();
+
+  bool _loading = true;
+  bool _error = false;
   bool _encuestaEnviada = false;
+
+  Map<String, dynamic> datosReservacion = {};
 
   int _calificacionPersonal = 0;
   int _calificacionEquipamiento = 0;
@@ -42,11 +33,36 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   int _calificacionMobiliario = 0;
 
   bool _esReservacionTerminada() {
-    final estado = widget.datosReservacion?['estado']?.toLowerCase() ?? '';
-    return estado == 'concluido' ||
-        estado == 'finalizado' ||
-        estado == 'finalizada' ||
-        estado == 'terminado';
+    final estado = datosReservacion['estado_reserva']?['codigo'] ?? '';
+    return estado == 'FINAL';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarInfoReservacion();
+  }
+
+  Future<void> _cargarInfoReservacion() async {
+    try {
+      final datos = await _servicioReservacion.getDetalleReservacion(
+        widget.idReservacion,
+      );
+      final voto = await _servicioEncuesta.verificarEncuestaExistente(
+        widget.idReservacion,
+      );
+      setState(() {
+        datosReservacion = datos;
+        _loading = false;
+        _encuestaEnviada = voto['realizada'] ?? false;
+      });
+    } catch (e) {
+      print("Error al jalar la info de la reservacion: $e");
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+    }
   }
 
   void _mostrarEncuesta() {
@@ -201,20 +217,14 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
 
   Future<void> _enviarEncuesta() async {
     try {
-      var dio = Dio();
-      dio.options.baseUrl = 'http://${IpConfig.ip}/api';
-
-      await dio.post(
-        '/encuesta/',
-        data: {
-          'personal': _calificacionPersonal,
-          'equipamiento': _calificacionEquipamiento,
-          'servicios': _calificacionServicios,
-          'salon': _calificacionSalon,
-          'mobiliario': _calificacionMobiliario,
-          'reservacion': int.tryParse(widget.idReservacion) ?? 0,
-        },
-      );
+      await _servicioEncuesta.enviarEncuesta({
+        'personal': _calificacionPersonal,
+        'equipamiento': _calificacionEquipamiento,
+        'servicios': _calificacionServicios,
+        'salon': _calificacionSalon,
+        'mobiliario': _calificacionMobiliario,
+        'reservacion': widget.idReservacion,
+      });
 
       if (mounted) {
         Navigator.pop(context);
@@ -277,8 +287,26 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
         backgroundColor: AppColores.background2,
       ),
       backgroundColor: AppColores.background2,
-      body: _cargando
+      body: _loading
           ? Center(child: CircularProgressIndicator())
+          : _error
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    "Error al cargar la reservación.",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "Revisa la consola para más detalles.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
           : SingleChildScrollView(
               child: Column(
                 children: [
@@ -287,12 +315,12 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                     child: CircularPercentIndicator(
                       radius: 80.0,
                       lineWidth: 12.0,
-                      percent: _progreso,
+                      percent: _progresoReservacion(),
                       center: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "${(_progreso * 100).toInt()}%",
+                            "${(_progresoReservacion() * 100).toInt()}%",
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -335,29 +363,28 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del evento:",
-                            widget.datosReservacion?['nombre'] ?? 'No definido',
+                            datosReservacion['nombreEvento'] ?? 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Fecha:",
-                            widget.datosReservacion?['fecha'] ?? 'No definida',
+                            datosReservacion['fechaEvento'] ?? 'No definida',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Horario:",
-                            widget.datosReservacion?['horario'] ??
-                                'No definido',
+                            "${datosReservacion['horaInicio'] ?? "No definido"} - ${datosReservacion['horaFin'] ?? "No definido"}",
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Tipo de evento:",
-                            widget.datosReservacion?['tipo'] ??
+                            datosReservacion['tipo_evento']?['nombre'] ??
                                 'No seleccionado',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Asistentes:",
-                            widget.datosReservacion?['asistentes'] ?? '0',
+                            datosReservacion['estimaAsistentes'].toString(),
                           ),
                         ],
                       ),
@@ -387,23 +414,25 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre:",
-                            widget.datosCliente?['nombre'] ?? 'No definido',
+                            datosReservacion['cliente']?['nombre'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Apellido:",
-                            widget.datosCliente?['apellidoPaterno'] ??
+                            datosReservacion['cliente']?['apellidoPaterno'] ??
                                 'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Teléfono:",
-                            widget.datosCliente?['telefono'] ?? 'No definido',
+                            datosReservacion['cliente']?['telefono'] ??
+                                'No definido',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
                             "Email:",
-                            widget.datosCliente?['correoElectronico'] ??
+                            datosReservacion['cliente']?['correo_electronico'] ??
                                 'No definido',
                           ),
                         ],
@@ -421,42 +450,57 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                       width: double.infinity,
                       padding: EdgeInsets.all(12),
                       decoration: ContainerStyles.sombreado,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Salón y Montaje",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          if (widget.salonSeleccionado == null)
-                            Text("Ningún salón seleccionado")
-                          else ...[
-                            _buildLabelValue(
-                              "Salón:",
-                              widget.salonSeleccionado!['nombre'].toString(),
-                            ),
-                            _buildLabelValue(
-                              "Precio:",
-                              "\$${widget.salonSeleccionado!['precio']}",
-                            ),
-                            _buildLabelValue(
-                              "Montaje:",
-                              widget.montajesPorSalon?[widget
-                                      .salonSeleccionado!['id']] ??
-                                  'No seleccionado',
-                            ),
-                          ],
-                        ],
+                      child: Builder(
+                        builder: (context) {
+                          final montaje = datosReservacion?['montaje'];
+                          final salon = montaje?['salon'];
+                          final tipoMontaje = montaje?['tipo_montaje'];
+
+                          final mobiliarios =
+                              montaje?['montaje_mobiliario'] ?? [];
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Salón y Montaje",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (salon == null)
+                                const Text("Ningún salón seleccionado")
+                              else ...[
+                                _buildLabelValue(
+                                  "Salón:",
+                                  salon['nombre'] ?? '',
+                                ),
+                                _buildLabelValue(
+                                  "Precio:",
+                                  "\$${salon['costo'] ?? '0'}",
+                                ),
+                                _buildLabelValue(
+                                  "Montaje:",
+                                  tipoMontaje?['nombre'] ?? 'No seleccionado',
+                                ),
+
+                                _buildMobiliarioLista(mobiliarios),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
                   // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
+                      final servicios =
+                          datosReservacion['reserva_servicio'] ?? [];
+                      final equipos = datosReservacion['reserva_equipa'] ?? [];
+
                       final bool esPantallaChica = constraints.maxWidth < 400;
 
                       if (esPantallaChica) {
@@ -468,9 +512,9 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                           ),
                           child: Column(
                             children: [
-                              _buildServiciosContainer(),
+                              _buildEquipamientosContainer(equipos),
                               SizedBox(height: 16),
-                              _buildEquipamientosContainer(),
+                              _buildServiciosContainer(servicios),
                             ],
                           ),
                         );
@@ -485,9 +529,13 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: _buildServiciosContainer()),
+                            Expanded(
+                              child: _buildServiciosContainer(servicios),
+                            ),
                             SizedBox(width: 16),
-                            Expanded(child: _buildEquipamientosContainer()),
+                            Expanded(
+                              child: _buildEquipamientosContainer(equipos),
+                            ),
                           ],
                         ),
                       );
@@ -555,167 +603,258 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
 
                   SizedBox(height: 20),
                   _buildBotonEncuesta(),
+                  _buildBotoneditarReservacion(),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildServiciosContainer() {
-    final servicios = widget.serviciosSeleccionados ?? [];
+  Widget _buildServiciosContainer(List<dynamic> servicios) {
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             "Servicios",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           if (servicios.isEmpty)
-            Text("Sin servicios", style: TextStyle(fontSize: 12))
+            const Text(
+              "Sin servicios",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            )
           else
-            ...servicios.map(
-              (s) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+            ...servicios.map((s) {
+              final nombre = s['servicio']?['nombre'] ?? 'Servicio';
+              final costo =
+                  double.tryParse(s['servicio']?['costo']?.toString() ?? '0') ??
+                  0;
+              final bool esExtra = s['extra'] ?? false;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        "- ${s['nombre']}",
-                        style: TextStyle(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "- $nombre",
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (esExtra) _buildBadgeExtra(),
+                        ],
                       ),
                     ),
                     Text(
-                      "\$${s['precio']}",
-                      style: TextStyle(
+                      "\$$costo",
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          if (servicios.isNotEmpty) ...[
-            Divider(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Total:",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                Text(
-                  "\$${servicios.fold(0, (sum, s) => sum + (s['precio'] as int))}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColores.primary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              );
+            }),
         ],
       ),
     );
   }
 
-  Widget _buildEquipamientosContainer() {
-    final equipos = widget.equipamientosSeleccionados ?? [];
+  Widget _buildEquipamientosContainer(List<dynamic> equipos) {
     return Container(
       width: double.infinity,
       decoration: ContainerStyles.sombreado,
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             "Equipamientos",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           if (equipos.isEmpty)
-            Text("Sin equipos", style: TextStyle(fontSize: 12))
+            const Text(
+              "Sin equipos",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            )
           else
-            ...equipos.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+            ...equipos.map((e) {
+              final nombre = e['equipamiento']?['nombre'] ?? 'Equipo';
+              final cantidad = e['cantidad'] ?? 1;
+              final costoUnitario =
+                  double.tryParse(
+                    e['equipamiento']?['costo']?.toString() ?? '0',
+                  ) ??
+                  0;
+              final costoTotal = costoUnitario * cantidad;
+
+              final bool esExtra = e['extra'] ?? false;
+              final bool completado = e['completado'] ?? false;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        "- ${e['nombre']} (x${e['cantidad']})",
-                        style: TextStyle(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            completado
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 14,
+                            color: completado ? Colors.green : Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              "$nombre (x$cantidad)",
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (esExtra) _buildBadgeExtra(),
+                        ],
                       ),
                     ),
                     Text(
-                      "\$${(e['precio'] as int) * (e['cantidad'] as int)}",
-                      style: TextStyle(
+                      "\$$costoTotal",
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          if (equipos.isNotEmpty) ...[
-            Divider(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Total:",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                Text(
-                  "\$${equipos.fold<int>(0, (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)))}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColores.primary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              );
+            }),
         ],
       ),
     );
   }
 
-  int _calcularSubtotal() {
-    return 1;
-    // int serviciosTotal = 0;
-    // int equiposTotal = 0;
-    // int salonPrecio = _datosReservacion?['precioSalon'] as int? ?? 0;
+  Widget _buildMobiliarioLista(List<dynamic> mobiliarios) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 20),
+        const Text(
+          "Mobiliario Asignado:",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        if (mobiliarios.isEmpty)
+          const Text(
+            "Sin mobiliario",
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          )
+        else
+          ...mobiliarios.map((m) {
+            final nombre = m['mobiliario']?['nombre'] ?? 'Mobiliario';
+            final cantidad = m['cantidad'] ?? 1;
+            final bool esExtra = m['extra'] ?? false;
+            final bool completado = m['completado'] ?? false;
 
-    // if (_datosReservacion?['servicios'] != null) {
-    //   serviciosTotal = (_datosReservacion?['servicios'] as List).fold(
-    //     0,
-    //     (sum, s) => sum + (s['precio'] as int),
-    //   );
-    // }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    completado
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    size: 14,
+                    color: completado ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            "$nombre (x$cantidad)",
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        if (esExtra) _buildBadgeExtra(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+      ],
+    );
+  }
 
-    // if (_datosReservacion?['equipos'] != null) {
-    //   equiposTotal = (_datosReservacion?['equipos'] as List).fold(
-    //     0,
-    //     (sum, e) => sum + ((e['precio'] as int) * (e['cantidad'] as int)),
-    //   );
-    // }
+  Widget _buildBadgeExtra() {
+    return Container(
+      margin: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade100,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        "EXTRA",
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: Colors.blue.shade900,
+        ),
+      ),
+    );
+  }
 
-    // return serviciosTotal + equiposTotal + salonPrecio;
+  Widget _buildBotoneditarReservacion() {
+    final estado = datosReservacion['estado_reserva']?['codigo'] ?? '';
+    if (!(estado == 'SOLIC' ||
+        estado == 'PENDI' ||
+        estado == 'PAGAD' ||
+        estado == 'LIQUI')) {
+      return SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ModificarReservacionScreen(
+                  reservacion: datosReservacion,
+                  // (Map<String, dynamic> datosActualizados) {},
+                ),
+              ),
+            );
+          },
+          icon: Icon(Icons.rate_review),
+          label: Text('Modificar reservacion:'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColores.primary,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBotonEncuesta() {
@@ -741,11 +880,61 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
     );
   }
 
-  int _calcularIVA() {
-    return (_calcularSubtotal() * 0.16).round();
+  String _calcularSubtotal() {
+    final valor =
+        double.tryParse(datosReservacion['subtotal']?.toString() ?? '0') ?? 0.0;
+    return valor.toStringAsFixed(2);
   }
 
-  int _calcularTotal() {
-    return _calcularSubtotal() + _calcularIVA();
+  String _calcularIVA() {
+    final valor =
+        double.tryParse(datosReservacion['IVA']?.toString() ?? '0') ?? 0.0;
+    return valor.toStringAsFixed(2);
+  }
+
+  String _calcularTotal() {
+    final valor =
+        double.tryParse(datosReservacion['total']?.toString() ?? '0') ?? 0.0;
+    return valor.toStringAsFixed(2);
+  }
+
+  double _progresoReservacion() {
+    if (datosReservacion.isEmpty) return 0.0;
+    final estado = datosReservacion['estado_reserva']?['codigo'] ?? '';
+    if (estado == 'SOLIC' || estado == 'CANCE') return 0.0;
+    if (estado == 'FINAL') return 1.0;
+
+    double progreso = 0.0;
+
+    if (estado == 'LIQUI' || estado == 'ENPRO') {
+      progreso = 0.30;
+    } else if (estado == 'PAGAD') {
+      progreso = 0.15;
+    }
+
+    final equipos = datosReservacion['reserva_equipa'] as List<dynamic>? ?? [];
+    final mobiliarios =
+        datosReservacion['montaje']?['montaje_mobiliario'] as List<dynamic>? ??
+        [];
+
+    int totalItems = equipos.length + mobiliarios.length;
+    double progresoItems = 0.0;
+
+    if (totalItems > 0) {
+      int itemsCompletados = 0;
+      for (var equipo in equipos) {
+        if (equipo['completado'] == true) itemsCompletados++;
+      }
+      for (var mob in mobiliarios) {
+        if (mob['completado'] == true) itemsCompletados++;
+      }
+
+      progresoItems = (itemsCompletados / totalItems) * 0.70;
+    } else {
+      progresoItems = 0.75;
+    }
+    double total = progreso + progresoItems;
+
+    return total > 1.0 ? 1.0 : total;
   }
 }

@@ -37,36 +37,32 @@ class ReservacionService {
     }
   }
 
-  Future<Response> crearReservacion(Map<String, dynamic> reservacionInfo) async {
-
+  Future<Response> crearReservacion(
+    Map<String, dynamic> reservacionInfo,
+  ) async {
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.post(
-        '/reservacion/',
-        data: reservacionInfo
-      );
+      final response = await dio.post('/reservacion/', data: reservacionInfo);
       if (response.statusCode == 201) {
         return response;
       } else {
-        throw Exception("Error al registrar la reservacion: ${response.statusCode}");
+        throw Exception(
+          "Error al registrar la reservacion: ${response.statusCode}",
+        );
       }
-    
     } on DioException catch (e) {
-      if (e.response != null){
+      if (e.response != null) {
         print("Problema con django: ${e.response?.data}");
         throw Exception("Error en el servidor: ${e.response?.data}");
       } else {
         print("Problkema de conexio: ${e.message}");
         throw Exception("Error en la conexion con el servidor");
       }
-
-    }
-    catch(e) {
+    } catch (e) {
       print("Error al crear reservacion: ($e)");
       throw Exception('Error al crear reservacion');
     }
-
   }
 
   Future<List<Map<String, dynamic>>> getPaquetes() async {
@@ -74,18 +70,65 @@ class ReservacionService {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
       final response = await dio.get('/lista-paquetes/');
-      if (response.statusCode == 200){
+      if (response.statusCode == 200) {
         List<dynamic> data = response.data;
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
       } else {
         throw Exception("Error al cargar los paquetes");
       }
-    }
-    catch (e) {
+    } catch (e) {
       print("Error al cargar paquetes: $e");
       throw Exception('Error al cargar los paquetes');
     }
+  }
 
+  Future<List<Map<String, dynamic>>> getReservacionesCliente(
+    String rfc,
+    String estado,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final respuesta = await dio.get(
+        '/reservaciones-cliente/$rfc/',
+        queryParameters: {'estado': estado},
+      );
+      if (respuesta.statusCode == 200) {
+        List<dynamic> datos = respuesta.data;
+        return datos.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception("Error al cargar las reservaciones.");
+      }
+    } catch (e) {
+      print("Error al cargar las reservaciones del cliente $rfc: $e");
+      throw Exception('Error al cargar las reservaciones');
+    }
+  }
+
+  Future<Response> modificarReservacion(int idReservacion, Map<String, dynamic> datosActualizar) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.patch('/reservacion/$idReservacion/', data: datosActualizar);
+      if (response.statusCode == 200) {
+        return response;
+      } else {
+        throw Exception(
+          "Error al modificar la reservacion: ${response.statusCode}",
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        print("Problema con django: ${e.response?.data}");
+        throw Exception("Error en el servidor: ${e.response?.data}");
+      } else {
+        print("Problkema de conexio: ${e.message}");
+        throw Exception("Error en la conexion con el servidor");
+      }
+    } catch (e) {
+      print("Error al crear reservacion: ($e)");
+      throw Exception('Error al crear reservacion');
+    }
   }
 
 }

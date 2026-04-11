@@ -2,42 +2,89 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
-class TabCanceladosReservacion extends StatelessWidget {
-  const TabCanceladosReservacion({super.key});
+class TabCanceladosReservacion extends StatefulWidget {
+  final String rfc;
+  const TabCanceladosReservacion({super.key, required this.rfc});
+
+  @override
+  State<TabCanceladosReservacion> createState() =>
+      _TabCanceladosReservacionState();
+}
+
+class _TabCanceladosReservacionState extends State<TabCanceladosReservacion>
+    with AutomaticKeepAliveClientMixin {
+  final ReservacionService _servicioReservaciones = ReservacionService();
+
+  List<Map<String, dynamic>> reservaciones = [];
+  bool loading = true;
+
+  Future<void> _cargarReservaciones() async {
+    List<Map<String, dynamic>> reservacionesObtenidas;
+    try {
+      reservacionesObtenidas = await _servicioReservaciones
+          .getReservacionesCliente(widget.rfc, 'CANCE');
+    } catch (e) {
+      reservacionesObtenidas = [];
+    }
+    setState(() {
+      reservaciones = reservacionesObtenidas;
+      loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> reservaciones = [
-      {
-        'id': '6',
-        'nombre': 'Fiesta Privada',
-        'salon': 'Salón Ejecutivo',
-        'fecha': '10 de Marzo 2026',
-        'hora': '20:00 - 00:00',
-      },
-      {
-        'id': '7',
-        'nombre': 'Taller de Cocina',
-        'salon': 'Salón Universal',
-        'fecha': '12 de Marzo 2026',
-        'hora': '11:00 - 14:00',
-      },
-      {
-        'id': '8',
-        'nombre': 'Seminario',
-        'salon': 'Salón Imperial',
-        'fecha': '14 de Marzo 2026',
-        'hora': '09:00 - 18:00',
-      },
-    ];
+    super.build(context);
 
-    return SingleChildScrollView(
+    if (loading) {
+      return Container(
+        color: AppColores.background2,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (reservaciones.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _cargarReservaciones,
+        color: AppColores.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            Container(
+              color: AppColores.background2,height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Center(
+                    child: Text(
+                      'No tienes reservaciones canceladas.',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _cargarReservaciones,
+      color: AppColores.primary,
       child: Container(
         decoration: BoxDecoration(color: AppColores.background2),
         child: ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.all(16),
           itemCount: reservaciones.length,
           itemBuilder: (context, index) {
@@ -68,7 +115,7 @@ class TabCanceladosReservacion extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                r['nombre'],
+                                r['nombreEvento'],
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -117,7 +164,7 @@ class TabCanceladosReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['salon'],
+                              r['montaje']['salon']['nombre'],
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -132,7 +179,7 @@ class TabCanceladosReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['fecha'],
+                              r['fechaEvento'],
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -147,7 +194,7 @@ class TabCanceladosReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['hora'],
+                              "${r['horaInicio']} - ${r['horaFin']}",
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],

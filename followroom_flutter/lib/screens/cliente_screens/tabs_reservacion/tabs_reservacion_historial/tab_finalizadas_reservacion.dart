@@ -4,16 +4,16 @@ import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 
-class TabAceptadosReservacion extends StatefulWidget {
+class TabFinalizadasReservacion extends StatefulWidget {
   final String rfc;
-  const TabAceptadosReservacion({super.key, required this.rfc});
+  const TabFinalizadasReservacion({super.key, required this.rfc});
 
   @override
-  State<TabAceptadosReservacion> createState() =>
-      _TabAceptadosReservacionState();
+  State<TabFinalizadasReservacion> createState() =>
+      _TabFinalizadasReservacionState();
 }
 
-class _TabAceptadosReservacionState extends State<TabAceptadosReservacion>
+class _TabFinalizadasReservacionState extends State<TabFinalizadasReservacion>
     with AutomaticKeepAliveClientMixin {
   final ReservacionService _servicioReservaciones = ReservacionService();
 
@@ -24,7 +24,7 @@ class _TabAceptadosReservacionState extends State<TabAceptadosReservacion>
     List<Map<String, dynamic>> reservacionesObtenidas;
     try {
       reservacionesObtenidas = await _servicioReservaciones
-          .getReservacionesCliente(widget.rfc, 'ACEPT');
+          .getReservacionesCliente(widget.rfc, 'FINAL');
     } catch (e) {
       reservacionesObtenidas = [];
     }
@@ -67,7 +67,7 @@ class _TabAceptadosReservacionState extends State<TabAceptadosReservacion>
                 children: [
                   const Center(
                     child: Text(
-                      'No tienes reservaciones por realizarse.',
+                      'No tienes reservaciones finalizadas.',
                       style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   ),
@@ -129,7 +129,7 @@ class _TabAceptadosReservacionState extends State<TabAceptadosReservacion>
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withValues(alpha: 0.15),
+                                color: Colors.green.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -138,13 +138,13 @@ class _TabAceptadosReservacionState extends State<TabAceptadosReservacion>
                                   Icon(
                                     Icons.check_circle,
                                     size: 14,
-                                    color: Colors.orange,
+                                    color: Colors.green,
                                   ),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Aceptado',
+                                    'Finalizado',
                                     style: TextStyle(
-                                      color: Colors.orange,
+                                      color: Colors.green,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),

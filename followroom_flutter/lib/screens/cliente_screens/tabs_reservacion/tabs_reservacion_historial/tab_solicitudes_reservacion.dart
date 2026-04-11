@@ -2,37 +2,89 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/screens/cliente_screens/historial/detalles_historial.dart';
+import 'package:followroom_flutter/services/reservacion_service.dart';
 
-class TabProcesoReservacion extends StatelessWidget {
-  const TabProcesoReservacion({super.key});
+class TabSolicitudesReservacion extends StatefulWidget {
+  final String rfc;
+  const TabSolicitudesReservacion({super.key, required this.rfc});
+
+  @override
+  State<TabSolicitudesReservacion> createState() =>
+      _TabSolicitudesReservacionState();
+}
+
+class _TabSolicitudesReservacionState extends State<TabSolicitudesReservacion>
+    with AutomaticKeepAliveClientMixin {
+  final ReservacionService _servicioReservaciones = ReservacionService();
+
+  List<Map<String, dynamic>> reservaciones = [];
+  bool loading = true;
+
+  Future<void> _cargarReservaciones() async {
+    List<Map<String, dynamic>> reservacionesObtenidas;
+    try {
+      reservacionesObtenidas = await _servicioReservaciones
+          .getReservacionesCliente(widget.rfc, 'SOLIC');
+    } catch (e) {
+      reservacionesObtenidas = [];
+    }
+    setState(() {
+      reservaciones = reservacionesObtenidas;
+      loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservaciones();
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> reservaciones = [
-      {
-        'id': '4',
-        'nombre': 'Boda Rodríguez',
-        'salon': 'Salón Premium',
-        'fecha': '25 de Marzo 2026',
-        'hora': '16:00 - 22:00',
-        'precio': 25000,
-      },
-      {
-        'id': '5',
-        'nombre': 'Exposición Arte',
-        'salon': 'Salón Imperial',
-        'fecha': '28 de Marzo 2026',
-        'hora': '08:00 - 17:00',
-        'precio': 18000,
-      },
-    ];
+    super.build(context);
 
-    return SingleChildScrollView(
+    if (loading) {
+      return Container(
+        color: AppColores.background2,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (reservaciones.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _cargarReservaciones,
+        color: AppColores.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            Container(
+              color: AppColores.background2,height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Center(
+                    child: Text(
+                      'No tienes solicitudes para reservaciones.',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _cargarReservaciones,
+      color: AppColores.primary,
       child: Container(
         decoration: BoxDecoration(color: AppColores.background2),
         child: ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.all(16),
           itemCount: reservaciones.length,
           itemBuilder: (context, index) {
@@ -63,7 +115,7 @@ class TabProcesoReservacion extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                r['nombre'],
+                                r['nombreEvento'],
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -77,7 +129,7 @@ class TabProcesoReservacion extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withValues(alpha: 0.15),
+                                color: Colors.grey.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -86,13 +138,13 @@ class TabProcesoReservacion extends StatelessWidget {
                                   Icon(
                                     Icons.hourglass_top,
                                     size: 14,
-                                    color: Colors.orange,
+                                    color: Colors.grey,
                                   ),
                                   SizedBox(width: 4),
                                   Text(
                                     'En Proceso',
                                     style: TextStyle(
-                                      color: Colors.orange,
+                                      color: Colors.grey,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -112,7 +164,7 @@ class TabProcesoReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['salon'],
+                              r['montaje']['salon']['nombre'],
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -127,7 +179,7 @@ class TabProcesoReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['fecha'],
+                              r['fechaEvento'],
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -142,12 +194,12 @@ class TabProcesoReservacion extends StatelessWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              r['hora'],
+                              "${r['horaInicio']} - ${r['horaFin']}",
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
-                        if (r['precio'] != null) ...[
+                        if (r['total'] != null) ...[
                           SizedBox(height: 8),
                           Row(
                             children: [
@@ -158,7 +210,7 @@ class TabProcesoReservacion extends StatelessWidget {
                               ),
                               SizedBox(width: 4),
                               Text(
-                                '\$${r['precio']}',
+                                '\$${r['total']}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColores.primary,
