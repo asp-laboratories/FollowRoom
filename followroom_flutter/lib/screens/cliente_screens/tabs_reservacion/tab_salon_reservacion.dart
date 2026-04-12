@@ -79,6 +79,16 @@ class _TabSalonState extends State<TabSalon> {
     return widget.mobiliariosPorSalon[salonId] ?? [];
   }
 
+  bool _estaBloqueado(Map<String, dynamic> salon) {
+    String estado = salon['estado'] ?? '';
+    bool reservado = salon['reservado'] == true;
+    return reservado ||
+        estado == 'Ocupado' ||
+        estado == 'Reservado' ||
+        estado == 'En Limpieza' ||
+        estado == 'Mantenimiento';
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool haySalonSeleccionado = widget.salonSeleccionado != null;
@@ -215,13 +225,13 @@ class _TabSalonState extends State<TabSalon> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: (salon['reservado'] == true)
+                        onTap: _estaBloqueado(salon)
                             ? null
                             : () => widget.onSalonSelected(salon),
                         child: Padding(
                           padding: EdgeInsets.all(12),
                           child: Opacity(
-                            opacity: (salon['reservado'] == true) ? 0.5 : 1.0,
+                            opacity: _estaBloqueado(salon) ? 0.5 : 1.0,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

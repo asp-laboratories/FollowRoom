@@ -9,7 +9,16 @@ import 'package:followroom_flutter/services/session_data.dart';
 import 'package:followroom_flutter/services/solicitudes_extra_service.dart';
 
 class SolicitudesScreen extends StatefulWidget {
-  const SolicitudesScreen({super.key});
+  final int? reservacionId;
+  final Map<String, dynamic>? reservacionInfo;
+  final VoidCallback? onVolver;
+
+  const SolicitudesScreen({
+    super.key,
+    this.reservacionId,
+    this.reservacionInfo,
+    this.onVolver,
+  });
 
   @override
   State<SolicitudesScreen> createState() => _SolicitudesScreenState();
@@ -93,37 +102,44 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
 
-      // Crear conjuntos de IDs ya solicitados para evitar duplicados
+      final int? reservacionIdFiltro = widget.reservacionId;
+
       final Set<int> serviciosSolicitados = {};
       final Map<int, int> mobiliariosCantidad = {};
       final Map<int, int> equipamentosCantidad = {};
 
-      for (var solicitud in misSolicitudesExtra) {
-        for (var s in (solicitud['servicios_extra'] as List?) ?? []) {
-          serviciosSolicitados.add(s['servicio_id'] as int);
-        }
-        for (var m in (solicitud['mobiliarios_extra'] as List?) ?? []) {
-          mobiliariosCantidad[m['mobiliario_id'] as int] = m['cantidad'] as int;
-        }
-        for (var e in (solicitud['equipamiento_extra'] as List?) ?? []) {
-          equipamentosCantidad[e['equipamiento_id'] as int] =
-              e['cantidad'] as int;
-        }
-      }
+      if (reservacionIdFiltro != null) {
+        final solicitudReservacion = misSolicitudesExtra
+            .where((s) => s['reservacion_id'] == reservacionIdFiltro)
+            .toList();
 
-      print('Reservaciones obtenidas: $reservaciones');
-      print('Mis solicitudes extra: $misSolicitudesExtra');
-
-      print('Servicios ya solicitados: $serviciosSolicitados');
-      print('Mobiliarios solicitados: $mobiliariosCantidad');
-      print('Equipamientos solicitados: $equipamentosCantidad');
-
-      // Imprimir detalle de cada solicitud
-      for (var solicitud in misSolicitudesExtra) {
-        print('Solicitud reservación ${solicitud["reservacion_id"]}:');
-        print('  Mobiliarios extra: ${solicitud["mobiliarios_extra"]}');
-        print('  Equipamiento extra: ${solicitud["equipamiento_extra"]}');
-        print('  Servicios extra: ${solicitud["servicios_extra"]}');
+        for (var solicitud in solicitudReservacion) {
+          for (var s in (solicitud['servicios_extra'] as List?) ?? []) {
+            serviciosSolicitados.add(s['servicio_id'] as int);
+          }
+          for (var m in (solicitud['mobiliarios_extra'] as List?) ?? []) {
+            mobiliariosCantidad[m['mobiliario_id'] as int] =
+                m['cantidad'] as int;
+          }
+          for (var e in (solicitud['equipamiento_extra'] as List?) ?? []) {
+            equipamentosCantidad[e['equipamiento_id'] as int] =
+                e['cantidad'] as int;
+          }
+        }
+      } else {
+        for (var solicitud in misSolicitudesExtra) {
+          for (var s in (solicitud['servicios_extra'] as List?) ?? []) {
+            serviciosSolicitados.add(s['servicio_id'] as int);
+          }
+          for (var m in (solicitud['mobiliarios_extra'] as List?) ?? []) {
+            mobiliariosCantidad[m['mobiliario_id'] as int] =
+                m['cantidad'] as int;
+          }
+          for (var e in (solicitud['equipamiento_extra'] as List?) ?? []) {
+            equipamentosCantidad[e['equipamiento_id'] as int] =
+                e['cantidad'] as int;
+          }
+        }
       }
 
       final reservacionesActivas = reservaciones.where((r) {
@@ -531,10 +547,64 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return Scaffold(
+      backgroundColor: AppColores.background2,
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                if (widget.reservacionId != null)
+                  Container(
+                    color: AppColores.background2,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            if (widget.onVolver != null) {
+                              widget.onVolver!();
+                            } else {
+                              Navigator.of(context).maybePop();
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back, size: 20),
+                          label: const Text('Volver'),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.reservacionInfo?['nombre'] ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                widget.reservacionInfo?['fecha'] ?? '',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(child: _buildMainContent()),
+              ],
+            ),
+    );
+  }
 
+  Widget _buildMainContent() {
     if (_error != null) {
       return Center(
         child: Column(

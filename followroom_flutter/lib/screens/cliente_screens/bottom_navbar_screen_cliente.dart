@@ -6,6 +6,7 @@ import 'package:followroom_flutter/screens/cliente_screens/home_screens/inicio_s
 import 'package:followroom_flutter/screens/screens_for_all.dart/manual_screen.dart';
 import 'package:followroom_flutter/screens/screens_for_all.dart/perfil_screen.dart';
 import 'package:followroom_flutter/screens/cliente_screens/home_screens/solicitudes_screen.dart';
+import 'package:followroom_flutter/screens/cliente_screens/home_screens/seleccionar_reservacion_extra_screen.dart';
 
 class FollowRoom extends StatefulWidget {
   const FollowRoom({super.key});
@@ -20,10 +21,44 @@ class _FollowRoomState extends State<FollowRoom> {
 
   final PageController _controladorPagina = PageController();
 
-  final List<Widget> _pantallas = [
+  int? _reservacionIdSeleccionada;
+  Map<String, dynamic>? _reservacionInfoSeleccionada;
+
+  void _onReservacionSeleccionada(int id, Map<String, dynamic> info) {
+    _reservacionIdSeleccionada = id;
+    _reservacionInfoSeleccionada = info;
+    setState(() {
+      _indiceSeleccionado = 2;
+    });
+    _controladorPagina.jumpToPage(2);
+  }
+
+  void _volverASeleccionar() {
+    _reservacionIdSeleccionada = null;
+    _reservacionInfoSeleccionada = null;
+    setState(() {
+      _indiceSeleccionado = 2;
+    });
+    _controladorPagina.jumpToPage(2);
+  }
+
+  Widget _buildSolicitudesPage() {
+    if (_reservacionIdSeleccionada != null) {
+      return SolicitudesScreen(
+        reservacionId: _reservacionIdSeleccionada,
+        reservacionInfo: _reservacionInfoSeleccionada,
+        onVolver: _volverASeleccionar,
+      );
+    }
+    return SeleccionarReservacionExtraScreen(
+      onReservacionSeleccionada: _onReservacionSeleccionada,
+    );
+  }
+
+  List<Widget> get _pantallas => [
     Reservacion(),
     HistorialScreen(),
-    SolicitudesScreen(),
+    _buildSolicitudesPage(),
     ManualScreen(),
     Perfil(),
   ];
