@@ -45,4 +45,24 @@ class DisponibilidadService {
       throw Exception('Error al cargar estados de salones');
     }
   }
+
+  Future<List<Map<String, dynamic>>> getReservacionesFecha(String fecha) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/reservaciones-fecha/',
+        queryParameters: {'fecha': fecha},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data;
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception('Error al cargar reservaciones');
+      }
+    } catch (e) {
+      print('Error al cargar reservaciones: $e');
+      throw Exception('Error al cargar reservaciones');
+    }
+  }
 }

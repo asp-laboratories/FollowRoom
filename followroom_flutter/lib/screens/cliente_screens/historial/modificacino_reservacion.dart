@@ -4,6 +4,7 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/input_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 import 'package:followroom_flutter/services/tipo_evento_service.dart';
 import 'package:followroom_flutter/services/mobiliario_service.dart';
@@ -100,6 +101,7 @@ class _ModificarReservacionScreenState
                 'nombre': m['mobiliario']?['nombre'] ?? '',
                 'costo': m['mobiliario']?['costo'] ?? 0,
                 'cantidad': m['cantidad'] ?? 1,
+                'cantidadDisponible': getCantidadDisponibleMob(m['mobiliario'] ?? {}),
               },
             )
             .toList();
@@ -111,6 +113,7 @@ class _ModificarReservacionScreenState
             'nombre': e['equipamiento']?['nombre'] ?? '',
             'costo': e['equipamiento']?['costo'] ?? 0,
             'cantidad': e['cantidad'] ?? 1,
+            'cantidadDisponible': getCantidadDisponibleEquipo(e['equipamiento'] ?? {})
           },
         )
         .toList();
@@ -119,6 +122,34 @@ class _ModificarReservacionScreenState
       c.addListener(_onCambio);
     }
     _cargarCatalogos();
+  }
+
+  int getCantidadDisponibleMob(Map<String, dynamic> mobiliario) {
+    final detalles = mobiliario['inventario_detalles'] as List? ?? [];
+
+    return detalles
+        .where(
+          (disponibles) =>
+              disponibles['estado_mobil']?.toString().toUpperCase() == 'DISPO',
+        )
+        .fold(
+          0,
+          (sum, disponible) => sum + (disponible['cantidad'] as num).toInt(),
+        );
+  }
+
+  int getCantidadDisponibleEquipo(Map<String, dynamic> mobiliario) {
+    final detalles = mobiliario['inventario_detalles'] as List? ?? [];
+
+    return detalles
+        .where(
+          (disponibles) =>
+              disponibles['estado_equipa']?.toString().toUpperCase() == 'DISPO',
+        )
+        .fold(
+          0,
+          (sum, disponible) => sum + (disponible['cantidad'] as num).toInt(),
+        );
   }
 
   List<TextEditingController> _controllers() => [
@@ -416,9 +447,10 @@ class _ModificarReservacionScreenState
                     ],
                   ),
                 ),
-                _buildCantidadControl(
-                  cantidad,
-                  (n) => _actualizarCantidadMobiliario(i, n),
+                WidgetCantidadElementos(
+                  cantidadActual: cantidad,
+                  onChange: (n) => _actualizarCantidadMobiliario(i, n),
+                  stockMaximo: mob['cantidadDisponible'],
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -498,9 +530,10 @@ class _ModificarReservacionScreenState
                     ],
                   ),
                 ),
-                _buildCantidadControl(
-                  cantidad,
-                  (n) => _actualizarCantidadEquipamiento(i, n),
+                WidgetCantidadElementos(
+                  cantidadActual: cantidad,
+                  onChange: (n) => _actualizarCantidadEquipamiento(i, n),
+                  stockMaximo: eq['cantidadDisponible'],
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -541,34 +574,6 @@ class _ModificarReservacionScreenState
         ),
       ),
     ]);
-  }
-
-  // ─── UI helpers ───────────────────────────────────────────────────────────
-  Widget _buildCantidadControl(int cantidad, ValueChanged<int> onChange) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(Icons.remove_circle_outline, color: AppColores.primary),
-          onPressed: cantidad > 1 ? () => onChange(cantidad - 1) : null,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            '$cantidad',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ),
-        IconButton(
-          icon: Icon(Icons.add_circle_outline, color: AppColores.primary),
-          onPressed: () => onChange(cantidad + 1),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-      ],
-    );
   }
 
   Widget _buildReadOnlyField(String label, String value, IconData icon) {

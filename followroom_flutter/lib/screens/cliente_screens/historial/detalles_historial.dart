@@ -9,8 +9,13 @@ import 'package:followroom_flutter/screens/cliente_screens/historial/modificacin
 
 class DetallesHistorial extends StatefulWidget {
   final int idReservacion;
+  final bool detallesPaquete;
 
-  const DetallesHistorial({super.key, required this.idReservacion});
+  const DetallesHistorial({
+    super.key,
+    required this.idReservacion,
+    this.detallesPaquete = false,
+  });
 
   @override
   State<DetallesHistorial> createState() => _DetallesHistorialState();
@@ -310,135 +315,154 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: CircularPercentIndicator(
-                      radius: 80.0,
-                      lineWidth: 12.0,
-                      percent: _progresoReservacion(),
-                      center: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "${(_progresoReservacion() * 100).toInt()}%",
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColores.primary,
+                  (widget.detallesPaquete)
+                      ? Text(
+                          "Detalles Paquete",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColores.primary,
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: CircularPercentIndicator(
+                            radius: 80.0,
+                            lineWidth: 12.0,
+                            percent: _progresoReservacion(),
+                            center: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${(_progresoReservacion() * 100).toInt()}%",
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColores.primary,
+                                  ),
+                                ),
+                                Text(
+                                  "Completado",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.grey.shade300,
+                            progressColor: AppColores.primary,
+                            circularStrokeCap: CircularStrokeCap.round,
+                            arcType: ArcType.HALF,
+                            arcBackgroundColor: Colors.grey.shade200,
+                          ),
+                        ),
+                  (widget.detallesPaquete)
+                      ? SizedBox(height: 4)
+                      : Padding(
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                          ),
+                          child: Container(
+                            decoration: ContainerStyles.sombreado,
+                            width: double.infinity,
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Datos de la Reservación",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                _buildLabelValue(
+                                  "Nombre del evento:",
+                                  datosReservacion['nombreEvento'] ??
+                                      'No definido',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Fecha:",
+                                  datosReservacion['fechaEvento'] ??
+                                      'No definida',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Horario:",
+                                  "${datosReservacion['horaInicio'] ?? "No definido"} - ${datosReservacion['horaFin'] ?? "No definido"}",
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Tipo de evento:",
+                                  datosReservacion['tipo_evento']?['nombre'] ??
+                                      'No seleccionado',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Asistentes:",
+                                  datosReservacion['estimaAsistentes']
+                                      .toString(),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            "Completado",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: Colors.grey.shade300,
-                      progressColor: AppColores.primary,
-                      circularStrokeCap: CircularStrokeCap.round,
-                      arcType: ArcType.HALF,
-                      arcBackgroundColor: Colors.grey.shade200,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    child: Container(
-                      decoration: ContainerStyles.sombreado,
-                      width: double.infinity,
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Datos de la Reservación",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          _buildLabelValue(
-                            "Nombre del evento:",
-                            datosReservacion['nombreEvento'] ?? 'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Fecha:",
-                            datosReservacion['fechaEvento'] ?? 'No definida',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Horario:",
-                            "${datosReservacion['horaInicio'] ?? "No definido"} - ${datosReservacion['horaFin'] ?? "No definido"}",
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Tipo de evento:",
-                            datosReservacion['tipo_evento']?['nombre'] ??
-                                'No seleccionado',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Asistentes:",
-                            datosReservacion['estimaAsistentes'].toString(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
                   // SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: ContainerStyles.sombreado,
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Datos del cliente",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                  (widget.detallesPaquete)
+                      ? SizedBox(height: 4)
+                      : Padding(
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                          ),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: ContainerStyles.sombreado,
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Datos del cliente",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                _buildLabelValue(
+                                  "Nombre:",
+                                  datosReservacion['cliente']?['nombre'] ??
+                                      'No definido',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Apellido:",
+                                  datosReservacion['cliente']?['apellidoPaterno'] ??
+                                      'No definido',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Teléfono:",
+                                  datosReservacion['cliente']?['telefono'] ??
+                                      'No definido',
+                                ),
+                                SizedBox(height: 2),
+                                _buildLabelValue(
+                                  "Email:",
+                                  datosReservacion['cliente']?['correo_electronico'] ??
+                                      'No definido',
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 8),
-                          _buildLabelValue(
-                            "Nombre:",
-                            datosReservacion['cliente']?['nombre'] ??
-                                'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Apellido:",
-                            datosReservacion['cliente']?['apellidoPaterno'] ??
-                                'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Teléfono:",
-                            datosReservacion['cliente']?['telefono'] ??
-                                'No definido',
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue(
-                            "Email:",
-                            datosReservacion['cliente']?['correo_electronico'] ??
-                                'No definido',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
                   // SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.only(
@@ -452,7 +476,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                       decoration: ContainerStyles.sombreado,
                       child: Builder(
                         builder: (context) {
-                          final montaje = datosReservacion?['montaje'];
+                          final montaje = datosReservacion['montaje'];
                           final salon = montaje?['salon'];
                           final tipoMontaje = montaje?['tipo_montaje'];
 

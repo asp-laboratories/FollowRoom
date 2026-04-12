@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/services/ip_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -451,49 +452,13 @@ class _TabEquipamientosReservacionState
                                 ],
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: cantidad > 0
-                                      ? () => actualizarCantidad(
-                                          equipamiento,
-                                          cantidad - 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.remove_circle_outline),
-                                  color: cantidad > 0
-                                      ? AppColores.primary
-                                      : Colors.grey,
-                                ),
-                                Container(
-                                  width: 40,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    "$cantidad",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed:
-                                      cantidad <
-                                          (getCantidadDisponible(equipamiento))
-                                      ? () => actualizarCantidad(
-                                          equipamiento,
-                                          cantidad + 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.add_circle_outline),
-                                  color:
-                                      cantidad <
-                                          (getCantidadDisponible(equipamiento))
-                                      ? AppColores.primary
-                                      : Colors.grey,
-                                ),
-                              ],
+                            WidgetCantidadElementos(
+                              cantidadActual: cantidad,
+                              stockMaximo: getCantidadDisponible(equipamiento),
+                              onChange: (nuevaCantidad) {
+                                print("catidad de nuevo bla blabla$nuevaCantidad");
+                                actualizarCantidad(equipamiento, nuevaCantidad);
+                              },
                             ),
                           ],
                         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/screens/cliente_screens/historial/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/services/tipo_mobiliario_service.dart';
 import 'package:followroom_flutter/services/mobiliario_service.dart';
 
@@ -435,49 +436,12 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
                                 ],
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: cantidad > 0
-                                      ? () => actualizarCantidad(
-                                          mobiliario,
-                                          cantidad - 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.remove_circle_outline),
-                                  color: cantidad > 0
-                                      ? AppColores.primary
-                                      : Colors.grey,
-                                ),
-                                Container(
-                                  width: 40,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    "$cantidad",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed:
-                                      cantidad <
-                                          getCantidadDisponible(mobiliario)
-                                      ? () => actualizarCantidad(
-                                          mobiliario,
-                                          cantidad + 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.add_circle_outline),
-                                  color:
-                                      cantidad <
-                                          getCantidadDisponible(mobiliario)
-                                      ? AppColores.primary
-                                      : Colors.grey,
-                                ),
-                              ],
+                            WidgetCantidadElementos(
+                              cantidadActual: cantidad,
+                              stockMaximo: getCantidadDisponible(mobiliario),
+                              onChange: (nuevaCantidad) {
+                                actualizarCantidad(mobiliario, nuevaCantidad);
+                              },
                             ),
                           ],
                         ),
@@ -510,3 +474,5 @@ class _TabMobiliariosReservacionState extends State<TabMobiliariosReservacion> {
     );
   }
 }
+
+

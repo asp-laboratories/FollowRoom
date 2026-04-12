@@ -13,7 +13,8 @@ class NavigatorEventosReservacion extends StatefulWidget {
 class _NavigatorEventosReservacionState
     extends State<NavigatorEventosReservacion> {
   DateTime fechaSeleccionada = DateTime.now();
-  String? salonSeleccionado;
+  // Filtro por estado del salon (null = todos)
+  String? estadoFiltro;
   final TextEditingController _busquedaController = TextEditingController();
   final DisponibilidadService _disponibilidadService = DisponibilidadService();
   List<Map<String, dynamic>> reservacionesDB = [];
@@ -33,7 +34,7 @@ class _NavigatorEventosReservacionState
           '${fechaSeleccionada.year}-${fechaSeleccionada.month.toString().padLeft(2, '0')}-${fechaSeleccionada.day.toString().padLeft(2, '0')}';
 
       final resultados = await Future.wait([
-        _disponibilidadService.getDisponibilidadSalones(fechaStr),
+        _disponibilidadService.getReservacionesFecha(fechaStr),
         _disponibilidadService.getEstadosSalones(fechaStr),
       ]);
 
@@ -44,30 +45,50 @@ class _NavigatorEventosReservacionState
         reservacionesDB = reservacionesData.map((item) {
           return {
             'id': item['id'],
-            'salon': item['salon_nombre'],
-            'salonId': item['id'],
+            'salon': item['montaje']['salon']['nombre'],
+            'salonId': item['montaje']['salon']['id'],
             'fecha': DateTime.parse(item['fechaEvento']),
             'horaInicio': int.parse(
               item['horaInicio'].toString().split(':')[0],
             ),
             'horaFin': int.parse(item['horaFin'].toString().split(':')[0]),
             'evento': item['nombreEvento'],
-            'tipo_evento': item['tipo_evento_nombre'],
+            'tipo_evento': item['tipo_evento']['nombre'],
           };
         }).toList();
 
         estadosSalonesDB = estadosData.map((item) {
+          dynamic salonData = item['salon'];
+          int? salonId;
+          String salonNombre = '';
+
+          if (salonData is Map) {
+            salonId = salonData['id'] is int
+                ? salonData['id']
+                : int.tryParse(salonData['id']?.toString() ?? '');
+            salonNombre = salonData['nombre']?.toString() ?? 'Desconocido';
+          } else {
+            salonId = salonData is int
+                ? salonData
+                : int.tryParse(salonData?.toString() ?? '');
+            salonNombre = 'Salón $salonId';
+          }
+          dynamic estadoData = item['estado_salon'];
+          String estadoCodigo = item['estado_codigo']?.toString() ?? '';
+          String estadoNombre = item['estado_nombre']?.toString() ?? '';
+
+          if (estadoData is Map) {
+            estadoCodigo = estadoData['codigo'] ?? estadoCodigo;
+            estadoNombre = estadoData['nombre'] ?? estadoNombre;
+          } else if (estadoData != null && estadoCodigo.isEmpty) {
+            estadoCodigo = estadoData.toString();
+          }
+
           return {
-            'salonId': item['salon']?['id'] ?? item['salon'],
-            'salonNombre': item['salon']?['nombre'] ?? '',
-            'estadoCodigo':
-                item['estado_codigo'] ?? item['estado_salon']?['codigo'] ?? '',
-            'estadoNombre':
-                item['estado_nombre'] ?? item['estado_salon']?['nombre'] ?? '',
-            // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
-            // 'fechaFin': item['fecha_fin'] != null
-            //     ? DateTime.parse(item['fecha_fin'])
-            //     : null,
+            'salonId': salonId,
+            'salonNombre': salonNombre,
+            'estadoCodigo': estadoCodigo,
+            'estadoNombre': estadoNombre,
           };
         }).toList();
 
@@ -113,26 +134,30 @@ class _NavigatorEventosReservacionState
     return codigo;
   }
 
-  final List<Map<String, dynamic>> salonesDB = [
-    {'id': 1, 'nombre': 'Salón Imperial'},
-    {'id': 2, 'nombre': 'Salón Ejecutivo'},
-    {'id': 3, 'nombre': 'Salón Universal'},
-    {'id': 4, 'nombre': 'Salón Premium'},
-  ];
-
   List<Map<String, dynamic>> get reservacionesFiltradas {
     return reservacionesDB.where((r) {
-      bool coincideFecha = _esMismaFecha(r['fecha'], fechaSeleccionada);
-      bool coincideSalon =
-          salonSeleccionado == null ||
-          salonSeleccionado == 'todos' ||
-          r['salon'] == salonSeleccionado;
-      bool coincideBusqueda =
-          _busquedaController.text.isEmpty ||
-          r['evento'].toString().toLowerCase().contains(
-            _busquedaController.text.toLowerCase(),
-          );
-      return coincideFecha && coincideSalon && coincideBusqueda;
+      // Filtro por fecha
+      final coincideFecha = _esMismaFecha(r['fecha'], fechaSeleccionada);
+
+      // Filtro por busqueda (nombre del evento o salon)
+      final textoBusqueda = _busquedaController.text.toLowerCase();
+      final coincideBusqueda =
+          textoBusqueda.isEmpty ||
+          r['evento'].toString().toLowerCase().contains(textoBusqueda) ||
+          r['salon'].toString().toLowerCase().contains(textoBusqueda);
+
+      // Filtro por estado del salon
+      bool coincideEstado = true;
+      if (estadoFiltro != null && estadoFiltro != 'todos') {
+        final estadoSalon = estadosSalonesDB
+            .where((e) => e['salonNombre'] == r['salon'])
+            .firstOrNull;
+        final codigoSalon =
+            estadoSalon?['estadoCodigo']?.toString().toUpperCase() ?? '';
+        coincideEstado = codigoSalon == estadoFiltro!.toUpperCase();
+      }
+
+      return coincideFecha && coincideBusqueda && coincideEstado;
     }).toList();
   }
 
@@ -191,9 +216,20 @@ class _NavigatorEventosReservacionState
     return fechas.toList()..sort();
   }
 
+  final List<Map<String, String>> _estadosDisponibles = [
+    {'codigo': 'DISPO', 'nombre': 'Disponible'},
+    {'codigo': 'NODIS', 'nombre': 'No disponible'},
+    {'codigo': 'ENLIM', 'nombre': 'En limpieza'},
+    {'codigo': 'MANTE', 'nombre': 'Mantenimiento'},
+    {'codigo': 'RESER', 'nombre': 'Reservado'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     List<DateTime> fechas = _getFechasConReservaciones();
+
+    print(reservacionesDB);
+    print(estadosSalonesDB);
 
     return Scaffold(
       appBar: AppBar(
@@ -272,8 +308,8 @@ class _NavigatorEventosReservacionState
                       SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: salonSeleccionado,
-                          hint: Text("Todos", style: TextStyle(fontSize: 13)),
+                          value: estadoFiltro,
+                          hint: Text("Estado", style: TextStyle(fontSize: 13)),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
@@ -292,11 +328,11 @@ class _NavigatorEventosReservacionState
                                 style: TextStyle(fontSize: 13),
                               ),
                             ),
-                            ...salonesDB.map(
-                              (s) => DropdownMenuItem(
-                                value: s['nombre'],
+                            ..._estadosDisponibles.map(
+                              (e) => DropdownMenuItem(
+                                value: e['codigo'],
                                 child: Text(
-                                  s['nombre'],
+                                  e['nombre'] ?? e['codigo'] ?? '',
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(fontSize: 13),
                                 ),
@@ -304,7 +340,7 @@ class _NavigatorEventosReservacionState
                             ),
                           ],
                           onChanged: (value) =>
-                              setState(() => salonSeleccionado = value),
+                              setState(() => estadoFiltro = value),
                         ),
                       ),
                     ],
@@ -398,7 +434,7 @@ class _NavigatorEventosReservacionState
 
     if (estadoCodigo != null) {
       switch (estadoCodigo) {
-        case 'DISP':
+        case 'DISPO':
         case 'DISPONIBLE':
           estadoColor = Colors.green.shade100;
           textColor = Colors.green;
@@ -411,22 +447,22 @@ class _NavigatorEventosReservacionState
           textColor = Colors.red;
           estadoTexto = "NO DISPONIBLE";
           break;
-        case 'LIM':
+        case 'ENLIM':
         case 'LIMPIEZA':
           estadoColor = Colors.orange.shade100;
           textColor = Colors.orange;
           estadoTexto = "EN LIMPIEZA";
           break;
-        case 'MANT':
+        case 'MANTE':
         case 'MANTENIMIENTO':
           estadoColor = Colors.blue.shade100;
           textColor = Colors.blue;
           estadoTexto = "MANTENIMIENTO";
           break;
         default:
-          estadoColor = Colors.red.shade100;
-          textColor = Colors.red;
-          estadoTexto = "OCUPADO";
+          estadoColor = Colors.grey.shade100;
+          textColor = Colors.grey;
+          estadoTexto = "SIN INFORMACION";
       }
     }
 
