@@ -76,29 +76,28 @@ class _AlmacenState extends State<Almacen> {
     }
   }
 
-  bool _linternaPrendida = false;
+ bool _linternaPrendida = false;
   void _mostrarAlerata() {
     _taAbiertoDialogo = true;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text("E we no hay luz"),
+        title: const Text("El sistema detecto que hay poca luz"),
         content: const Text(
-          "E we si q hay poca luz, deberias prender la linterna.",
+          "Se recomienda prender la linterna, ¿Deseas prender la linterna?",
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Ta bien"),
+            onPressed: () {
+              _prenderLinterna(); // Enciende la linterna
+              Navigator.pop(context); // Cierra el diálogo
+            },
+            child: const Text("Sí"),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Ta bien"),
-          ),
-          TextButton(
-            onPressed: _prenderLinterna,
-            child: Text(_linternaPrendida ? "Apagar linterna": "Prender lintenrna"),
+            onPressed: () => Navigator.pop(context), // Solo cierra el diálogo
+            child: const Text("No"),
           ),
         ],
       ),
