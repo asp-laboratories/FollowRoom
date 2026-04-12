@@ -3,6 +3,7 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
 import 'package:followroom_flutter/screens/almacenista_screens/subnavbar_almacenista.dart';
+import 'package:followroom_flutter/services/inventario_service.dart';
 
 class AlmacenistaEstadoScreen extends StatefulWidget {
   const AlmacenistaEstadoScreen({super.key});
@@ -13,10 +14,12 @@ class AlmacenistaEstadoScreen extends StatefulWidget {
 }
 
 class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
+  final InventarioService _inventarioService = InventarioService();
   int _actualIndice = 0;
   bool _buscar = true;
-  bool _cagando = true;
+  bool _cargando = true;
   String _filtroAplicado = "";
+  List<Map<String, dynamic>> _tipos = [];
 
   List<dynamic> _datosObtenidos = [];
   List<dynamic> _datosMostrados = [];
@@ -25,29 +28,41 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
   void initState() {
     super.initState();
     _datosBaseDatos();
+    _cargarTipos();
   }
 
   Future<void> _datosBaseDatos() async {
-    // logica pa jalar la info de django
-    final List<dynamic> datosObtenidos;
+    try {
+      print('Cargando datos... indice: $_actualIndice');
+      final List<dynamic> datosObtenidos;
 
-    _actualIndice == 0
-        ? datosObtenidos = [
-            {'cosa': 'Sila Blanca', 'cantidadDisponible': 20, 'tipo': "Silla"},
-            {'cosa': 'Sila Negra', 'cantidadDisponible': 10, 'tipo': "Mesa"},
-          ]
-        : datosObtenidos = [
-            {'cosa': 'laptop', 'cantidadDisponible': 10, 'tipo': "Ejecutivo"},
-          ];
+      if (_actualIndice == 0) {
+        datosObtenidos = await _inventarioService.getInventarioMobiliario();
+        print('Mobiliarios cargados: ${datosObtenidos.length}');
+      } else {
+        datosObtenidos = await _inventarioService.getInventarioEquipamiento();
+        print('Equipamientos cargados: ${datosObtenidos.length}');
+      }
 
-    if (!mounted) return;
+      if (datosObtenidos.isNotEmpty) {
+        print('Primer item: ${datosObtenidos.first}');
+      }
 
-    setState(() {
-      _datosObtenidos = datosObtenidos;
-      _datosMostrados = List.from(datosObtenidos);
-      _filtroAplicado = "Todos";
-      _cagando = false;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        _datosObtenidos = datosObtenidos;
+        _datosMostrados = List.from(datosObtenidos);
+        _filtroAplicado = "Todos";
+        _cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _cargando = false;
+      });
+      print('Error al cargar inventario: $e');
+    }
   }
 
   void _aplicarFiltro(String tipo) {
@@ -57,23 +72,31 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
       if (tipo == "Todos") {
         _datosMostrados = List.from(_datosObtenidos);
       } else {
-        _datosMostrados = _datosObtenidos.where((mobiliairo) {
-          return mobiliairo['tipo'] == tipo;
+        _datosMostrados = _datosObtenidos.where((item) {
+          if (_buscar) {
+            return item['equipamiento']?['tipo_equipa']?['nombre']
+                    ?.toString() ==
+                tipo;
+          } else {
+            return item['mobiliario']?['tipo_movil']?['nombre']?.toString() ==
+                tipo;
+          }
         }).toList();
       }
     });
   }
 
-  Future<List<String>> _tipos() async {
-    // Aca para jalar los tipos dependiendo de si se tratan de equipos o mobiliaros
-
-    List<String> tiposObtenidos;
-
-    _actualIndice == 0
-        ? tiposObtenidos = ["Silla", "Mesa", "Taburete", "Atril"]
-        : tiposObtenidos = ["Ejecutivo", "Fiestas"];
-
-    return tiposObtenidos;
+  Future<void> _cargarTipos() async {
+    try {
+      final tipos = _actualIndice == 0
+          ? await _inventarioService.getTiposMobil()
+          : await _inventarioService.getTiposEquipa();
+      setState(() {
+        _tipos = tipos;
+      });
+    } catch (e) {
+      print('Error al cargar tipos: $e');
+    }
   }
 
   @override
@@ -97,7 +120,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                 alSeleccionar: (int nuevoIndice) {
                   setState(() {
                     _actualIndice = nuevoIndice;
-                    _cagando = true;
+                    _cargando = true;
                   });
                   _datosBaseDatos();
                 },
@@ -106,12 +129,17 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
 
             GestureDetector(
               onTap: () async {
-                List tipos = await _tipos();
+                if (_tipos.isEmpty) {
+                  await _cargarTipos();
+                }
+                final listaNombres = _tipos
+                    .map((t) => t['nombre']?.toString() ?? '')
+                    .toList();
 
                 final String? seleccionado = await showModalBottomSheet<String>(
                   context: context,
                   builder: (BuildContext context) {
-                    return Filtro(tipos: tipos);
+                    return Filtro(tipos: listaNombres);
                   },
                 );
 
@@ -144,7 +172,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
               ),
             ),
 
-            _cagando
+            _cargando
                 ? const Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(
@@ -204,12 +232,20 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                           fontSize: 14,
                                         ),
                                       ),
-                                      Text(
-                                        itemActual['cosa'],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                          color: AppColores.foreground,
+                                      Expanded(
+                                        child: Text(
+                                          _buscar
+                                              ? (itemActual['equipamiento']?['nombre']
+                                                        ?.toString() ??
+                                                    'Sin nombre')
+                                              : (itemActual['mobiliario']?['nombre']
+                                                        ?.toString() ??
+                                                    'Sin nombre'),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal,
+                                            color: AppColores.foreground,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -218,14 +254,14 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        "Disponibles: ",
+                                        "Cantidad: ",
                                         style: TextEstilos.labelCard.copyWith(
                                           fontSize: 12,
                                         ),
                                       ),
                                       Text(
-                                        itemActual['cantidadDisponible']
-                                            .toString(),
+                                        itemActual['cantidad']?.toString() ??
+                                            '0',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.normal,
