@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
+import 'package:dio/dio.dart';
 
 class TabTotalReservacion extends StatefulWidget {
   final Map<String, String> datosReservacion;
@@ -155,7 +156,9 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
     return null; // Todo válido
   }
 
-  Future<void> _enviarReservacion() async {
+  bool _yaMostroDialogo = false;
+
+  Future<void> _enviarReservacion({bool confirmarInventario = true}) async {
     final error = validarReservacion();
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,26 +174,50 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
       builder: (context) => Center(child: CircularProgressIndicator()),
     );
 
-    final salonId = widget.salonSeleccionado!['id'];
-    final montagemId = widget.montajesPorSalon[salonId] != null
-        ? salonId
-        : null;
+    print('DEBUG montajesPorSalon: ${widget.montajesPorSalon}');
+
+    int salonId = widget.salonSeleccionado!['id'];
+    int? montagemId;
+
+    String? montajeStr = widget.montajesPorSalon[salonId]?.toString();
+    if (montajeStr != null && montajeStr.isNotEmpty) {
+      if (montajeStr.contains('-')) {
+        montagemId = int.tryParse(montajeStr.split('-').last);
+      } else {
+        montagemId = int.tryParse(montajeStr);
+      }
+    }
+
+    print('DEBUG montageStr: $montajeStr, parsed montagemId: $montagemId');
+
+    if (montagemId == null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Debe seleccionar un montaje'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     final service = ReservacionService();
-    final success = await service.crearReservacion(
-      datosReservacion: widget.datosReservacion,
-      datosCliente: widget.datosCliente,
-      salonId: salonId,
-      montageId: montagemId,
-      servicios: widget.serviciosSeleccionados,
-      equipamentos: widget.equipamientosSeleccionados,
-      mobiliarios: widget.mobiliariosSeleccionados,
-    );
 
-    if (mounted) {
-      Navigator.pop(context); // Quitar loading
+    try {
+      await service.crearReservacion(
+        datosReservacion: widget.datosReservacion,
+        datosCliente: widget.datosCliente,
+        salonId: salonId,
+        montageId: montagemId,
+        servicios: widget.serviciosSeleccionados,
+        equipamentos: widget.equipamientosSeleccionados,
+        mobiliarios: widget.mobiliariosSeleccionados,
+        confirmarInventario: confirmarInventario,
+      );
 
-      if (success) {
+      if (mounted) {
+        Navigator.pop(context); // Quitar loading
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Reservación enviada exitosamente"),
@@ -198,15 +225,156 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
           ),
         );
         widget.onReservacionEnviada?.call();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error al enviar la reservación"),
-            backgroundColor: Colors.red,
-          ),
-        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Quitar loading
+
+        // Parsear error de stock
+        String mensajeError = "Error al enviar la reservación";
+        String? producto;
+        int? stockDisponible;
+
+        print('DEBUG: Error recibido: $e');
+
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response?.data;
+          print('DEBUG: Response data: $data');
+
+          // Manejar como Map
+          if (data is Map) {
+            if (data.containsKey('error')) {
+              final error = data['error'];
+              print('DEBUG: Error field: $error');
+              if (error is List && error.isNotEmpty) {
+                final primerError = error.first;
+                print('DEBUG: Primer error: $primerError');
+                if (primerError is Map) {
+                  // Los valores pueden ser listas o strings, necesitamos handlear ambos
+                  final productoValor = primerError['producto'];
+                  producto = productoValor is List
+                      ? productoValor.first?.toString()
+                      : productoValor?.toString();
+
+                  final stockValor = primerError['stock_disponible'];
+                  if (stockValor is List && stockValor.isNotEmpty) {
+                    final firstItem = stockValor.first;
+                    if (firstItem is int) {
+                      stockDisponible = firstItem;
+                    } else if (firstItem is String) {
+                      stockDisponible = int.tryParse(firstItem);
+                    } else {
+                      stockDisponible = int.tryParse(
+                        firstItem?.toString() ?? '',
+                      );
+                    }
+                  } else if (stockValor is int) {
+                    stockDisponible = stockValor;
+                  } else if (stockValor is String) {
+                    stockDisponible = int.tryParse(stockValor);
+                  }
+
+                  final mensajeValor = primerError['mensaje'];
+                  mensajeError = mensajeValor is List
+                      ? mensajeValor.first?.toString() ?? mensajeError
+                      : mensajeValor?.toString() ?? mensajeError;
+                } else if (primerError is String) {
+                  mensajeError = primerError;
+                }
+              } else if (error is String) {
+                mensajeError = error;
+              }
+            }
+          }
+        }
+
+        print('DEBUG: Parsed producto: $producto, stock: $stockDisponible');
+
+        // Mostrar diálogo de stock insuficiente
+        if (producto != null) {
+          _mostrarDialogoStockInsuficiente(
+            context,
+            producto,
+            stockDisponible ?? 0,
+            mensajeError,
+            onContinuarIgual: () =>
+                _enviarReservacion(confirmarInventario: false),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(mensajeError), backgroundColor: Colors.red),
+          );
+        }
       }
     }
+  }
+
+  void _mostrarDialogoStockInsuficiente(
+    BuildContext context,
+    String producto,
+    int stockDisponible,
+    String mensaje, {
+    required Future<void> Function() onContinuarIgual,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            SizedBox(width: 8),
+            Text('Stock Insuficiente'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    producto,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Stock disponible: $stockDisponible',
+                    style: TextStyle(color: Colors.orange.shade800),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '¿Deseas continuar de todas formas?',
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await onContinuarIgual();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text('Continuar igual'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

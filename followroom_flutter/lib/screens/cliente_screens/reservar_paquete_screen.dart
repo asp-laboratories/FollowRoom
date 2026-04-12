@@ -201,7 +201,7 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
     if (widget.paquete['salon_id'] != null &&
         widget.paquete['montaje_nombre'] != null) {
       montajesPorSalon[widget.paquete['salon_id']] =
-          widget.paquete['montaje_nombre'];
+          '${widget.paquete['montaje_nombre']}-${widget.paquete['montaje_id']}';
     }
 
     return DefaultTabController(

@@ -76,7 +76,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
         'capacidad': paquete['salon_capacidad'] ?? 0,
       };
       montajesPorSalon[paquete['montaje_id'] ?? 0] =
-          paquete['montaje_nombre'] ?? '';
+          '${paquete['montaje_nombre'] ?? ''}-${paquete['montaje_id'] ?? 0}';
     }
 
     setState(() {});

@@ -73,6 +73,7 @@ class ReservacionService {
     required List<Map<String, dynamic>> servicios,
     required List<Map<String, dynamic>> equipamentos,
     required List<Map<String, dynamic>> mobiliarios,
+    bool confirmarInventario = true,
   }) async {
     try {
       var dio = Dio();
@@ -113,23 +114,38 @@ class ReservacionService {
 
       print('Fecha formateada: $fechaFormateada');
 
-      // Format time to HH:mm
-      String formatTime(String? timeStr) {
-        if (timeStr == null || timeStr.isEmpty) return '12:00';
-        // Extract just the start time, remove AM/PM
-        final match = RegExp(r'(\d+):(\d+)').firstMatch(timeStr);
+      // Format time to HH:mm, handles both "horaInicio - horaFin" and single time
+      String parseTimeComponent(String timePart) {
+        final match = RegExp(r'(\d+):(\d+)').firstMatch(timePart);
         if (match != null) {
           int hour = int.parse(match.group(1)!);
           final minute = int.parse(match.group(2)!);
-          if (timeStr.contains('PM') && hour != 12) hour += 12;
-          if (timeStr.contains('AM') && hour == 12) hour = 0;
+          if (timePart.contains('PM') && hour != 12) hour += 12;
+          if (timePart.contains('AM') && hour == 12) hour = 0;
           return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
         }
         return '12:00';
       }
 
+      String formatTime(String? timeStr, {bool isEndTime = false}) {
+        if (timeStr == null || timeStr.isEmpty) return '12:00';
+
+        final cleanStr = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+        if (cleanStr.contains(' - ')) {
+          final parts = cleanStr.split(' - ');
+          final timePart = isEndTime ? parts[1] : parts[0];
+          return parseTimeComponent(timePart);
+        }
+
+        return parseTimeComponent(cleanStr);
+      }
+
       final horaInicioStr = formatTime(datosReservacion['horario']);
-      final horaFinStr = formatTime(datosReservacion['horario']);
+      final horaFinStr = formatTime(
+        datosReservacion['horario'],
+        isEndTime: true,
+      );
 
       final data = {
         'nombre': datosReservacion['nombre'] ?? '',
@@ -161,6 +177,8 @@ class ReservacionService {
             .toList(),
       };
 
+      data['confirmar_inventario'] = confirmarInventario;
+
       print('Data being sent: $data');
       final response = await dio.post('/reservacion/', data: data);
       print('Response status: ${response.statusCode}');
@@ -169,6 +187,8 @@ class ReservacionService {
     } catch (e) {
       if (e is DioException && e.response != null) {
         print('Error: ${e.response?.statusCode} - ${e.response?.data}');
+        // Re-throw with detailed error info
+        rethrow;
       }
       print('Error al crear reservación: $e');
       return false;

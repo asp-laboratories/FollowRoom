@@ -307,7 +307,7 @@ class _TabSalonState extends State<TabSalon> {
                                     if (resultado != null) {
                                       widget.onMontajeSelected(
                                         salonId,
-                                        resultado['nombre'] ?? '',
+                                        '${resultado['nombre'] ?? ''}-${resultado['id'] ?? ''}',
                                       );
                                       final mobiliariosSugeridos =
                                           (resultado['mobiliarios_sugeridos']
