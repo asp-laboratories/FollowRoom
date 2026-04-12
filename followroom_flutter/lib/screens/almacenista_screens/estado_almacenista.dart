@@ -645,6 +645,7 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
     );
   }
 
+
   Widget _buildSmallInput(BuildContext context, String label, IconData icon) {
     return TextField(
       controller: _cantidadController,
