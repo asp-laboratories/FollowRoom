@@ -40,6 +40,15 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
 
   void _calcularProgreso() {
     if (_reservacion == null) return;
+
+    final progresoReal = _reservacion!['progreso_checklist'];
+    if (progresoReal != null &&
+        progresoReal is num &&
+        progresoReal.toDouble() > 0) {
+      _progreso = progresoReal.toDouble();
+      return;
+    }
+
     final estado = _reservacion!['estado_reserva'];
     String codigo = '';
     if (estado is Map) {

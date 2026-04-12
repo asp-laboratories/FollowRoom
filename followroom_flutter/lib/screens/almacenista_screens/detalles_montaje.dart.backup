@@ -40,8 +40,7 @@ class _DetallesState extends State<Detalles> {
       final checklistData = await _reservacionService.getChecklistAlmacenista(
         int.parse(widget.numeroReservacion),
       );
-      final checklistMap =
-          checklistData['checklist_almacenista'] as Map<String, dynamic>? ?? {};
+      final checklistMap = checklistData['checklist_almacenista'] as Map<String, dynamic>? ?? {};
       _checklistAlmacenista = checklistMap.map(
         (k, v) => MapEntry(k, v == true || v == 'true'),
       );
@@ -67,6 +66,7 @@ class _DetallesState extends State<Detalles> {
         _isLoading = false;
       });
     }
+  }
   }
 
   IconData _getIconForMobiliario(String nombre) {
@@ -99,6 +99,7 @@ class _DetallesState extends State<Detalles> {
   }
 
   Future<void> _guardarChecklist() async {
+    print('DEBUG: Guardando checklist: $_checklistAlmacenista');
     try {
       final result = await _reservacionService.updateChecklist(
         int.parse(widget.numeroReservacion),
@@ -106,6 +107,7 @@ class _DetallesState extends State<Detalles> {
         _checklistAlmacenista,
       );
 
+      print('DEBUG: Resultado guardado: $result');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -115,6 +117,7 @@ class _DetallesState extends State<Detalles> {
         );
       }
     } catch (e) {
+      print('DEBUG: Error al guardar: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,

@@ -43,6 +43,17 @@ class ReservacionService {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
       final response = await dio.get('/reservacion/$id/');
+      print('DEBUG Service: Response status: ${response.statusCode}');
+      print('DEBUG Service: Full response data keys: ${response.data.keys}');
+      print(
+        'DEBUG Service: checklist_almacenista: ${response.data['checklist_almacenista']}',
+      );
+      print(
+        'DEBUG Service: checklist_coordinador: ${response.data['checklist_coordinador']}',
+      );
+      print(
+        'DEBUG Service: progreso_checklist: ${response.data['progreso_checklist']}',
+      );
       if (response.statusCode == 200) {
         return Map<String, dynamic>.from(response.data);
       } else {
@@ -260,6 +271,46 @@ class ReservacionService {
     } catch (e) {
       print('Error al obtener progreso: $e');
       throw Exception('Error al obtener progreso');
+    }
+  }
+
+  Future<Map<String, dynamic>> getChecklistAlmacenista(
+    int reservacionId,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/reservacion/$reservacionId/checklist-almacenista/',
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al obtener checklist de almacenista');
+      }
+    } catch (e) {
+      print('Error al obtener checklist de almacenista: $e');
+      throw Exception('Error al obtener checklist de almacenista');
+    }
+  }
+
+  Future<Map<String, dynamic>> getChecklistCoordinador(
+    int reservacionId,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get(
+        '/reservacion/$reservacionId/checklist-coordinador/',
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al obtener checklist de coordinador');
+      }
+    } catch (e) {
+      print('Error al obtener checklist de coordinador: $e');
+      throw Exception('Error al obtener checklist de coordinador');
     }
   }
 }

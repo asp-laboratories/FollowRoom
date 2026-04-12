@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/core/estados_widgets.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 
 class PantallaDetallesCoordinador extends StatefulWidget {
@@ -64,7 +65,10 @@ class _PantallaDetallesCoordinadorState
   ];
 
   Map<String, bool> _checklistCoordinador = {};
+  Map<String, bool> _checklistAlmacenista = {};
   double _progresoChecklist = 0.0;
+  bool _checklistAlmacenistaCompleto = false;
+  String? _error;
 
   @override
   void initState() {
@@ -95,19 +99,71 @@ class _PantallaDetallesCoordinadorState
 
       print('DEBUG - Datos recibidos: $data');
 
-      // Cargar checklist desde API
-      final checklistData =
-          data['checklist_coordinador'] as Map<String, dynamic>? ?? {};
-      _checklistCoordinador = checklistData.map(
-        (k, v) => MapEntry(k, v == true || v == 'true'),
-      );
-      _progresoChecklist = (data['progreso_checklist'] ?? 0.0).toDouble();
-
+      // Cargar datos de la reservación
       setState(() {
         _datosCompletos = data;
         _precioController.text = (_datosCompletos?['total'] ?? 0).toString();
         _cargando = false;
       });
+
+      // Cargar checklist del coordinador desde endpoint específico
+      try {
+        final checklistCoordinadorData = await _reservacionService
+            .getChecklistCoordinador(int.parse(widget.idReservacion));
+        final checklistData =
+            checklistCoordinadorData['checklist_coordinador']
+                as Map<String, dynamic>? ??
+            {};
+        _checklistCoordinador = checklistData.map(
+          (k, v) => MapEntry(k, v == true || v == 'true'),
+        );
+        _progresoChecklist =
+            (checklistCoordinadorData['progreso_checklist'] ?? 0.0).toDouble();
+
+        if (mounted) setState(() {});
+      } catch (e) {
+        print('Error al cargar checklist coordinador: $e');
+      }
+
+      // Cargar checklist del almacenista
+      try {
+        final checklistAlmacenistaData = await _reservacionService
+            .getChecklistAlmacenista(int.parse(widget.idReservacion));
+        final almacenistaMap =
+            checklistAlmacenistaData['checklist_almacenista']
+                as Map<String, dynamic>? ??
+            {};
+        _checklistAlmacenista = almacenistaMap.map(
+          (k, v) => MapEntry(k, v == true || v == 'true'),
+        );
+        // Verificar si todos los items del almacenista están completos
+        _checklistAlmacenistaCompleto =
+            _checklistAlmacenista.isNotEmpty &&
+            _checklistAlmacenista.values.every((v) => v == true);
+
+        if (mounted) setState(() {});
+      } catch (e) {
+        print('Error al cargar checklist almacenista: $e');
+      }
+
+      // Cargar checklist del almacenista
+      try {
+        final checklistAlmacenistaData = await _reservacionService
+            .getChecklistAlmacenista(int.parse(widget.idReservacion));
+        final almacenistaMap =
+            checklistAlmacenistaData['checklist_almacenista']
+                as Map<String, dynamic>? ??
+            {};
+        _checklistAlmacenista = almacenistaMap.map(
+          (k, v) => MapEntry(k, v == true || v == 'true'),
+        );
+        // Verificar si todos los items del almacenista están completos
+        _checklistAlmacenistaCompleto =
+            _checklistAlmacenista.isNotEmpty &&
+            _checklistAlmacenista.values.every((v) => v == true);
+      } catch (e) {
+        print('Error al cargar checklist almacenista: $e');
+      }
 
       _timerPuntos?.cancel();
     } catch (e) {
@@ -115,13 +171,8 @@ class _PantallaDetallesCoordinadorState
 
       setState(() {
         _cargando = false;
+        _error = e.toString();
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al cargar: $e')));
-      }
     }
   }
 
@@ -129,8 +180,22 @@ class _PantallaDetallesCoordinadorState
     final keys = _checklist.map((e) => e.keys.first).toList();
     final index = keys.indexOf(key);
     if (index <= 0) return true;
-    // Solo puede marcar si el anterior está completado
+
+    // El item 9 (Checklist de Montaje - índice 8) está marcado cuando el almacenista completa su checklist
+    final esItemMontaje = index == 8;
+    if (esItemMontaje && _checklistAlmacenistaCompleto) {
+      return true;
+    }
+
+    // Solo puede marcar si el anterior está completado (considerando el item 9 del almacenista)
     final anteriorKey = keys[index - 1];
+    final esAnteriorItemMontaje = (index - 1) == 8;
+
+    if (esAnteriorItemMontaje) {
+      // Si el anterior era el item 9 (Checklist de Montaje), depende del almacenista
+      return _checklistAlmacenistaCompleto;
+    }
+
     return _checklistCoordinador[anteriorKey] == true;
   }
 
@@ -174,10 +239,13 @@ class _PantallaDetallesCoordinadorState
     num serviciosTotal = 0;
     num equiposTotal = 0;
 
+    // El serializer devuelve: servicio__costo, equipamiento__costo, mobiliario__costo
     if (_datosCompletos?['servicios'] != null) {
       serviciosTotal = (_datosCompletos?['servicios'] as List).fold<num>(
         0,
-        (sum, s) => sum + ((s['precio'] ?? 0) as num),
+        (sum, s) =>
+            sum +
+            ((s['servicio__costo'] ?? s['costo'] ?? s['precio'] ?? 0) as num),
       );
     }
 
@@ -185,7 +253,10 @@ class _PantallaDetallesCoordinadorState
       equiposTotal = (_datosCompletos?['equipamentos'] as List).fold<num>(
         0,
         (sum, e) =>
-            sum + (((e['precio'] ?? 0) as num) * ((e['cantidad'] ?? 1) as num)),
+            sum +
+            (((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0)
+                    as num) *
+                ((e['cantidad'] ?? 1) as num)),
       );
     }
 
@@ -195,7 +266,9 @@ class _PantallaDetallesCoordinadorState
             0,
             (sum, m) =>
                 sum +
-                (((m['precio'] ?? 0) as num) * ((m['cantidad'] ?? 1) as num)),
+                (((m['mobiliario__costo'] ?? m['costo'] ?? m['precio'] ?? 0)
+                        as num) *
+                    ((m['cantidad'] ?? 1) as num)),
           );
       equiposTotal += mobiliariosTotal;
     }
@@ -243,22 +316,27 @@ class _PantallaDetallesCoordinadorState
 
   @override
   Widget build(BuildContext context) {
+    final nombreEvento =
+        _datosCompletos?['nombreEvento'] ??
+        'Reservación ${widget.idReservacion}';
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detalles de Reserva ${widget.idReservacion}'),
+        title: Text(nombreEvento),
         backgroundColor: AppColores.background2,
       ),
       backgroundColor: AppColores.background2,
       body: _cargando
-          ? Center(
-              child: Text(
-                'Cargando$_puntos',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+          ? const LoadingWidget(mensaje: 'Cargando reservación...')
+          : _error != null
+          ? ErrorDisplay.conexion(
+              mensaje: _error!,
+              onRetry: () {
+                setState(() {
+                  _error = null;
+                  _cargando = true;
+                });
+                _descargarDatos();
+              },
             )
           : SingleChildScrollView(
               controller: _scrollController,
@@ -304,9 +382,12 @@ class _PantallaDetallesCoordinadorState
                           SizedBox(height: 8),
                           _buildLabelValue(
                             "Nombre del evento:",
+                            _datosCompletos?['nombreEvento'] ?? 'No definido',
+                          ),
+                          _buildLabelValue(
+                            'Descripcion del evento:',
                             _datosCompletos?['descripEvento'] ??
-                                _datosCompletos?['nombreEvento'] ??
-                                'No definido',
+                                'Sin descripcion',
                           ),
                           SizedBox(height: 2),
                           _buildLabelValue(
@@ -334,6 +415,41 @@ class _PantallaDetallesCoordinadorState
                       ),
                     ),
                   ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(
+                  //     left: 16,
+                  //     right: 16,
+                  //     bottom: 16,
+                  //   ),
+                  //   child: Container(
+                  //     decoration: ContainerStyles.sombreado,
+                  //     width: double.infinity,
+                  //     padding: EdgeInsets.all(12),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Text(
+                  //           "Descripción del Evento",
+                  //           style: TextStyle(
+                  //             fontWeight: FontWeight.bold,
+                  //             fontSize: 16,
+                  //           ),
+                  //         ),
+                  //         SizedBox(height: 8),
+                  //         Text(
+                  //           _datosCompletos?['descripEvento'] ??
+                  //               'Sin descripción',
+                  //           style: TextStyle(
+                  //             fontSize: 14,
+                  //             color: AppColores.foreground.withValues(
+                  //               alpha: 0.8,
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                   // SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.only(
@@ -557,25 +673,71 @@ class _PantallaDetallesCoordinadorState
                           ...List.generate(_checklist.length, (index) {
                             final item = _checklist[index];
                             final key = item.keys.first;
-                            // El item #9 "Checklist de Montaje" (índice 8) se marca automáticamente desde almacenista
+                            // El item #9 "Checklist de Montaje" (índice 8) depende del checklist del almacenista
                             final esItemMontaje = index == 8;
                             final puedeMarcar = esItemMontaje
-                                ? false
+                                ? _checklistAlmacenistaCompleto
                                 : _puedeMarcarChecklist(key);
+
+                            // Cuando el almacenista completa su checklist, marcar automáticamente el item del coordinador
+                            final valorItem =
+                                esItemMontaje && _checklistAlmacenistaCompleto
+                                ? true
+                                : (_checklistCoordinador[key] ?? false);
+
                             return CheckboxListTile(
-                              title: Text(
-                                key,
-                                style: TextStyle(
-                                  color: esItemMontaje
-                                      ? Colors.grey
-                                      : !puedeMarcar &&
-                                            !(_checklistCoordinador[key] ??
-                                                false)
-                                      ? Colors.grey
-                                      : null,
-                                ),
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      key,
+                                      style: TextStyle(
+                                        color: esItemMontaje
+                                            ? (_checklistAlmacenistaCompleto
+                                                  ? Colors.black
+                                                  : Colors.grey)
+                                            : !puedeMarcar &&
+                                                  !(_checklistCoordinador[key] ??
+                                                      false)
+                                            ? Colors.grey
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                  if (esItemMontaje) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _checklistAlmacenistaCompleto
+                                            ? Colors.green.withValues(
+                                                alpha: 0.2,
+                                              )
+                                            : Colors.orange.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        _checklistAlmacenistaCompleto
+                                            ? 'Almacenista concluyó'
+                                            : 'Almacenista debe completar',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: _checklistAlmacenistaCompleto
+                                              ? Colors.green[800]
+                                              : Colors.orange[800],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              value: _checklistCoordinador[key] ?? false,
+                              value: valorItem,
                               onChanged: puedeMarcar
                                   ? (value) {
                                       setState(() {
@@ -689,9 +851,11 @@ class _PantallaDetallesCoordinadorState
                             children: [
                               _buildLabelValue(
                                 "Subtotal:",
-                                "\$${_calcularSubtotal()}",
+                                _datosCompletos?['subtotal']?.toString() ?? '0',
                               ),
-                              Text("\$${_calcularSubtotal()}"),
+                              Text(
+                                _datosCompletos?['subtotal']?.toString() ?? '0',
+                              ),
                             ],
                           ),
                           SizedBox(height: 2),
@@ -699,10 +863,10 @@ class _PantallaDetallesCoordinadorState
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildLabelValue(
-                                "IVA (16%):",
-                                "\$${_calcularIVA()}",
+                                "IVA:",
+                                _datosCompletos?['IVA']?.toString() ?? '0',
                               ),
-                              Text("\$${_calcularIVA()}"),
+                              Text(_datosCompletos?['IVA']?.toString() ?? '0'),
                             ],
                           ),
                           Divider(height: 16),
@@ -711,10 +875,10 @@ class _PantallaDetallesCoordinadorState
                             children: [
                               _buildLabelValue(
                                 "Total:",
-                                "\${_datosCompletos?['total'] ?? 0}",
+                                "${_datosCompletos?['total'] ?? 0}",
                               ),
                               Text(
-                                "\${_datosCompletos?['total'] ?? 0}",
+                                "${_datosCompletos?['total'] ?? 0}",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,

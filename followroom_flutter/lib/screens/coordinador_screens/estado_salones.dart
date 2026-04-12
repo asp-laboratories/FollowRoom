@@ -36,19 +36,21 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
     setState(() => _cargando = true);
     try {
       final data = await _salonService.getSalonesConEstado();
+      print('DEBUG: Salones data: $data');
       setState(() {
         salones = data.map((item) {
           return {
             'id': item['id'],
-            'nombre': item['nombre'],
-            'estado': item['estado_nombre'],
-            'estado_codigo': item['estado_codigo'],
+            'nombre': item['nombre'] ?? 'Sin nombre',
+            'estado': item['estado'] ?? 'Sin estado',
+            'estado_codigo': item['estado_codigo'] ?? '',
           };
         }).toList();
         salonesMostrados = List.from(salones);
         _cargando = false;
       });
     } catch (e) {
+      print('Error: $e');
       setState(() => _cargando = false);
     }
   }
@@ -71,10 +73,15 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
     int index,
     String nuevoEstado,
     String nuevoCodigo,
+    String? nuevaFecha,
   ) async {
     final salonId = salonesMostrados[index]['id'];
     try {
-      await _salonService.actualizarEstado(salonId, nuevoCodigo);
+      final result = await _salonService.actualizarEstado(
+        salonId,
+        nuevoCodigo,
+        nuevaFecha,
+      );
       setState(() {
         salonesMostrados[index]['estado'] = nuevoEstado;
         final originalIndex = salones.indexWhere((s) => s['id'] == salonId);
@@ -83,25 +90,46 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
           salones[originalIndex]['estado_codigo'] = nuevoCodigo;
         }
       });
-    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al actualizar estado')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Estado actualizado a $nuevoEstado'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      String mensajeError = 'Error al actualizar estado';
+      if (e.toString().contains('ocupado/reservado')) {
+        mensajeError =
+            'No se puede cambiar a Limpieza: salon ocupado/reservado hoy';
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mensajeError), backgroundColor: Colors.red),
+        );
       }
     }
   }
 
   void abrirModalEstado(int index) async {
+    final salon = salonesMostrados[index];
+    final estadoActual = salon['estado_codigo'] ?? '';
+
     final Map<String, String>? nuevoEstado =
         await showModalBottomSheet<Map<String, String>>(
           context: context,
           builder: (context) {
-            return _ModalEstados();
+            return _ModalEstados(estadoActual: estadoActual);
           },
         );
     if (nuevoEstado != null) {
-      cambiarEstado(index, nuevoEstado['nombre']!, nuevoEstado['codigo']!);
+      cambiarEstado(
+        index,
+        nuevoEstado['nombre']!,
+        nuevoEstado['codigo']!,
+        nuevoEstado['fecha'],
+      );
     }
   }
 
@@ -171,6 +199,11 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
                     itemCount: salonesMostrados.length,
                     itemBuilder: (context, index) {
                       final salon = salonesMostrados[index];
+                      final estadoCodigo = (salon['estado_codigo'] ?? '')
+                          .toUpperCase();
+                      final esReservadoOcupado =
+                          estadoCodigo == 'RESV' || estadoCodigo == 'OCUP';
+
                       return Container(
                         margin: EdgeInsets.only(bottom: 12),
                         decoration: ContainerStyles.sombreado,
@@ -178,7 +211,9 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
-                            onTap: () => abrirModalEstado(index),
+                            onTap: esReservadoOcupado
+                                ? null
+                                : () => abrirModalEstado(index),
                             child: Padding(
                               padding: EdgeInsets.all(12),
                               child: Row(
@@ -214,10 +249,11 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
                                       ],
                                     ),
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: AppColores.primary,
-                                  ),
+                                  if (!esReservadoOcupado)
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: AppColores.primary,
+                                    ),
                                 ],
                               ),
                             ),
@@ -267,16 +303,20 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
 }
 
 class _ModalEstados extends StatefulWidget {
+  final String estadoActual;
+
+  const _ModalEstados({super.key, this.estadoActual = ''});
+
   @override
   State<_ModalEstados> createState() => _ModalEstadosState();
 }
 
 class _ModalEstadosState extends State<_ModalEstados> {
   final List<Map<String, String>> estados = [
-    {"nombre": "Disponible", "codigo": "DISP"},
-    {"nombre": "No disponible", "codigo": "NODISP"},
+    {"nombre": "Disponible", "codigo": "DIS"},
     {"nombre": "Reservado", "codigo": "RESV"},
-    {"nombre": "En limpieza", "codigo": "LIM"},
+    {"nombre": "En limpieza", "codigo": "LIMPI"},
+    {"nombre": "En mantenimiento", "codigo": "MANTE"},
   ];
 
   DateTime _fechaSeleccionada = DateTime.now();

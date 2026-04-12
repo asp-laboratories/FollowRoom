@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/core/estados_widgets.dart';
 import 'package:followroom_flutter/services/solicitudes_extra_service.dart';
 
 class ReservacionesVisualScreen extends StatefulWidget {
@@ -67,23 +68,11 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingWidget(mensaje: 'Cargando solicitudes...');
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _cargarDatos,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      );
+      return ErrorDisplay.conexion(mensaje: _error!, onRetry: _cargarDatos);
     }
 
     if (_reservaciones.isEmpty) {

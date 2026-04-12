@@ -24,14 +24,18 @@ class SalonService {
   Future<Map<String, dynamic>> actualizarEstado(
     int salonId,
     String estadoCodigo,
+    String? fecha,
   ) async {
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.patch(
-        '/salon/$salonId/',
-        data: {'estado_salon': estadoCodigo},
-      );
+
+      Map<String, dynamic> data = {'estado_salon': estadoCodigo};
+      if (fecha != null) {
+        data['fecha'] = fecha;
+      }
+
+      final response = await dio.patch('/salon/$salonId/', data: data);
       if (response.statusCode == 200) {
         return Map<String, dynamic>.from(response.data);
       } else {

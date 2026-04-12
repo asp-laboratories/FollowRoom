@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/boton_styles.dart';
 import 'package:followroom_flutter/core/colores.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/core/estados_widgets.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_eventos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/main_reservacion_proceso.dart';
 import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion/navigator_detalles_reservacion_actual.dart';
@@ -24,6 +25,8 @@ class _ReservacionState extends State<Reservacion> {
   List<Map<String, dynamic>> paquetesDB = [];
   bool _cargandoPaquetes = true;
   bool _cargandoReservacion = true;
+  String? _errorPaquetes;
+  String? _errorReservacion;
   Map<String, dynamic>? _reservacionProxima;
   final Color _colorBase = Colors.blue;
 
@@ -64,6 +67,7 @@ class _ReservacionState extends State<Reservacion> {
       print('Error al cargar paquetes: $e');
       setState(() {
         _cargandoPaquetes = false;
+        _errorPaquetes = e.toString();
       });
     }
   }
@@ -99,12 +103,33 @@ class _ReservacionState extends State<Reservacion> {
       print('Error al cargar reservación próxima: $e');
       setState(() {
         _cargandoReservacion = false;
+        _errorReservacion = e.toString();
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_cargandoPaquetes || _cargandoReservacion) {
+      return const LoadingWidget(mensaje: 'Cargando información...');
+    }
+
+    if (_errorPaquetes != null || _errorReservacion != null) {
+      return ErrorDisplay.conexion(
+        mensaje: _errorPaquetes ?? _errorReservacion ?? 'Error de conexión',
+        onRetry: () {
+          setState(() {
+            _errorPaquetes = null;
+            _errorReservacion = null;
+            _cargandoPaquetes = true;
+            _cargandoReservacion = true;
+          });
+          _cargarPaquetes();
+          _cargarReservacionProxima();
+        },
+      );
+    }
+
     return SingleChildScrollView(
       child: Container(
         decoration: BoxDecoration(color: AppColores.background2),

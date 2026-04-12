@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
+import 'package:followroom_flutter/core/estados_widgets.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/detalles_reservacion_coordinador.dart';
 import 'package:followroom_flutter/screens/coordinador_screens/subnavbar_coordinador.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
@@ -43,7 +44,7 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
     } catch (e) {
       setState(() {
         _cargando = false;
-        _error = 'Error al cargar reservaciones: $e';
+        _error = 'Error al cargar reservaciones';
       });
     }
   }
@@ -69,22 +70,13 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
   @override
   Widget build(BuildContext context) {
     if (_cargando) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingWidget(mensaje: 'Cargando reservaciones...');
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _cargarReservaciones,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+      return ErrorDisplay.conexion(
+        mensaje: _error!,
+        onRetry: _cargarReservaciones,
       );
     }
 
