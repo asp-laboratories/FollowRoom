@@ -18,8 +18,17 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
   int _actualIndice = 0;
   bool _buscar = true;
   bool _cargando = true;
-  String _filtroAplicado = "";
+  String _filtroAplicado = "Todos";
+  String _filtroEstadoAplicado = "Todos"; // Nuevo: Filtro por estado
   List<Map<String, dynamic>> _tipos = [];
+
+  final Map<String, String> _nombresEstados = {
+    'Todos': 'Todos los estados',
+    'DISP': 'Disponible',
+    'NODISP': 'No disponible',
+    'REPAR': 'En reparación',
+    'DESCOMP': 'Descompuesta',
+  };
 
   List<dynamic> _datosObtenidos = [];
   List<dynamic> _datosMostrados = [];
@@ -52,8 +61,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
 
       setState(() {
         _datosObtenidos = datosObtenidos;
-        _datosMostrados = List.from(datosObtenidos);
-        _filtroAplicado = "Todos";
+        _actualizarListaFiltrada(); // Aplicar filtros al cargar
         _cargando = false;
       });
     } catch (e) {
@@ -65,59 +73,69 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
     }
   }
 
-  void _aplicarFiltro(String tipo) {
+  void _actualizarListaFiltrada() {
     setState(() {
-      _filtroAplicado = tipo;
+      _datosMostrados = _datosObtenidos.where((item) {
+        // --- FILTRO 1: CATEGORÍA (Tipo) ---
+        bool coincideTipo = true;
+        if (_filtroAplicado != "Todos") {
+          final dynamic baseData = _actualIndice == 0 ? item['mobiliario'] : item['equipamiento'];
+          if (baseData is Map) {
+            dynamic tipoValue;
+            if (_actualIndice == 0) {
+              tipoValue = baseData['tipo_movil'] ?? baseData['tipo'];
+            } else {
+              tipoValue = baseData['tipo_equipa'] ?? 
+                          baseData['tipo_equipamiento'] ?? 
+                          baseData['tipo_equipa_id'] ??
+                          baseData['tipo_id'] ??
+                          baseData['tipo'] ??
+                          baseData['categoria'];
+            }
 
-      if (tipo == "Todos") {
-        _datosMostrados = List.from(_datosObtenidos);
-      } else {
-        _datosMostrados = _datosObtenidos.where((item) {
-          // 1. Obtener el objeto base (mueble o equipo)
-          final dynamic baseData = _actualIndice == 0 
-              ? item['mobiliario'] 
-              : item['equipamiento'];
-          
-          if (baseData is! Map) return false;
-
-          // 2. Extraer el valor del Tipo buscando en múltiples nombres posibles
-          dynamic tipoValue;
-          if (_actualIndice == 0) {
-            tipoValue = baseData['tipo_movil'] ?? baseData['tipo'];
+            if (tipoValue is Map && tipoValue['nombre']?.toString() == _filtroAplicado) {
+              coincideTipo = true;
+            } else if (tipoValue is String && tipoValue == _filtroAplicado) {
+              coincideTipo = true;
+            } else if (tipoValue != null) {
+              final tipoEnCatalogo = _tipos.firstWhere(
+                (t) => t['id'].toString() == tipoValue.toString(),
+                orElse: () => {},
+              );
+              coincideTipo = tipoEnCatalogo['nombre']?.toString() == _filtroAplicado;
+            } else {
+              coincideTipo = false;
+            }
           } else {
-            // Probamos todas las variaciones comunes de nombres de campo en Django
-            tipoValue = baseData['tipo_equipa'] ?? 
-                        baseData['tipo_equipamiento'] ?? 
-                        baseData['tipo_equipa_id'] ??
-                        baseData['tipo_id'] ??
-                        baseData['tipo'] ??
-                        baseData['categoria'];
+            coincideTipo = false;
           }
+        }
 
-          if (tipoValue == null) return false;
-
-          // 3. Comparación si es un objeto (depth=2 o to_representation anidado)
-          if (tipoValue is Map && tipoValue['nombre']?.toString() == tipo) {
-            return true;
-          }
-
-          // 4. NUEVO: Comparación si ya es un String (StringRelatedField de Django)
-          if (tipoValue is String && tipoValue == tipo) {
-            return true;
-          }
-
-          // 5. Comparación si es un ID (depth=1 o to_representation simple)
-          // Buscamos el nombre correspondiente a ese ID en nuestro catálogo local _tipos
-          final String idStr = tipoValue.toString();
-          final tipoEnCatalogo = _tipos.firstWhere(
-            (t) => t['id'].toString() == idStr,
-            orElse: () => {},
-          );
+        // --- FILTRO 2: ESTADO (Disponible, Reparación, etc.) ---
+        bool coincideEstado = true;
+        if (_filtroEstadoAplicado != "Todos") {
+          final dynamic estadoData = _actualIndice == 0 ? item['estado_mobil'] : item['estado_equipa'];
           
-          return tipoEnCatalogo['nombre']?.toString() == tipo;
-        }).toList();
-      }
+          if (estadoData is Map) {
+            coincideEstado = estadoData['codigo']?.toString() == _filtroEstadoAplicado;
+          } else {
+            coincideEstado = estadoData?.toString() == _filtroEstadoAplicado;
+          }
+        }
+
+        return coincideTipo && coincideEstado;
+      }).toList();
     });
+  }
+
+  void _aplicarFiltro(String tipo) {
+    _filtroAplicado = tipo;
+    _actualizarListaFiltrada();
+  }
+
+  void _aplicarFiltroEstado(String codigoEstado) {
+    _filtroEstadoAplicado = codigoEstado;
+    _actualizarListaFiltrada();
   }
 
   Future<void> _cargarTipos() async {
@@ -152,6 +170,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                     _actualIndice = nuevoIndice;
                     _tipos = []; // Limpiar catálogos al cambiar de sección
                     _filtroAplicado = "Todos"; // Resetear filtro
+                    _filtroEstadoAplicado = "Todos"; // Resetear ambos
                     _cargando = true;
                   });
                   _datosBaseDatos();
@@ -159,57 +178,104 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
               ),
             ),
 
-            GestureDetector(
-              onTap: () async {
-                // Forzar carga de catálogos si está vacía
-                if (_tipos.isEmpty) {
-                  // Mostrar indicador de carga rápido
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Cargando categorías...'), duration: Duration(milliseconds: 500)),
-                  );
-                  await _cargarTipos();
-                }
-                
-                final listaNombres = _tipos
-                    .map((t) => t['nombre']?.toString() ?? '')
-                    .where((n) => n.isNotEmpty)
-                    .toList();
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
+              child: Row(
+                children: [
+                  // Botón de Filtro de Categoría
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        if (_tipos.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Cargando categorías...'), duration: Duration(milliseconds: 500)),
+                          );
+                          await _cargarTipos();
+                        }
+                        
+                        final listaNombres = _tipos
+                            .map((t) => t['nombre']?.toString() ?? '')
+                            .where((n) => n.isNotEmpty)
+                            .toList();
 
-                if (mounted) {
-                  final String? seleccionado = await showModalBottomSheet<String>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Filtro(tipos: listaNombres);
-                    },
-                  );
+                        if (mounted) {
+                          final String? seleccionado = await showModalBottomSheet<String>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Filtro(tipos: listaNombres, titulo: "Categoría");
+                            },
+                          );
 
-                  if (seleccionado != null) {
-                    _aplicarFiltro(seleccionado);
-                  }
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
-                child: Container(
-                  decoration: ContainerStyles.sombreado,
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Text(
-                        "Filtro: $_filtroAplicado",
-                        style: TextEstilos.labelCard.copyWith(
-                          color: AppColores.foreground,
+                          if (seleccionado != null) {
+                            _aplicarFiltro(seleccionado);
+                          }
+                        }
+                      },
+                      child: Container(
+                        decoration: ContainerStyles.sombreado,
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _filtroAplicado,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.category, size: 20, color: Colors.blue),
+                          ],
                         ),
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.arrow_drop_down,
-                        size: 27,
-                        color: AppColores.foreground,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  // Botón de Filtro de Estado
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final String? seleccionado = await showModalBottomSheet<String>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Filtro(
+                              tipos: _nombresEstados.values.toList(),
+                              titulo: "Estado",
+                            );
+                          },
+                        );
+
+                        if (seleccionado != null) {
+                          final codigo = _nombresEstados.entries
+                              .firstWhere((e) => e.value == seleccionado, orElse: () => const MapEntry('Todos', 'Todos'))
+                              .key;
+                          _aplicarFiltroEstado(codigo);
+                        }
+                      },
+                      child: Container(
+                        decoration: ContainerStyles.sombreado,
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _nombresEstados[_filtroEstadoAplicado] ?? "Estado",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextEstilos.labelCard.copyWith(
+                                  fontSize: 12,
+                                  color: AppColores.foreground,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.settings_suggest, size: 20, color: Colors.orange),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -801,8 +867,9 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
 
 class Filtro extends StatefulWidget {
   final List tipos;
+  final String titulo;
 
-  const Filtro({super.key, required this.tipos});
+  const Filtro({super.key, required this.tipos, this.titulo = "Filtro"});
 
   @override
   State<Filtro> createState() => _FiltroState();
@@ -812,7 +879,7 @@ class _FiltroState extends State<Filtro> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(15),
+      padding: const EdgeInsets.all(15),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -820,7 +887,7 @@ class _FiltroState extends State<Filtro> {
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: Text(
-              "Seleccione un tipo:",
+              "Seleccione ${widget.titulo}:",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColores.foreground,
@@ -830,7 +897,7 @@ class _FiltroState extends State<Filtro> {
           const SizedBox(height: 10),
           ListTile(
             leading: Icon(Icons.all_inclusive, color: AppColores.primary),
-            title: Text("Quitar filtro"),
+            title: const Text("Mostrar Todos"),
             onTap: () {
               Navigator.pop(context, "Todos");
             },
@@ -838,7 +905,10 @@ class _FiltroState extends State<Filtro> {
           Divider(color: AppColores.primary.withValues(alpha: 0.3)),
           ...widget.tipos.map((tipo) {
             return ListTile(
-              leading: Icon(Icons.category, color: AppColores.primary),
+              leading: Icon(
+                widget.titulo == "Estado" ? Icons.settings_suggest : Icons.category,
+                color: AppColores.primary,
+              ),
               title: Text(tipo),
               onTap: () {
                 Navigator.pop(context, tipo);
