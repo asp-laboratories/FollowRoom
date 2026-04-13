@@ -60,14 +60,26 @@ class _TabSalonState extends State<TabSalon> {
         data = await _salonService.getSalonesConEstado();
       }
       setState(() {
-        salonesDB = data;
+        salonesDB = data.map((salon) {
+          final estadoSalon = salon['estado'];
+          String estadoNombre = '';
+          if (estadoSalon is Map) {
+            estadoNombre = estadoSalon['nombre']?.toString() ?? '';
+          } else {
+            estadoNombre = estadoSalon?.toString() ?? '';
+          }
+          return {
+            ...salon,
+            'precio': salon['costo'] ?? salon['precio'] ?? 0,
+            'capacidad': salon['maxCapacidad'] ?? salon['capacidad'] ?? 0,
+            'estado': estadoNombre,
+          };
+        }).toList();
         _cargando = false;
       });
     } catch (e) {
       print('Error al cargar salones: $e');
-      setState(() {
-        _cargando = false;
-      });
+      setState(() => _cargando = false);
     }
   }
 
@@ -80,13 +92,13 @@ class _TabSalonState extends State<TabSalon> {
   }
 
   bool _estaBloqueado(Map<String, dynamic> salon) {
-    String estado = salon['estado'] ?? '';
-    bool reservado = salon['reservado'] == true;
-    return reservado ||
-        estado == 'Ocupado' ||
-        estado == 'Reservado' ||
-        estado == 'En Limpieza' ||
-        estado == 'Mantenimiento';
+    final estado = salon['estado']?.toString().toUpperCase() ?? '';
+    return estado == 'RESV' ||
+        estado == 'RESERVADO' ||
+        estado == 'LIM' ||
+        estado == 'LIMPIEZA' ||
+        estado == 'NODIS' ||
+        estado == 'NO DISPONIBLE';
   }
 
   @override
@@ -311,7 +323,7 @@ class _TabSalonState extends State<TabSalon> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                NavigatorMontajeReservacion(),
+                                                NavigatorMontajeReservacion(idSalon: salonId,),
                                           ),
                                         );
                                     if (resultado != null) {

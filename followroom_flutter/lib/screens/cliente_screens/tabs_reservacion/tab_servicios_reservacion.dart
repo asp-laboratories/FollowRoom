@@ -53,6 +53,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
       print("tipo-servicio body: ${response.body}");
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        if (!mounted) return;
         setState(() {
           _tiposServicios = data
               .map((e) => e['nombre']?.toString() ?? '')
@@ -73,6 +74,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
       print("servicio response body: ${response.body}");
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        if (!mounted) return;
         setState(() {
           _serviciosDB = data
               .map(
@@ -107,6 +109,7 @@ class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
     });
 
     await Future.delayed(Duration(milliseconds: 500));
+    if (!mounted) return;
 
     final startIndex = _currentPage * _pageSize;
     final endIndex = (startIndex + _pageSize).clamp(0, _serviciosDB.length);

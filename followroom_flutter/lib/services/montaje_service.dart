@@ -25,7 +25,7 @@ class MontajeService {
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.get('/montaje/?salon=$salonId');
+      final response = await dio.get('/tipo-montaje/?salon=$salonId');
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
         return data.map((item) => Map<String, dynamic>.from(item)).toList();

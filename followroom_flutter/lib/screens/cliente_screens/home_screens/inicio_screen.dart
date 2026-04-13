@@ -37,32 +37,55 @@ class _ReservacionState extends State<Reservacion> {
     _cargarReservacionProxima();
   }
 
-  Future<void> _cargarPaquetes() async {
-    try {
-      final data = await _paqueteService.getPaquetes();
-      setState(() {
-        paquetesDB = data.map((item) {
-          final precio = int.tryParse(item['total']?.toString() ?? '0') ?? 0;
-          return {
-            'id': item['id'],
-            'nombre': item['nombre_paquete'] ?? 'Sin nombre',
-            'descripcion': item['descripEvento'] ?? 'Sin descripción',
-            'precio': precio,
-            'icono': Icons.card_giftcard,
-            'color': _colorBase,
-            'servicios': item['servicios'] ?? [],
-            'equipamentos': item['equipamentos'] ?? [],
-            'mobiliarios': item['mobiliarios'] ?? [],
-            'salon_id': item['salon_id'],
-            'salon_nombre': item['salon_nombre'],
-            'salon_precio': item['salon_precio'],
-            'salon_capacidad': item['salon_capacidad'],
-            'montaje_id': item['montaje_id'],
-            'montaje_nombre': item['montaje_nombre'],
-          };
-        }).toList();
-        _cargandoPaquetes = false;
-      });
+  final List<Color> _coloresPaquetes = [
+    Colors.blue,
+    Colors.purple,
+    Colors.teal,
+    Colors.orange,
+    Colors.pink,
+    Colors.indigo,
+  ];
+  final List<IconData> _iconosPaquetes = [
+    Icons.card_giftcard,
+    Icons.celebration,
+    Icons.star,
+    Icons.diamond,
+    Icons.workspace_premium,
+    Icons.auto_awesome,
+  ];
+Future<void> _cargarPaquetes() async {
+  try {
+    final data = await _paqueteService.getPaquetes();
+    setState(() {
+      paquetesDB = data.asMap().entries.map((entry) {
+        final i = entry.key;
+        final item = entry.value;
+      
+        final precioRaw = item['total'] ?? item['costo'] ?? item['precio'] ?? '0';
+        print(precioRaw);
+        final precio = double.tryParse(precioRaw.toString()) ?? 0;
+        print(precio);
+        
+        return {
+          'id': item['id'],
+          'nombre': item['nombre_paquete'] ?? item['nombre'] ?? 'Sin nombre',
+          
+          'descripcion': item['descripEvento'] ?? item['descripcion'] ?? 'Sin descripción',
+          
+          'precio': precio,
+          'color': _coloresPaquetes[i % _coloresPaquetes.length],
+          'icono': _iconosPaquetes[i % _iconosPaquetes.length],
+          'salon_nombre': item['salon_nombre'],
+          'salon_id': item['salon_id'],
+          'montaje_id': item['montaje_id'],
+          'montaje_nombre': item['montaje_nombre'],
+          'servicios': item['servicios'] ?? [],
+          'mobiliarios': item['mobiliarios'] ?? [],
+          'equipamentos': item['equipamentos'] ?? [],
+        };
+      }).toList();
+      _cargandoPaquetes = false;
+    });
     } catch (e) {
       print('Error al cargar paquetes: $e');
       setState(() {
@@ -300,7 +323,7 @@ class _ReservacionState extends State<Reservacion> {
             SizedBox(height: 24),
             CarouselSlider(
               options: CarouselOptions(
-                height: 320.0,
+                height: 380.0,
                 enlargeCenterPage: true,
                 viewportFraction: 0.85,
                 autoPlay: true,
@@ -393,54 +416,134 @@ class _ReservacionState extends State<Reservacion> {
                                 ],
                               ),
                               SizedBox(height: 16),
-                              Container(
-                                padding: EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Incluye:',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey.shade700,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      paquete['descripcion'] as String,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.black87,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (paquete['salon_nombre'] != null) ...[
-                                      SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            size: 12,
-                                            color: Colors.grey,
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Incluye:',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey.shade700,
                                           ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'Salón: ${paquete['salon_nombre']}',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
-                                            ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          paquete['descripcion'] as String,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black87,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if ((paquete['mobiliarios'] as List)
+                                            .isNotEmpty) ...[
+                                          SizedBox(height: 4),
+                                          ...(paquete['mobiliarios'] as List)
+                                              .take(2)
+                                              .map(
+                                                (m) => Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.chair,
+                                                      size: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      '${m['nombre']} (x${m['cantidad']})',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                        ],
+                                        if ((paquete['servicios'] as List)
+                                            .isNotEmpty) ...[
+                                          SizedBox(height: 4),
+                                          ...(paquete['servicios'] as List)
+                                              .take(2)
+                                              .map(
+                                                (s) => Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.people,
+                                                      size: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      s['nombre'] ?? '',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                        ],
+                                        if ((paquete['equipamentos'] as List)
+                                            .isNotEmpty) ...[
+                                          SizedBox(height: 4),
+                                          ...(paquete['equipamentos'] as List)
+                                              .take(2)
+                                              .map(
+                                                (e) => Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.laptop,
+                                                      size: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      '${e['nombre']} (x${e['cantidad']})',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                        ],
+                                        if (paquete['salon_nombre'] != null) ...[
+                                          SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.location_on,
+                                                size: 12,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Salón: ${paquete['salon_nombre']}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
-                                      ),
-                                    ],
-                                  ],
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 16),

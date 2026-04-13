@@ -3,7 +3,8 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/services/montaje_service.dart';
 
 class NavigatorMontajeReservacion extends StatefulWidget {
-  const NavigatorMontajeReservacion({super.key});
+  final int idSalon;
+  const NavigatorMontajeReservacion({super.key, required this.idSalon});
 
   @override
   State<NavigatorMontajeReservacion> createState() =>
@@ -24,13 +25,28 @@ class _NavigatorMontajeReservacionState
 
   Future<void> _cargarMontajes() async {
     try {
-      final data = await _montajeService.getMontajes();
+      final data = await _montajeService.getMontajesPorSalon(widget.idSalon);
+      final Map<String, Map<String, dynamic>> montajesUnicos = {};
+
+      for (var item in data) {
+        final nombre =
+            item['tipo_montaje_nombre'] ?? item['nombre'] ?? 'Sin nombre';
+        if (!montajesUnicos.containsKey(nombre)) {
+          montajesUnicos[nombre] = item;
+        }
+      }
+
+      if (!mounted) return;
+
       setState(() {
-        montajes = data;
+        montajes = montajesUnicos.values.toList();
         _cargando = false;
       });
     } catch (e) {
       print('Error al cargar montajes: $e');
+
+      if (!mounted) return;
+
       setState(() {
         _cargando = false;
       });

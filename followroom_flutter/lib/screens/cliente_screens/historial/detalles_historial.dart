@@ -83,16 +83,16 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
             }
             switch (codigo) {
               case 'SOLIC':
-                _progreso = 0.25;
+                _progreso = 0.25 * 0.30;
                 break;
               case 'PEN':
-                _progreso = 0.5;
+                _progreso = 0.5 * 0.30;
                 break;
               case 'CON':
-                _progreso = 0.75;
+                _progreso = 0.75 * 0.30;
                 break;
               case 'TERMI':
-                _progreso = 1.0;
+                _progreso = 1.0 * 0.30;
                 break;
               case 'CANCEL':
                 _progreso = 0.0;
@@ -100,6 +100,24 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
               default:
                 _progreso = 0.0;
             }
+
+            double aporteChecklist = 0.0;
+            final progresoValor = progresoData['progreso_checklist'];
+
+            if (progresoValor != null &&
+                progresoValor is num &&
+                progresoValor > 0) {
+              double valorApi = progresoValor.toDouble();
+              if (valorApi > 1.0) {
+                valorApi = valorApi / 100.0;
+              }
+
+              aporteChecklist = valorApi * 0.70;
+            }
+            _progreso = _progreso + aporteChecklist;
+
+            if (_progreso > 1.0) _progreso = 1.0;
+            if (_progreso < 0.0) _progreso = 0.0;
           }
         });
       }

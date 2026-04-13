@@ -266,6 +266,9 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               serviciosSeleccionados: serviciosSeleccionados,
               equipamientosSeleccionados: equipamientosSeleccionados,
               mobiliariosSeleccionados: mobiliariosSeleccionados,
+              onReservacionEnviada: () {
+                Navigator.pop(context);
+              },
             ),
           ],
         ),
