@@ -73,14 +73,48 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
         _datosMostrados = List.from(_datosObtenidos);
       } else {
         _datosMostrados = _datosObtenidos.where((item) {
-          if (_buscar) {
-            return item['equipamiento']?['tipo_equipa']?['nombre']
-                    ?.toString() ==
-                tipo;
+          // 1. Obtener el objeto base (mueble o equipo)
+          final dynamic baseData = _actualIndice == 0 
+              ? item['mobiliario'] 
+              : item['equipamiento'];
+          
+          if (baseData is! Map) return false;
+
+          // 2. Extraer el valor del Tipo buscando en múltiples nombres posibles
+          dynamic tipoValue;
+          if (_actualIndice == 0) {
+            tipoValue = baseData['tipo_movil'] ?? baseData['tipo'];
           } else {
-            return item['mobiliario']?['tipo_movil']?['nombre']?.toString() ==
-                tipo;
+            // Probamos todas las variaciones comunes de nombres de campo en Django
+            tipoValue = baseData['tipo_equipa'] ?? 
+                        baseData['tipo_equipamiento'] ?? 
+                        baseData['tipo_equipa_id'] ??
+                        baseData['tipo_id'] ??
+                        baseData['tipo'] ??
+                        baseData['categoria'];
           }
+
+          if (tipoValue == null) return false;
+
+          // 3. Comparación si es un objeto (depth=2 o to_representation anidado)
+          if (tipoValue is Map && tipoValue['nombre']?.toString() == tipo) {
+            return true;
+          }
+
+          // 4. NUEVO: Comparación si ya es un String (StringRelatedField de Django)
+          if (tipoValue is String && tipoValue == tipo) {
+            return true;
+          }
+
+          // 5. Comparación si es un ID (depth=1 o to_representation simple)
+          // Buscamos el nombre correspondiente a ese ID en nuestro catálogo local _tipos
+          final String idStr = tipoValue.toString();
+          final tipoEnCatalogo = _tipos.firstWhere(
+            (t) => t['id'].toString() == idStr,
+            orElse: () => {},
+          );
+          
+          return tipoEnCatalogo['nombre']?.toString() == tipo;
         }).toList();
       }
     });
@@ -101,11 +135,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_actualIndice == 0) {
-      _buscar = true;
-    } else {
-      _buscar = false;
-    }
+    _buscar = (_actualIndice == 0);
 
     return SingleChildScrollView(
       child: Container(
@@ -120,6 +150,8 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                 alSeleccionar: (int nuevoIndice) {
                   setState(() {
                     _actualIndice = nuevoIndice;
+                    _tipos = []; // Limpiar catálogos al cambiar de sección
+                    _filtroAplicado = "Todos"; // Resetear filtro
                     _cargando = true;
                   });
                   _datosBaseDatos();
@@ -129,22 +161,31 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
 
             GestureDetector(
               onTap: () async {
+                // Forzar carga de catálogos si está vacía
                 if (_tipos.isEmpty) {
+                  // Mostrar indicador de carga rápido
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cargando categorías...'), duration: Duration(milliseconds: 500)),
+                  );
                   await _cargarTipos();
                 }
+                
                 final listaNombres = _tipos
                     .map((t) => t['nombre']?.toString() ?? '')
+                    .where((n) => n.isNotEmpty)
                     .toList();
 
-                final String? seleccionado = await showModalBottomSheet<String>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Filtro(tipos: listaNombres);
-                  },
-                );
+                if (mounted) {
+                  final String? seleccionado = await showModalBottomSheet<String>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Filtro(tipos: listaNombres);
+                    },
+                  );
 
-                if (seleccionado != null) {
-                  _aplicarFiltro(seleccionado);
+                  if (seleccionado != null) {
+                    _aplicarFiltro(seleccionado);
+                  }
                 }
               },
               child: Padding(
@@ -208,10 +249,12 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                     ),
                                     child: SingleChildScrollView(
                                       child: Padding(
-                                        padding: EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(10),
                                         child: TarjetaMobiliarioElegante(
-                                          idMobiliario: 1,
-                                          equipamientoMobiliario: _buscar,
+                                          item: itemActual,
+                                          fullList: _datosObtenidos,
+                                          esEquipamiento: _actualIndice != 0,
+                                          onUpdate: _datosBaseDatos,
                                         ),
                                       ),
                                     ),
@@ -234,13 +277,13 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                       ),
                                       Expanded(
                                         child: Text(
-                                          _buscar
-                                              ? (itemActual['equipamiento']?['nombre']
-                                                        ?.toString() ??
-                                                    'Sin nombre')
-                                              : (itemActual['mobiliario']?['nombre']
-                                                        ?.toString() ??
-                                                    'Sin nombre'),
+                                          () {
+                                            final data = _actualIndice != 0
+                                                ? itemActual['equipamiento']
+                                                : itemActual['mobiliario'];
+                                            if (data is Map) return data['nombre']?.toString() ?? 'Sin nombre';
+                                            return 'ID: ${data.toString()}';
+                                          }(),
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.normal,
@@ -266,6 +309,35 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                           fontSize: 12,
                                           fontWeight: FontWeight.normal,
                                           color: AppColores.foreground,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColores.primary.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          () {
+                                            final data = _actualIndice != 0
+                                                ? itemActual['estado_equipa']
+                                                : itemActual['estado_mobil'];
+                                            if (data is Map) return data['nombre']?.toString() ?? 'N/A';
+                                            return data?.toString() ?? 'N/A';
+                                          }(),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: AppColores.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -296,35 +368,208 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
   }
 }
 
-class TarjetaMobiliarioElegante extends StatelessWidget {
-  final int idMobiliario;
-  final bool
-  equipamientoMobiliario; // Este nos dice si es equipamiento o mobiliario
+class TarjetaMobiliarioElegante extends StatefulWidget {
+  final Map<String, dynamic> item;
+  final List<dynamic> fullList;
+  final bool esEquipamiento;
+  final VoidCallback onUpdate;
 
-  TarjetaMobiliarioElegante({
+  const TarjetaMobiliarioElegante({
     super.key,
-    required this.idMobiliario,
-    required this.equipamientoMobiliario,
+    required this.item,
+    required this.fullList,
+    required this.esEquipamiento,
+    required this.onUpdate,
   });
 
-  // Logica para obtener datos del mobilairios
-  final String nombre = "silla fea";
-  final String urlImage =
-      "https://thumbs.dreamstime.com/z/silla-fea-maciza-aislada-en-el-fondo-blanco-101306793.jpg";
-  final List<Map<String, dynamic>> estaos = [
-    {'nombreEstado': "Disponible", 'cantidad': 12},
-    {'nombreEstado': "No disponible", 'cantidad': 12},
-    {'nombreEstado': "En reparacion", 'cantidad': 12},
-  ];
-  final List<Map<String, dynamic>> tipos = [
-    {'nombreEstado': "Diponible"},
-    {'nombreEstado': "En reparacion"},
-    {'nombreEstado': "No disponible"},
-    {'nombreEstado': "Descompuesta"},
-  ];
+  @override
+  State<TarjetaMobiliarioElegante> createState() =>
+      _TarjetaMobiliarioEleganteState();
+}
+
+class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
+  final InventarioService _inventarioService = InventarioService();
+  final TextEditingController _cantidadController = TextEditingController();
+
+  String? _estadoOrigen;
+  String? _estadoDestino;
+  bool _procesando = false;
+
+  final Map<String, String> _nombresEstados = {
+    'DISP': 'Disponible',
+    'NODISP': 'No disponible',
+    'REPAR': 'En reparación',
+    'DESCOMP': 'Descompuesta',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    final data = widget.esEquipamiento
+        ? widget.item['estado_equipa']
+        : widget.item['estado_mobil'];
+    
+    if (data is Map) {
+      _estadoOrigen = data['codigo']?.toString();
+    } else {
+      _estadoOrigen = data?.toString();
+    }
+  }
+
+  Future<void> _cambiarEstado() async {
+    if (_estadoDestino == null || _cantidadController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor complete todos los campos')),
+      );
+      return;
+    }
+
+    final int? cantidadMover = int.tryParse(_cantidadController.text);
+    final int cantidadActual = widget.item['cantidad'] ?? 0;
+
+    if (cantidadMover == null || cantidadMover <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cantidad no válida')),
+      );
+      return;
+    }
+
+    if (cantidadMover > cantidadActual) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cantidad mayor a la disponible')),
+      );
+      return;
+    }
+
+    setState(() => _procesando = true);
+
+    try {
+      // 1. Reducir cantidad del registro de ORIGEN
+      final int nuevaCantidadOrigen = cantidadActual - cantidadMover;
+      bool okOrigen = false;
+
+      if (widget.esEquipamiento) {
+        okOrigen = await _inventarioService.updateInventarioEquipa(
+          widget.item['id'],
+          nuevaCantidadOrigen,
+          _estadoOrigen!,
+        );
+      } else {
+        okOrigen = await _inventarioService.updateInventarioMob(
+          widget.item['id'],
+          nuevaCantidadOrigen,
+          _estadoOrigen!,
+        );
+      }
+
+      if (!okOrigen) throw Exception('Error al actualizar origen');
+
+      // 2. Aumentar cantidad del registro de DESTINO
+      // Buscamos si ya existe el elemento en ese estado en la lista completa
+      final int elementoBaseId = widget.esEquipamiento
+          ? (widget.item['equipamiento'] is Map
+              ? widget.item['equipamiento']['id']
+              : widget.item['equipamiento'])
+          : (widget.item['mobiliario'] is Map
+              ? widget.item['mobiliario']['id']
+              : widget.item['mobiliario']);
+
+      Map<String, dynamic>? itemDestino;
+      try {
+        itemDestino = widget.fullList.firstWhere((item) {
+          final itemMuebleId = widget.esEquipamiento
+              ? (item['equipamiento'] is Map
+                  ? item['equipamiento']['id']
+                  : item['equipamiento'])
+              : (item['mobiliario'] is Map
+                  ? item['mobiliario']['id']
+                  : item['mobiliario']);
+
+          final itemEstadoCod = widget.esEquipamiento
+              ? (item['estado_equipa'] is Map
+                  ? item['estado_equipa']['codigo']
+                  : item['estado_equipa'])
+              : (item['estado_mobil'] is Map
+                  ? item['estado_mobil']['codigo']
+                  : item['estado_mobil']);
+
+          return itemMuebleId == elementoBaseId &&
+              itemEstadoCod == _estadoDestino;
+        });
+      } catch (_) {
+        itemDestino = null; // No existe
+      }
+
+      bool okDestino = false;
+      if (itemDestino != null) {
+        // ACTUALIZAR (PATCH)
+        final int nuevaCantidadDestino =
+            (itemDestino['cantidad'] ?? 0) + cantidadMover;
+        if (widget.esEquipamiento) {
+          okDestino = await _inventarioService.updateInventarioEquipa(
+            itemDestino['id'],
+            nuevaCantidadDestino,
+            _estadoDestino!,
+          );
+        } else {
+          okDestino = await _inventarioService.updateInventarioMob(
+            itemDestino['id'],
+            nuevaCantidadDestino,
+            _estadoDestino!,
+          );
+        }
+      } else {
+        // CREAR (POST)
+        if (widget.esEquipamiento) {
+          okDestino = await _inventarioService.createInventarioEquipa(
+            elementoBaseId,
+            cantidadMover,
+            _estadoDestino!,
+          );
+        } else {
+          okDestino = await _inventarioService.createInventarioMob(
+            elementoBaseId,
+            cantidadMover,
+            _estadoDestino!,
+          );
+        }
+      }
+
+      if (!okDestino) throw Exception('Error al actualizar destino');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Movimiento realizado con éxito')),
+      );
+
+      widget.onUpdate();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _procesando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final String nombre = (() {
+      final data = widget.esEquipamiento
+          ? widget.item['equipamiento']
+          : widget.item['mobiliario'];
+      if (data is Map) return data['nombre']?.toString() ?? 'Sin nombre';
+      return 'ID: ${data.toString()}';
+    })();
+
+    final String estadoActualNombre = (() {
+      final data = widget.esEquipamiento
+          ? widget.item['estado_equipa']
+          : widget.item['estado_mobil'];
+      if (data is Map) return data['nombre']?.toString() ?? 'N/A';
+      return data?.toString() ?? 'N/A';
+    })();
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
@@ -342,31 +587,13 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const SizedBox(width: 24),
-
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      urlImage,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      },
-                    ),
-                  ),
+                  const Icon(Icons.inventory_2, size: 40, color: Colors.blue),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "${equipamientoMobiliario ? 'Mobiliario' : 'Equipamiento'}: $nombre",
+                      "${widget.esEquipamiento ? 'Equipamiento' : 'Mobiliario'}: $nombre",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColores.foreground,
                       ),
@@ -377,32 +604,13 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
               const SizedBox(height: 20),
               Divider(color: AppColores.primary.withValues(alpha: 0.3)),
               const SizedBox(height: 10),
-              Text(
-                "Estados:",
-                style: TextStyle(
-                  color: AppColores.foreground,
-                  fontWeight: FontWeight.w500,
-                ),
+              _buildInfoRow("Estado Actual", estadoActualNombre, Colors.blue),
+              _buildInfoRow(
+                "Cantidad Total",
+                widget.item['cantidad']?.toString() ?? '0',
+                Colors.green,
               ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: estaos.length,
-                itemBuilder: (context, index) {
-                  final itemActual = estaos[index];
-                  return _buildEstadoRow(
-                    context,
-                    itemActual['nombreEstado'],
-                    itemActual['cantidad'].toString(),
-                    index == 0
-                        ? Colors.green
-                        : index == (estaos.length - 1)
-                        ? Colors.red
-                        : Colors.orange,
-                  );
-                },
-              ),
+              const SizedBox(height: 10),
               Divider(color: AppColores.primary.withValues(alpha: 0.3)),
               const SizedBox(height: 10),
               Text(
@@ -417,22 +625,14 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _selectInput(
-                      context,
-                      "De (estado)",
-                      Icons.output_rounded,
-                      estaos,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: const Icon(Icons.arrow_forward, color: Colors.grey),
-                  ),
-                  Expanded(
-                    child: _selectInput(
-                      context,
                       "A (estado)",
                       Icons.input_rounded,
-                      tipos,
+                      _nombresEstados.entries
+                          .where((e) => e.key != _estadoOrigen)
+                          .map((e) => {'codigo': e.key, 'nombre': e.value})
+                          .toList(),
+                      _estadoDestino,
+                      (val) => setState(() => _estadoDestino = val),
                     ),
                   ),
                 ],
@@ -443,16 +643,16 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
                   SizedBox(
                     width: 110,
                     child: _buildSmallInput(
-                      context,
-                      "Total",
+                      "Cantidad",
                       Icons.numbers,
+                      controller: _cantidadController,
                       isNumber: true,
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: _procesando ? null : _cambiarEstado,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColores.primary,
                         foregroundColor: Colors.white,
@@ -461,11 +661,20 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      icon: const Icon(Icons.swap_horiz_rounded),
-                      label: const Text(
-                        "Cambiar Estado",
-                        style: TextStyle(
-                          fontSize: 16,
+                      icon: _procesando
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : const Icon(Icons.swap_horiz_rounded),
+                      label: Text(
+                        _procesando ? "Procesando..." : "Cambiar Estado",
+                        style: const TextStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -480,13 +689,7 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
     );
   }
 
-  // Widget para las filas de estado (con el punto de color)
-  Widget _buildEstadoRow(
-    BuildContext context,
-    String label,
-    String value,
-    Color color,
-  ) {
+  Widget _buildInfoRow(String label, String value, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -512,13 +715,15 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
   }
 
   Widget _selectInput(
-    BuildContext contex,
     String label,
     IconData icon,
-    List<Map<String, dynamic>> tipos,
+    List<Map<String, String>> opciones,
+    String? value,
+    ValueChanged<String?> onChanged,
   ) {
-    return DropdownButtonFormField(
+    return DropdownButtonFormField<String>(
       isExpanded: true,
+      value: value,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: AppColores.foreground),
@@ -534,41 +739,38 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
             color: AppColores.primary.withValues(alpha: 0.3),
           ),
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
             color: AppColores.primary.withValues(alpha: 0.3),
           ),
         ),
-
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
-      items: tipos.map((Map<String, dynamic> mapa) {
-        return DropdownMenuItem<dynamic>(
-          value: 4,
+      items: opciones.map((opcion) {
+        return DropdownMenuItem<String>(
+          value: opcion['codigo'],
           child: Text(
-            mapa['nombreEstado'].toString(),
+            opcion['nombre']!,
+            style: const TextStyle(fontSize: 14),
             overflow: TextOverflow.ellipsis,
           ),
         );
       }).toList(),
-      // ignore: non_constant_identifier_names
-      onChanged: (None) {},
+      onChanged: onChanged,
     );
   }
 
-  // Widget para los campos de texto modernos
   Widget _buildSmallInput(
-    BuildContext context,
     String label,
     IconData icon, {
+    required TextEditingController controller,
     bool isNumber = false,
   }) {
     return TextField(
+      controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: AppColores.foreground),
@@ -584,14 +786,12 @@ class TarjetaMobiliarioElegante extends StatelessWidget {
             color: AppColores.primary.withValues(alpha: 0.3),
           ),
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
             color: AppColores.primary.withValues(alpha: 0.3),
           ),
         ),
-
         filled: true,
         fillColor: Colors.grey.shade50,
       ),

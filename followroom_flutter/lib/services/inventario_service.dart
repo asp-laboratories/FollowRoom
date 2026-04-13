@@ -120,6 +120,58 @@ class InventarioService {
     }
   }
 
+  Future<bool> createInventarioMob(
+    int mobiliarioId,
+    int cantidad,
+    String estadoCodigo,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.post(
+        '/inventario-mob/',
+        data: {
+          'mobiliario': mobiliarioId,
+          'cantidad': cantidad,
+          'estado_mobil': estadoCodigo,
+        },
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error Django (Mob): ${e.response?.data}');
+        throw Exception('Error servidor: ${e.response?.data}');
+      }
+      return false;
+    }
+  }
+
+  Future<bool> createInventarioEquipa(
+    int equipamientoId,
+    int cantidad,
+    String estadoCodigo,
+  ) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.post(
+        '/inventarioequipa/',
+        data: {
+          'equipamiento': equipamientoId,
+          'cantidad': cantidad,
+          'estado_equipa': estadoCodigo,
+        },
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error Django (Equipa): ${e.response?.data}');
+        throw Exception('Error servidor: ${e.response?.data}');
+      }
+      return false;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getTiposMobil() async {
     try {
       var dio = Dio();
@@ -127,8 +179,14 @@ class InventarioService {
       final response = await dio.get('/tipo-mobil/');
 
       if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+        var data = response.data;
+        if (data is Map && data.containsKey('results')) {
+          data = data['results'];
+        }
+        if (data is List) {
+          return data.map((item) => Map<String, dynamic>.from(item)).toList();
+        }
+        return [];
       } else {
         throw Exception('Error al cargar tipos de mobiliario');
       }
@@ -142,11 +200,17 @@ class InventarioService {
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.get('/tipo-equipamiento/');
+      final response = await dio.get('/tipo-equipa/');
 
       if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+        var data = response.data;
+        if (data is Map && data.containsKey('results')) {
+          data = data['results'];
+        }
+        if (data is List) {
+          return data.map((item) => Map<String, dynamic>.from(item)).toList();
+        }
+        return [];
       } else {
         throw Exception('Error al cargar tipos de equipamiento');
       }
