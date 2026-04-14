@@ -76,49 +76,11 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
               progresoValor.toDouble() > 0) {
             _progreso = progresoValor.toDouble();
           } else {
-            final estado = _reservacion?['estado_reserva_datos'];
-            String codigo = '';
-            if (estado is Map) {
-              codigo = estado['codigo']?.toString() ?? '';
-            }
-            switch (codigo) {
-              case 'SOLIC':
-                _progreso = 0.25;
-                break;
-              case 'PEN':
-                _progreso = 0.5;
-                break;
-              case 'CON':
-                _progreso = 0.75;
-                break;
-              case 'TERMI':
-                _progreso = 1.0;
-                break;
-              case 'CANCEL':
-                _progreso = 0.0;
-                break;
-              default:
-                _progreso = 0.0;
-            }
-
-            double aporteChecklist = 0.0;
-            final progresoValor = progresoData['progreso_checklist'];
-
-            if (progresoValor != null &&
-                progresoValor is num &&
-                progresoValor > 0) {
-              double valorApi = progresoValor.toDouble();
-              if (valorApi > 1.0) {
-                valorApi = valorApi / 100.0;
-              }
-
-              aporteChecklist = valorApi * 0.70;
-            }
-            _progreso = _progreso + aporteChecklist;
-
-            if (_progreso > 1.0) _progreso = 1.0;
-            if (_progreso < 0.0) _progreso = 0.0;
+            _progreso = 0.0;
           }
+
+          if (_progreso > 1.0) _progreso = 1.0;
+          if (_progreso < 0.0) _progreso = 0.0;
         });
       }
     } catch (e) {
@@ -130,9 +92,12 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   }
 
   bool _esReservacionTerminada() {
-    return _getValue(_reservacion?['estado_reserva_datos'], 'codigo') ==
-            'CONF' ||
+    // Verifica por estado o por progreso 100%
+    final progresoCompleto = _progreso >= 1.0;
+    final estadoTerminado =
+        _getValue(_reservacion?['estado_reserva_datos'], 'codigo') == 'CONF' ||
         _getValue(_reservacion?['estado_reserva_datos'], 'codigo') == 'TERMI';
+    return estadoTerminado || progresoCompleto;
   }
 
   void _mostrarEncuesta() {

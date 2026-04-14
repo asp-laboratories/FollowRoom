@@ -336,6 +336,28 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                     ],
                                   ),
                                 ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: totalItems > 0
+                                        ? () => _aceptarSolicitud(
+                                            reservacion,
+                                            mobiliarios,
+                                            equipamentos,
+                                          )
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.check_circle),
+                                    label: const Text('Aceptar solicitudes'),
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -469,5 +491,72 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         }),
       ],
     );
+  }
+
+  Future<void> _aceptarSolicitud(
+    Map<String, dynamic> reservacion,
+    List mobiliarios,
+    List equipamentos,
+  ) async {
+    final mobiliariosIds = mobiliarios.map((m) => m['id'] as int).toList();
+    final equipamentosIds = equipamentos.map((e) => e['id'] as int).toList();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Aceptar solicitudes'),
+        content: const Text(
+          '¿Está seguro de aceptar las solicitudes extra? Esto aumentará el precio total de la reservación.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _loading = true;
+    });
+
+    final result = await _service.aceptarSolicitud(
+      reservacionId: reservacion['id'],
+      mobiliariosIds: mobiliariosIds,
+      equipamentosIds: equipamentosIds,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+    });
+
+    if (result != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Solicitudes aceptadas. Total adicional: \$${result['total_adicional']?.toStringAsFixed(2) ?? '0'}',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _cargarDatos();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al aceptar solicitudes'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

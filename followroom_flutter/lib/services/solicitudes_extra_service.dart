@@ -77,4 +77,39 @@ class SolicitudesExtraService {
       return false;
     }
   }
+
+  Future<Map<String, dynamic>?> aceptarSolicitud({
+    required int reservacionId,
+    List<int> mobiliariosIds = const [],
+    List<int> equipamentosIds = const [],
+  }) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+
+      final data = {
+        'mobiliarios_ids': mobiliariosIds,
+        'equipamentos_ids': equipamentosIds,
+      };
+
+      print('Aceptando solicitud $reservacionId: $data');
+      final response = await dio.post(
+        '/solicitudes-extra/$reservacionId/aceptar/',
+        data: data,
+      );
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      return null;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error: ${e.response?.statusCode} - ${e.response?.data}');
+      }
+      print('Error al aceptar solicitud: $e');
+      return null;
+    }
+  }
 }
