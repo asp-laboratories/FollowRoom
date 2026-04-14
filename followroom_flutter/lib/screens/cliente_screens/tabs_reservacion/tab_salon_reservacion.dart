@@ -73,6 +73,8 @@ class _TabSalonState extends State<TabSalon> {
             'precio': salon['costo'] ?? salon['precio'] ?? 0,
             'capacidad': salon['maxCapacidad'] ?? salon['capacidad'] ?? 0,
             'estado': estadoNombre,
+            'dimensiones': salon['dimensiones'] ?? 'No disponible',
+            'mtrCuad': salon['metrosCuadrados']?.toString() ?? "No disponible",
           };
         }).toList();
         _cargando = false;
@@ -98,7 +100,9 @@ class _TabSalonState extends State<TabSalon> {
         estado == 'LIM' ||
         estado == 'LIMPIEZA' ||
         estado == 'NODIS' ||
-        estado == 'NO DISPONIBLE';
+        estado == 'NO DISPONIBLE' ||
+        estado == 'RESER' ||
+        estado == 'Ocupado';
   }
 
   @override
@@ -314,6 +318,29 @@ class _TabSalonState extends State<TabSalon> {
                                   ],
                                 ),
                                 SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    if (salon['dimensiones'] !=
+                                        'No disponible') ...[
+                                      Icon(
+                                        Icons.square_foot,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "${salon['dimensiones']} - ",
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                      SizedBox(width: 20),
+                                      Text(
+                                        "${salon['mtrCuad']}",
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                SizedBox(height: 12),
                                 OutlinedButton.icon(
                                   onPressed: () async {
                                     final resultado =
@@ -323,7 +350,9 @@ class _TabSalonState extends State<TabSalon> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                NavigatorMontajeReservacion(idSalon: salonId,),
+                                                NavigatorMontajeReservacion(
+                                                  idSalon: salonId,
+                                                ),
                                           ),
                                         );
                                     if (resultado != null) {

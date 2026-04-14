@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/ip_config.dart';
@@ -359,43 +360,53 @@ class _TabEquipamientosReservacionState
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  onPressed: cantidad > 0
-                                      ? () => actualizarCantidad(
-                                          equipamiento,
-                                          cantidad - 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.remove_circle_outline),
-                                  color: cantidad > 0
-                                      ? AppColores.primary
-                                      : Colors.grey,
+                                WidgetCantidadElementos(
+                                  cantidadActual: cantidad,
+                                  stockMaximo: equipamiento['stock'] as int,
+                                  onChange: (nuevaCantidad) =>
+                                      actualizarCantidad(
+                                        equipamiento,
+                                        nuevaCantidad,
+                                      ),
                                 ),
-                                Container(
-                                  width: 40,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    "$cantidad",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed:
-                                      cantidad < (equipamiento['stock'] as int)
-                                      ? () => actualizarCantidad(
-                                          equipamiento,
-                                          cantidad + 1,
-                                        )
-                                      : null,
-                                  icon: Icon(Icons.add_circle_outline),
-                                  color:
-                                      cantidad < (equipamiento['stock'] as int)
-                                      ? AppColores.primary
-                                      : Colors.grey,
-                                ),
+                                // Ex-funcionamiento del boton
+                                // IconButton(
+                                //   onPressed: cantidad > 0
+                                //       ? () => actualizarCantidad(
+                                //           equipamiento,
+                                //           cantidad - 1,
+                                //         )
+                                //       : null,
+                                //   icon: Icon(Icons.remove_circle_outline),
+                                //   color: cantidad > 0
+                                //       ? AppColores.primary
+                                //       : Colors.grey,
+                                // ),
+                                // Container(
+                                //   width: 40,
+                                //   alignment: Alignment.center,
+                                //   child: Text(
+                                //     "$cantidad",
+                                //     style: TextStyle(
+                                //       fontSize: 18,
+                                //       fontWeight: FontWeight.bold,
+                                //     ),
+                                //   ),
+                                // ),
+                                // IconButton(
+                                //   onPressed:
+                                //       cantidad < (equipamiento['stock'] as int)
+                                //       ? () => actualizarCantidad(
+                                //           equipamiento,
+                                //           cantidad + 1,
+                                //         )
+                                //       : null,
+                                //   icon: Icon(Icons.add_circle_outline),
+                                //   color:
+                                //       cantidad < (equipamiento['stock'] as int)
+                                //       ? AppColores.primary
+                                //       : Colors.grey,
+                                // ),
                               ],
                             ),
                           ],

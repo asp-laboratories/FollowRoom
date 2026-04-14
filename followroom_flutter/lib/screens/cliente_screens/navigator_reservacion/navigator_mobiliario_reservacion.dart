@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/mobiliario_service.dart';
@@ -241,11 +242,11 @@ class _NavigatorMobiliarioReservacionState
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb, color: Colors.orange, size: 18),
+              Icon(Icons.lightbulb, color: Colors.orange, size: 20),
               SizedBox(width: 4),
               Text(
                 "Sugerencias del montaje",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -255,7 +256,7 @@ class _NavigatorMobiliarioReservacionState
               style: TextStyle(
                 color: Colors.orange,
                 fontWeight: FontWeight.bold,
-                fontSize: 11,
+                fontSize: 13,
               ),
             ),
           SizedBox(height: 8),
@@ -263,7 +264,7 @@ class _NavigatorMobiliarioReservacionState
             (m) => Text(
               "- ${m['nombre']} (sug: x${m['cantidad_sugerida']}) Disp: ${m['disponible']}",
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 color: m['es_insuficiente'] == true
                     ? Colors.orange
                     : AppColores.foreground,
@@ -319,7 +320,7 @@ class _NavigatorMobiliarioReservacionState
         children: [
           Text(
             "Mobiliarios seleccionados",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           SizedBox(height: 8),
           ...widget.mobiliariosIniciales.map(
@@ -384,7 +385,7 @@ class _NavigatorMobiliarioReservacionState
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             "Catálogo de mobiliarios:",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
         ListView.builder(
@@ -425,7 +426,25 @@ class _NavigatorMobiliarioReservacionState
                         ),
                         Text(
                           mob['tipo_nombre'] ?? '',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        Text(
+                          mob['descripcion'] ?? '',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        Row(
+                          children: [
+                            if (mob['caracteristicas'] != null)
+                              ...mob['caracteristicas'].take(2).map((carac) {
+                                return Text(
+                                  "- $carac ",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              }),
+                          ],
                         ),
                         Row(
                           children: [
@@ -438,9 +457,9 @@ class _NavigatorMobiliarioReservacionState
                             ),
                             SizedBox(width: 8),
                             Text(
-                              "Stock: ${mob['stock'] ?? 0}",
+                              "Stock disponible: ${mob['stockDisponible'] ?? 0}",
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 color: Colors.grey,
                               ),
                             ),
@@ -451,25 +470,32 @@ class _NavigatorMobiliarioReservacionState
                   ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: Icon(Icons.remove_circle_outline),
-                        onPressed: cantidad > 0
-                            ? () => actualizarCantidad(mob, cantidad - 1)
-                            : null,
-                        color: AppColores.primary,
+                      WidgetCantidadElementos(
+                        cantidadActual: cantidad,
+                        stockMaximo: mob['stockDisponible'],
+                        onChange: (nuevaCantidad) =>
+                            actualizarCantidad(mob, nuevaCantidad),
                       ),
-                      Text(
-                        "$cantidad",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add_circle_outline),
-                        onPressed: () => actualizarCantidad(mob, cantidad + 1),
-                        color: AppColores.primary,
-                      ),
+
+                      // IconButton(
+                      //   icon: Icon(Icons.remove_circle_outline),
+                      //   onPressed: cantidad > 0
+                      //       ? () => actualizarCantidad(mob, cantidad - 1)
+                      //       : null,
+                      //   color: AppColores.primary,
+                      // ),
+                      // Text(
+                      //   "$cantidad",
+                      //   style: TextStyle(
+                      //     fontWeight: FontWeight.bold,
+                      //     fontSize: 16,
+                      //   ),
+                      // ),
+                      // IconButton(
+                      //   icon: Icon(Icons.add_circle_outline),
+                      //   onPressed: () => actualizarCantidad(mob, cantidad + 1),
+                      //   color: AppColores.primary,
+                      // ),
                     ],
                   ),
                 ],

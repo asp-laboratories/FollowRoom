@@ -3,7 +3,7 @@ import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:followroom_flutter/services/servicio_service.dart';
+// import 'package:followroom_flutter/services/servicio_service.dart';
 import 'package:followroom_flutter/services/ip_config.dart';
 
 class TabServiciosReservacion extends StatefulWidget {
@@ -22,7 +22,7 @@ class TabServiciosReservacion extends StatefulWidget {
 }
 
 class _TabServiciosReservacionState extends State<TabServiciosReservacion> {
-  final ServicioService _servicioService = ServicioService();
+  // final ServicioService _servicioService = ServicioService();
   final int _pageSize = 10;
   int _currentPage = 0;
   bool _isLoadingMore = false;

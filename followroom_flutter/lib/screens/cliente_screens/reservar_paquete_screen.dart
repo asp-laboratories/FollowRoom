@@ -6,6 +6,7 @@ import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_datos_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_resumen_reservacion.dart';
 import 'package:followroom_flutter/screens/cliente_screens/tabs_reservacion/tab_total_reservacion.dart';
+import 'package:followroom_flutter/services/ip_config.dart';
 import 'package:followroom_flutter/services/salon_service.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
 import 'package:followroom_flutter/services/session_data.dart';
@@ -292,7 +293,7 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
 }
 
 class _ClienteService {
-  static const String baseUrl = 'http://192.168.1.69/api';
+  static const String baseUrl = 'http://${IpConfig.ip}/api';
 
   Future<Map<String, dynamic>?> getDatosCliente(String email) async {
     try {

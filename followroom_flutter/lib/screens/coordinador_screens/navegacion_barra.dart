@@ -209,22 +209,22 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
               items: const [
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
-                  icon: Icon(Icons.work_outline, size: 24, color: Colors.white),
+                  icon: Icon(Icons.work_outline, size: 22, color: Colors.white),
                   label: "Panel",
-                  activeIcon: Icon(Icons.work, size: 32, color: Colors.white),
+                  activeIcon: Icon(Icons.work, size: 30, color: Colors.white),
                   tooltip: ("Ir al panel"),
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: AppColores.primary,
                   icon: Icon(
                     Icons.notifications_outlined,
-                    size: 24,
+                    size: 22,
                     color: Colors.white,
                   ),
                   label: "Solicitudes",
                   activeIcon: Icon(
                     Icons.notifications,
-                    size: 32,
+                    size: 30,
                     color: Colors.white,
                   ),
                   tooltip: ("Ir a solicitudes"),
@@ -233,12 +233,12 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
                   backgroundColor: AppColores.primary,
                   icon: Icon(
                     Icons.meeting_room_outlined,
-                    size: 24,
+                    size: 22,
                     color: Colors.white,
                   ),
                   activeIcon: Icon(
                     Icons.meeting_room,
-                    size: 32,
+                    size: 30,
                     color: Colors.white,
                   ),
                   label: "Salones",
@@ -248,13 +248,13 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
                   backgroundColor: AppColores.primary,
                   icon: Icon(
                     Icons.description_outlined,
-                    size: 24,
+                    size: 22,
                     color: Colors.white,
                   ),
                   label: "Manual de garantias",
                   activeIcon: Icon(
                     Icons.description,
-                    size: 32,
+                    size: 30,
                     color: Colors.white,
                   ),
                   tooltip: ("Ir a Manual de Garantias"),
@@ -263,11 +263,11 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
                   backgroundColor: AppColores.primary,
                   icon: Icon(
                     Icons.person_outline,
-                    size: 24,
+                    size: 22,
                     color: Colors.white,
                   ),
                   label: "Perfil",
-                  activeIcon: Icon(Icons.person, size: 32, color: Colors.white),
+                  activeIcon: Icon(Icons.person, size: 30, color: Colors.white),
                   tooltip: ("Ir al perfil"),
                 ),
               ],

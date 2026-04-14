@@ -38,6 +38,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Error al cargar solicitudes: $e';
         _loading = false;

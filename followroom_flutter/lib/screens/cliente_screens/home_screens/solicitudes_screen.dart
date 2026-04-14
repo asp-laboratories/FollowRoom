@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:buttons_tabbar/buttons_tabbar.dart';
+import 'package:followroom_flutter/components/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/mobiliario_service.dart';
@@ -824,6 +825,22 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                               ),
                               Row(
                                 children: [
+                                  if (item['caracteristicas'] != null)
+                                    ...item['caracteristicas'].take(2).map((
+                                      carac,
+                                    ) {
+                                      return Text(
+                                        "- $carac ",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    }),
+                                ],
+                              ),
+                              Row(
+                                children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
@@ -862,47 +879,60 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         ),
                         Row(
                           children: [
-                            IconButton(
-                              onPressed: cantidad > 0
-                                  ? () {
-                                      final originalIndex = _mobiliario.indexOf(
-                                        item,
-                                      );
-                                      _actualizarCantidad(
-                                        _mobiliario,
-                                        originalIndex,
-                                        cantidad - 1,
-                                      );
-                                    }
-                                  : null,
-                              icon: Icon(
-                                Icons.remove_circle_outline,
-                                color: cantidad > 0
-                                    ? AppColores.primary
-                                    : Colors.grey,
-                              ),
-                            ),
-                            Text(
-                              '$cantidad',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
+                            WidgetCantidadElementos(
+                              cantidadActual: cantidad,
+                              stockMaximo:
+                                  item['stockDisponible'] ?? item['stock'] ?? 0,
+                              onChange: (nuevaCantidad) {
                                 final originalIndex = _mobiliario.indexOf(item);
                                 _actualizarCantidad(
                                   _mobiliario,
                                   originalIndex,
-                                  cantidad + 1,
+                                  nuevaCantidad,
                                 );
                               },
-                              icon: const Icon(
-                                Icons.add_circle_outline,
-                                color: AppColores.primary,
-                              ),
                             ),
+                            // IconButton(
+                            //   onPressed: cantidad > 0
+                            //       ? () {
+                            //           final originalIndex = _mobiliario.indexOf(
+                            //             item,
+                            //           );
+                            //           _actualizarCantidad(
+                            //             _mobiliario,
+                            //             originalIndex,
+                            //             cantidad - 1,
+                            //           );
+                            //         }
+                            //       : null,
+                            //   icon: Icon(
+                            //     Icons.remove_circle_outline,
+                            //     color: cantidad > 0
+                            //         ? AppColores.primary
+                            //         : Colors.grey,
+                            //   ),
+                            // ),
+                            // Text(
+                            //   '$cantidad',
+                            //   style: const TextStyle(
+                            //     fontWeight: FontWeight.bold,
+                            //     fontSize: 16,
+                            //   ),
+                            // ),
+                            // IconButton(
+                            //   onPressed: () {
+                            //     final originalIndex = _mobiliario.indexOf(item);
+                            //     _actualizarCantidad(
+                            //       _mobiliario,
+                            //       originalIndex,
+                            //       cantidad + 1,
+                            //     );
+                            //   },
+                            //   icon: const Icon(
+                            //     Icons.add_circle_outline,
+                            //     color: AppColores.primary,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ],
@@ -1084,48 +1114,63 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         ),
                         Row(
                           children: [
-                            IconButton(
-                              onPressed: cantidad > 0
-                                  ? () {
-                                      final originalIndex = _equipamiento
-                                          .indexOf(item);
-                                      _actualizarCantidad(
-                                        _equipamiento,
-                                        originalIndex,
-                                        cantidad - 1,
-                                      );
-                                    }
-                                  : null,
-                              icon: Icon(
-                                Icons.remove_circle_outline,
-                                color: cantidad > 0
-                                    ? AppColores.primary
-                                    : Colors.grey,
-                              ),
-                            ),
-                            Text(
-                              '$cantidad',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
+                            WidgetCantidadElementos(
+                              cantidadActual: cantidad,
+                              stockMaximo:
+                                  item['stockDisponible'] ?? item['stock'] ?? 0,
+                              onChange: (nuevaCantidad) {
                                 final originalIndex = _equipamiento.indexOf(
                                   item,
                                 );
                                 _actualizarCantidad(
                                   _equipamiento,
                                   originalIndex,
-                                  cantidad + 1,
+                                  nuevaCantidad,
                                 );
                               },
-                              icon: const Icon(
-                                Icons.add_circle_outline,
-                                color: AppColores.primary,
-                              ),
                             ),
+                            // IconButton(
+                            //   onPressed: cantidad > 0
+                            //       ? () {
+                            //           final originalIndex = _equipamiento
+                            //               .indexOf(item);
+                            //           _actualizarCantidad(
+                            //             _equipamiento,
+                            //             originalIndex,
+                            //             cantidad - 1,
+                            //           );
+                            //         }
+                            //       : null,
+                            //   icon: Icon(
+                            //     Icons.remove_circle_outline,
+                            //     color: cantidad > 0
+                            //         ? AppColores.primary
+                            //         : Colors.grey,
+                            //   ),
+                            // ),
+                            // Text(
+                            //   '$cantidad',
+                            //   style: const TextStyle(
+                            //     fontWeight: FontWeight.bold,
+                            //     fontSize: 16,
+                            //   ),
+                            // ),
+                            // IconButton(
+                            //   onPressed: () {
+                            //     final originalIndex = _equipamiento.indexOf(
+                            //       item,
+                            //     );
+                            //     _actualizarCantidad(
+                            //       _equipamiento,
+                            //       originalIndex,
+                            //       cantidad + 1,
+                            //     );
+                            //   },
+                            //   icon: const Icon(
+                            //     Icons.add_circle_outline,
+                            //     color: AppColores.primary,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ],

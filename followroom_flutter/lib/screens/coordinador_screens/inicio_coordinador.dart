@@ -42,6 +42,7 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
         _cargando = false;
       });
     } catch (e) {
+      if(!mounted) return;
       setState(() {
         _cargando = false;
         _error = 'Error al cargar reservaciones';

@@ -83,16 +83,16 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
             }
             switch (codigo) {
               case 'SOLIC':
-                _progreso = 0.25 * 0.30;
+                _progreso = 0.25;
                 break;
               case 'PEN':
-                _progreso = 0.5 * 0.30;
+                _progreso = 0.5;
                 break;
               case 'CON':
-                _progreso = 0.75 * 0.30;
+                _progreso = 0.75;
                 break;
               case 'TERMI':
-                _progreso = 1.0 * 0.30;
+                _progreso = 1.0;
                 break;
               case 'CANCEL':
                 _progreso = 0.0;

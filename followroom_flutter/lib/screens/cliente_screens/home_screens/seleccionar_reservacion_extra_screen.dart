@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:followroom_flutter/services/reservacion_service.dart';
-import 'package:followroom_flutter/screens/cliente_screens/home_screens/solicitudes_screen.dart';
+// import 'package:followroom_flutter/screens/cliente_screens/home_screens/solicitudes_screen.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 

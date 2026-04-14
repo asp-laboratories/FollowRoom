@@ -10,7 +10,7 @@ import 'package:followroom_flutter/screens/cliente_screens/navigator_reservacion
 import 'package:followroom_flutter/screens/cliente_screens/reservar_paquete_screen.dart';
 import 'package:followroom_flutter/services/paquete_service.dart';
 import 'package:followroom_flutter/services/historial_service.dart';
-import 'package:followroom_flutter/services/session_data.dart';
+// import 'package:followroom_flutter/services/session_data.dart';
 
 class Reservacion extends StatefulWidget {
   const Reservacion({super.key});
@@ -28,7 +28,6 @@ class _ReservacionState extends State<Reservacion> {
   String? _errorPaquetes;
   String? _errorReservacion;
   Map<String, dynamic>? _reservacionProxima;
-  final Color _colorBase = Colors.blue;
 
   @override
   void initState() {
@@ -320,7 +319,7 @@ Future<void> _cargarPaquetes() async {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 12),
             CarouselSlider(
               options: CarouselOptions(
                 height: 380.0,
@@ -429,15 +428,6 @@ Future<void> _cargarPaquetes() async {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          'Incluye:',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
                                           paquete['descripcion'] as String,
                                           style: TextStyle(
                                             fontSize: 13,
@@ -445,6 +435,15 @@ Future<void> _cargarPaquetes() async {
                                           ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          'Incluye:',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey.shade700,
+                                          ),
                                         ),
                                         if ((paquete['mobiliarios'] as List)
                                             .isNotEmpty) ...[

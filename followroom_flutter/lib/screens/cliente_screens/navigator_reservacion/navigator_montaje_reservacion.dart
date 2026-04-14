@@ -90,11 +90,23 @@ class _NavigatorMontajeReservacionState
                           'Sin nombre',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      mobiliarios.isNotEmpty
-                          ? "${mobiliarios.length} mobiliarios sugeridos"
-                          : "Sin mobiliarios",
-                      style: TextStyle(fontSize: 12),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tipo['descripcion'] ?? 'Sin descripción adicional',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          mobiliarios.isNotEmpty
+                              ? "${mobiliarios.length} mobiliarios sugeridos"
+                              : "Sin mobiliarios",
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
                     ),
                     trailing: Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
