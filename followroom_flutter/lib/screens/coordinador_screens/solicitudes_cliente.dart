@@ -570,71 +570,91 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
     List mobiliarios,
     List equipamentos,
   ) async {
-    final mobiliariosIds = mobiliarios.map((m) => m['id'] as int).toList();
-    final equipamentosIds = equipamentos.map((e) => e['id'] as int).toList();
+    try {
+      // Conversión segura de IDs para evitar errores de tipo (int vs String vs double)
+      final mobiliariosIds = mobiliarios
+          .map((m) => int.parse(m['id'].toString()))
+          .toList();
+      final equipamentosIds = equipamentos
+          .map((e) => int.parse(e['id'].toString()))
+          .toList();
+      final reservacionId = int.parse(reservacion['id'].toString());
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Aceptar solicitudes'),
-        content: const Text(
-          '¿Está seguro de aceptar las solicitudes extra? Esto aumentará el precio total de la reservación.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Aceptar solicitudes'),
+          content: const Text(
+            '¿Está seguro de aceptar las solicitudes extra? Esto aumentará el precio total de la reservación.',
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Aceptar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() {
-      _loading = true;
-    });
-
-    print('Llamando aceptarSolicitud para reservación ${reservacion['id']}');
-    print('mobiliariosIds: $mobiliariosIds');
-    print('equipamentosIds: $equipamentosIds');
-
-    final result = await _service.aceptarSolicitud(
-      reservacionId: reservacion['id'],
-      mobiliariosIds: mobiliariosIds,
-      equipamentosIds: equipamentosIds,
-    );
-
-    print('Resultado: $result');
-
-    if (!mounted) return;
-
-    setState(() {
-      _loading = false;
-    });
-
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Solicitudes aceptadas. Total adicional: \$${result['total_adicional']?.toStringAsFixed(2) ?? '0'}',
-          ),
-          backgroundColor: Colors.green,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Aceptar'),
+            ),
+          ],
         ),
       );
-      _cargarDatos();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al aceptar solicitudes'),
-          backgroundColor: Colors.red,
-        ),
+
+      if (confirm != true) return;
+
+      setState(() {
+        _loading = true;
+      });
+
+      print('Llamando aceptarSolicitud para reservación $reservacionId');
+      print('mobiliariosIds: $mobiliariosIds');
+      print('equipamentosIds: $equipamentosIds');
+
+      final result = await _service.aceptarSolicitud(
+        reservacionId: reservacionId,
+        mobiliariosIds: mobiliariosIds,
+        equipamentosIds: equipamentosIds,
       );
+
+      print('Resultado: $result');
+
+      if (!mounted) return;
+
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Solicitudes aceptadas. Total adicional: \$${result['total_adicional']?.toStringAsFixed(2) ?? '0'}',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _cargarDatos();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al aceptar solicitudes en el servidor'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Excepción en _aceptarSolicitud: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de sistema: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 }
