@@ -13,6 +13,7 @@ class TabSalon extends StatefulWidget {
   final Map<int, List<Map<String, dynamic>>> mobiliariosPorSalon;
   final Function(int, List<Map<String, dynamic>>) onMobiliariosChanged;
   final String? fechaSeleccionada;
+  final int? asistentes;
 
   const TabSalon({
     super.key,
@@ -23,13 +24,15 @@ class TabSalon extends StatefulWidget {
     required this.mobiliariosPorSalon,
     required this.onMobiliariosChanged,
     this.fechaSeleccionada,
+    this.asistentes,
   });
 
   @override
   State<TabSalon> createState() => _TabSalonState();
 }
 
-class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin {
+class _TabSalonState extends State<TabSalon>
+    with AutomaticKeepAliveClientMixin {
   final SalonService _salonService = SalonService();
   List<Map<String, dynamic>> salonesDB = [];
   bool _cargando = true;
@@ -40,16 +43,38 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
   @override
   void initState() {
     super.initState();
-    print('TabSalon: initState - fecha: ${widget.fechaSeleccionada}');
+    // print('TabSalon: initState - fecha: ${widget.fechaSeleccionada}');
     _cargarSalones();
   }
 
   @override
   void didUpdateWidget(TabSalon oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (widget.fechaSeleccionada != oldWidget.fechaSeleccionada) {
-      print('TabSalon: actualizando fecha de ${oldWidget.fechaSeleccionada} a ${widget.fechaSeleccionada}');
       _cargarSalones();
+    }
+
+    if (widget.salonSeleccionado != null) {
+      if (widget.asistentes != oldWidget.asistentes) {
+        final capacidadSalon =
+            int.tryParse(widget.salonSeleccionado!['capacidad'].toString()) ??
+            0;
+
+        if (_comprobarCapacidad(capacidadSalon)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Se deseleccionó el salón debido al cambio de asistentes",
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            widget.onSalonSelected(null);
+          });
+        }
+      }
     }
   }
 
@@ -59,8 +84,8 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
     });
     try {
       List<Map<String, dynamic>> data;
-      print('TabSalon: Cargando salones para fecha: ${widget.fechaSeleccionada}');
-      
+      // print('TabSalon: Cargando salones para fecha: ${widget.fechaSeleccionada}');
+
       if (widget.fechaSeleccionada != null &&
           widget.fechaSeleccionada!.isNotEmpty) {
         data = await _salonService.getSalonesDisponibles(
@@ -69,11 +94,11 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
       } else {
         data = await _salonService.getSalonesConEstado();
       }
-      
+
       if (mounted) {
         setState(() {
           salonesDB = data.map((salon) {
-            print('TabSalon: Salon ${salon['nombre']} - disponible: ${salon['disponible']} - estado: ${salon['estado']}');
+            // print('TabSalon: Salon ${salon['nombre']} - disponible: ${salon['disponible']} - estado: ${salon['estado']}');
             final estadoSalon = salon['estado'];
             String estadoNombre = '';
             if (estadoSalon is Map) {
@@ -87,14 +112,35 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
               'capacidad': salon['maxCapacidad'] ?? salon['capacidad'] ?? 0,
               'estado': estadoNombre,
               'dimensiones': salon['dimensiones'] ?? 'No disponible',
-              'mtrCuad': salon['metrosCuadrados']?.toString() ?? "No disponible",
+              'mtrCuad':
+                  salon['metrosCuadrados']?.toString() ?? "No disponible",
             };
           }).toList();
           _cargando = false;
         });
+
+        if (widget.salonSeleccionado != null) {
+          final salonAcutalizado = salonesDB.firstWhere(
+            (s) => s['id'] == widget.salonSeleccionado!['id'],
+            orElse: () => {},
+          );
+          if (salonAcutalizado.isEmpty || _estaBloqueado(salonAcutalizado)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "El salón seleccionado no está disponible en esta nueva fecha",
+                  ),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              widget.onSalonSelected(null);
+            });
+          }
+        }
       }
     } catch (e) {
-      print('Error al cargar salones: $e');
+      // print('Error al cargar salones: $e');
       if (mounted) {
         setState(() => _cargando = false);
       }
@@ -111,19 +157,26 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
 
   bool _estaBloqueado(Map<String, dynamic> salon) {
     // Si la API retorna un campo 'disponible' (bool), lo priorizamos
-    if (salon.containsKey('disponible')) {
-      return !(salon['disponible'] as bool);
+    if (salon['estado'] != null && salon['estado'] == 'Disponible') {
+      return false;
     }
-    
+
     // Si no, fallback al nombre del estado
-    final estado = salon['estado']?.toString().toUpperCase() ?? '';
-    return estado != 'DISPONIBLE' && estado != 'DISP';
+    final estado = salon['estado_codigo']?.toString().toUpperCase() ?? '';
+    return estado != 'DISPONIBLE' || estado != 'DISP' || estado != 'DIS';
+  }
+
+  bool _comprobarCapacidad(int capacidadSalon) {
+    if (widget.asistentes == null) {
+      return false;
+    }
+    return capacidadSalon < widget.asistentes!;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    print('TabSalon: building - fechaSeleccionada: ${widget.fechaSeleccionada}');
+    // print('TabSalon: building - fechaSeleccionada: ${widget.fechaSeleccionada}');
     final bool haySalonSeleccionado = widget.salonSeleccionado != null;
 
     return SingleChildScrollView(
@@ -250,6 +303,7 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
                   final String? montaje = getMontajeDelSalon(salonId);
                   final List<Map<String, dynamic>> mobiliariosDelSalon =
                       getMobiliariosDelSalon(salonId);
+                  // print(salon);
 
                   return Container(
                     margin: EdgeInsets.only(bottom: 12),
@@ -260,11 +314,21 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
                         borderRadius: BorderRadius.circular(12),
                         onTap: _estaBloqueado(salon)
                             ? null
+                            : _comprobarCapacidad(
+                                int.parse(salon['capacidad'].toString()),
+                              )
+                            ? null
                             : () => widget.onSalonSelected(salon),
                         child: Padding(
                           padding: EdgeInsets.all(12),
                           child: Opacity(
-                            opacity: _estaBloqueado(salon) ? 0.5 : 1.0,
+                            opacity: _estaBloqueado(salon)
+                                ? 0.5
+                                : _comprobarCapacidad(
+                                    int.parse(salon['capacidad'].toString()),
+                                  )
+                                ? 0.75
+                                : 1.0,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -307,11 +371,39 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
                                           ),
                                         ),
                                         child: Text(
-                                          'NO DISPONIBLE',
+                                          'NO DISPONIBLE EL DIA SELECCIONADO',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.red,
+                                          ),
+                                        ),
+                                      )
+                                    else if (_comprobarCapacidad(
+                                      int.parse(salon['capacidad'].toString()),
+                                    ))
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'NO RECOMENDABLE PARA \nLA CANTIDAD DE ASISTENTES',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange,
                                           ),
                                         ),
                                       ),
@@ -374,78 +466,96 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
                                       ),
                                       SizedBox(width: 4),
                                       Text(
-                                        "${salon['dimensiones']} - ",
+                                        "${salon['dimensiones']}",
                                         style: TextStyle(color: Colors.grey),
                                       ),
-                                      SizedBox(width: 20),
+                                      SizedBox(width: 5),
                                       Text(
-                                        "${salon['mtrCuad']}",
+                                        " - ",
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        "${salon['mtrCuad']}m²",
                                         style: TextStyle(color: Colors.grey),
                                       ),
                                     ],
                                   ],
                                 ),
                                 SizedBox(height: 12),
-                                OutlinedButton.icon(
-                                  onPressed: _estaBloqueado(salon)
-                                      ? null
-                                      : () async {
-                                    final resultado =
-                                        await Navigator.push<
-                                          Map<String, dynamic>
-                                        >(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                NavigatorMontajeReservacion(
-                                                  idSalon: salonId,
-                                                ),
-                                          ),
-                                        );
-                                    if (resultado != null) {
-                                      widget.onMontajeSelected(
-                                        salonId,
-                                        '${resultado['nombre'] ?? ''}-${resultado['id'] ?? ''}',
-                                      );
-                                      final mobiliariosSugeridos =
-                                          (resultado['mobiliarios_sugeridos']
-                                                  as List?)
-                                              ?.map(
-                                                (e) =>
-                                                    Map<String, dynamic>.from(
-                                                      e,
+                                Row(
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: _estaBloqueado(salon)
+                                          ? null
+                                          : _comprobarCapacidad(
+                                              int.parse(
+                                                salon['capacidad'].toString(),
+                                              ),
+                                            )
+                                          ? null
+                                          : () async {
+                                              final resultado =
+                                                  await Navigator.push<
+                                                    Map<String, dynamic>
+                                                  >(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          NavigatorMontajeReservacion(
+                                                            idSalon: salonId,
+                                                          ),
                                                     ),
-                                              )
-                                              .toList() ??
-                                          [];
+                                                  );
+                                              if (resultado != null) {
+                                                widget.onMontajeSelected(
+                                                  salonId,
+                                                  '${resultado['nombre'] ?? ''}-${resultado['id'] ?? ''}',
+                                                );
+                                                final mobiliariosSugeridos =
+                                                    (resultado['mobiliarios_sugeridos']
+                                                            as List?)
+                                                        ?.map(
+                                                          (e) =>
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(e),
+                                                        )
+                                                        .toList() ??
+                                                    [];
 
-                                      final mobiliarios =
-                                          await Navigator.push<
-                                            List<Map<String, dynamic>>
-                                          >(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  NavigatorMobiliarioReservacion(
-                                                    mobiliariosIniciales:
-                                                        getMobiliariosDelSalon(
-                                                          salonId,
-                                                        ),
-                                                    mobiliariosSugeridos:
-                                                        mobiliariosSugeridos,
-                                                  ),
-                                            ),
-                                          );
-                                      if (mobiliarios != null) {
-                                        widget.onMobiliariosChanged(
-                                          salonId,
-                                          mobiliarios,
-                                        );
-                                      }
-                                    }
-                                  },
-                                  icon: Icon(Icons.grid_view),
-                                  label: Text(montaje ?? "Seleccionar montaje"),
+                                                final mobiliarios =
+                                                    await Navigator.push<
+                                                      List<Map<String, dynamic>>
+                                                    >(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            NavigatorMobiliarioReservacion(
+                                                              mobiliariosIniciales:
+                                                                  getMobiliariosDelSalon(
+                                                                    salonId,
+                                                                  ),
+                                                              mobiliariosSugeridos:
+                                                                  mobiliariosSugeridos,
+                                                            ),
+                                                      ),
+                                                    );
+                                                if (mobiliarios != null) {
+                                                  widget.onMobiliariosChanged(
+                                                    salonId,
+                                                    mobiliarios,
+                                                  );
+                                                }
+                                              }
+                                            },
+                                      icon: Icon(Icons.grid_view),
+                                      label: Text(
+                                        montaje ?? "Seleccionar montaje",
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 if (mobiliariosDelSalon.isNotEmpty) ...[
                                   SizedBox(height: 8),

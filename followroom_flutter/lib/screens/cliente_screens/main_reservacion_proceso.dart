@@ -240,6 +240,7 @@ class _ReservacionProcesoState extends State<ReservacionProceso> {
               mobiliariosPorSalon: mobiliariosPorSalon,
               onMobiliariosChanged: actualizarMobiliarios,
               fechaSeleccionada: datosReservacion['fecha'],
+              asistentes: int.tryParse(datosReservacion['asistentes']?.toString() ?? '')
             ),
             TabServiciosReservacion(
               onServiciosChanged: actualizarServicios,
