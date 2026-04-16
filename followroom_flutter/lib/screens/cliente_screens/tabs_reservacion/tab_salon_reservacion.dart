@@ -387,7 +387,9 @@ class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin 
                                 ),
                                 SizedBox(height: 12),
                                 OutlinedButton.icon(
-                                  onPressed: () async {
+                                  onPressed: _estaBloqueado(salon)
+                                      ? null
+                                      : () async {
                                     final resultado =
                                         await Navigator.push<
                                           Map<String, dynamic>
