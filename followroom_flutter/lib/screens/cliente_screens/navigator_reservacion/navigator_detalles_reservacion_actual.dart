@@ -25,6 +25,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
   int _calificacionServicios = 3;
   int _calificacionSalon = 3;
   int _calificacionMobiliario = 3;
+  String _comentario = '';
 
   @override
   void initState() {
@@ -792,6 +793,16 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
                 _calificacionMobiliario,
                 (v) => setState(() => _calificacionMobiliario = v),
               ),
+              const SizedBox(height: 16),
+              TextField(
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Comentarios adicionales (opcional)',
+                  border: OutlineInputBorder(),
+                  hintText: 'Escribe tu experiencia...',
+                ),
+                onChanged: (v) => _comentario = v,
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -845,6 +856,7 @@ class _DetallesReservacionActualState extends State<DetallesReservacionActual> {
           'servicios': _calificacionServicios,
           'salon': _calificacionSalon,
           'mobiliario': _calificacionMobiliario,
+          'comentario': _comentario,
           'reservacion': _reservacion?['id'],
         },
       );

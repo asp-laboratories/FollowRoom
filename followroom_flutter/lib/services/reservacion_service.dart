@@ -361,4 +361,42 @@ class ReservacionService {
       throw Exception('Error al obtener checklist de coordinador');
     }
   }
+
+  Future<bool> cambiarEstado(int reservacionId, String estado) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.post(
+        '/reservacion/$reservacionId/cambiar-estado/',
+        data: {'estado': estado},
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print('Error al cambiar estado: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getEncuesta(int reservacionId) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/encuesta/?reservacion=$reservacionId');
+      if (response.statusCode == 200) {
+        if (response.data is List && (response.data as List).isNotEmpty) {
+          return Map<String, dynamic>.from((response.data as List).first);
+        }
+        return null;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error al obtener encuesta: $e');
+      return null;
+    }
+  }
 }

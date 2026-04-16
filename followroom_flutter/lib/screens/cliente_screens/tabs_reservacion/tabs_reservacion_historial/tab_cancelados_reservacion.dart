@@ -30,8 +30,16 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
         setState(() {
           _reservaciones = datos.where((r) {
             final estado = r['estado_codigo'] ?? '';
-            return estado == 'CANCEL';
+            return estado == 'CANCEL' || estado == 'CAN';
           }).toList();
+          _reservaciones.sort((a, b) {
+            final ordenA = _getOrden(a['estado_codigo'] ?? '');
+            final ordenB = _getOrden(b['estado_codigo'] ?? '');
+            return ordenB - ordenA;
+          });
+          print(
+            'DEBUG: Reservaciones canceladas: ${_reservaciones.map((r) => '${r['nombre']}:${r['estado_codigo']}').toList()}',
+          );
           _cargando = false;
         });
       }
@@ -114,22 +122,28 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.15),
+                                color: _getBadgeColor(
+                                  r['estado_codigo'] ?? '',
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.cancel,
+                                    _getBadgeIcon(r['estado_codigo'] ?? ''),
                                     size: 14,
-                                    color: Colors.red,
+                                    color: _getBadgeColor(
+                                      r['estado_codigo'] ?? '',
+                                    ),
                                   ),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Cancelado',
+                                    r['estado_nombre'] ?? 'Cancelado',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: _getBadgeColor(
+                                        r['estado_codigo'] ?? '',
+                                      ),
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -241,5 +255,17 @@ class _TabCanceladosReservacionState extends State<TabCanceladosReservacion> {
       '12': 'Diciembre',
     };
     return meses[m] ?? m;
+  }
+
+  int _getOrden(String estado) {
+    return 1;
+  }
+
+  Color _getBadgeColor(String estado) {
+    return Colors.red;
+  }
+
+  IconData _getBadgeIcon(String estado) {
+    return Icons.cancel;
   }
 }

@@ -41,6 +41,14 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   List<Map<String, dynamic>> _reservacionesActivas = [];
   List<Map<String, dynamic>> _misSolicitudesExtra = [];
 
+  List<Map<String, dynamic>> get _reservacionesENPRO => _reservacionesActivas
+      .where((r) => r['estado_codigo']?.toString().toUpperCase() == 'ENPRO')
+      .toList();
+
+  List<Map<String, dynamic>> get _reservacionesOtras => _reservacionesActivas
+      .where((r) => r['estado_codigo']?.toString().toUpperCase() != 'ENPRO')
+      .toList();
+
   String? _tipoMobiliarioSeleccionado;
   String? _tipoEquipamientoSeleccionado;
   String? _tipoServicioSeleccionado;
@@ -350,8 +358,41 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  ..._reservacionesActivas.map((r) {
-                    return RadioListTile<int>(
+                  if (_reservacionesENPRO.isNotEmpty) ...[
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'EN PROCESO',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    ..._reservacionesENPRO.map(
+                      (r) => RadioListTile<int>(
+                        value: r['id'],
+                        groupValue: reservacionIdSeleccionada,
+                        onChanged: (value) {
+                          setModalState(() {
+                            reservacionIdSeleccionada = value;
+                          });
+                        },
+                        title: Text(r['nombre'] ?? 'Reservación ${r['id']}'),
+                        subtitle: Text(
+                          '${r['fecha'] ?? ''} - ${r['salon_nombre'] ?? ''}',
+                        ),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                  ..._reservacionesOtras.map(
+                    (r) => RadioListTile<int>(
                       value: r['id'],
                       groupValue: reservacionIdSeleccionada,
                       onChanged: (value) {
@@ -363,8 +404,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                       subtitle: Text(
                         '${r['fecha'] ?? ''} - ${r['salon_nombre'] ?? ''}',
                       ),
-                    );
-                  }),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,

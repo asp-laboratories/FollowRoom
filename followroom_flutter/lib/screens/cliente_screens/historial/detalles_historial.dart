@@ -43,6 +43,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
   int _calificacionServicios = 0;
   int _calificacionSalon = 0;
   int _calificacionMobiliario = 0;
+  String _comentario = '';
 
   @override
   void initState() {
@@ -172,7 +173,17 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                   setModalState(() => _calificacionMobiliario = v);
                   setState(() {});
                 }),
-                SizedBox(height: 24),
+                const SizedBox(height: 16),
+                TextField(
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Comentarios adicionales (opcional)',
+                    border: OutlineInputBorder(),
+                    hintText: 'Escribe tu experiencia...',
+                  ),
+                  onChanged: (v) => setModalState(() => _comentario = v),
+                ),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -263,6 +274,7 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
           'servicios': _calificacionServicios,
           'salon': _calificacionSalon,
           'mobiliario': _calificacionMobiliario,
+          'comentario': _comentario,
           'reservacion': widget.idReservacion,
         },
       );

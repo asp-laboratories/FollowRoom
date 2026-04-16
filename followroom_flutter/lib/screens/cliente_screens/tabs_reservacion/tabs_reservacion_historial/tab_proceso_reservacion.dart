@@ -29,12 +29,13 @@ class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
         setState(() {
           _reservaciones = datos.where((r) {
             final estado = r['estado_codigo'] ?? '';
-            // Incluir: SOLIC (solicitud), PEN (pendiente), CONF (confirmada), CON (confirmada legacy), PROC (en proceso)
+            // Incluir: SOLIC (solicitud), PEN (pendiente), CONF (confirmada), CON (confirmada legacy), PROC (en proceso), ENPRO (evento en proceso)
             return estado == 'SOLIC' ||
                 estado == 'PEN' ||
                 estado == 'CONF' ||
                 estado == 'CON' ||
-                estado == 'PROC';
+                estado == 'PROC' ||
+                estado == 'ENPRO';
           }).toList();
           _cargando = false;
         });
@@ -118,22 +119,28 @@ class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withValues(alpha: 0.15),
+                                color: _getBadgeColor(
+                                  r['estado_codigo'] ?? '',
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.hourglass_top,
+                                    _getBadgeIcon(r['estado_codigo'] ?? ''),
                                     size: 14,
-                                    color: Colors.orange,
+                                    color: _getBadgeColor(
+                                      r['estado_codigo'] ?? '',
+                                    ),
                                   ),
                                   SizedBox(width: 4),
                                   Text(
                                     r['estado_nombre'] ?? 'En proceso',
                                     style: TextStyle(
-                                      color: Colors.orange,
+                                      color: _getBadgeColor(
+                                        r['estado_codigo'] ?? '',
+                                      ),
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -245,5 +252,39 @@ class _TabProcesoReservacionState extends State<TabProcesoReservacion> {
       '12': 'Diciembre',
     };
     return meses[m] ?? m;
+  }
+
+  Color _getBadgeColor(String estado) {
+    switch (estado) {
+      case 'ENPRO':
+        return Colors.blue;
+      case 'PROC':
+        return Colors.blue;
+      case 'CONF':
+      case 'CON':
+        return Colors.green;
+      case 'PEN':
+      case 'SOLIC':
+        return Colors.orange;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  IconData _getBadgeIcon(String estado) {
+    switch (estado) {
+      case 'ENPRO':
+        return Icons.play_circle;
+      case 'PROC':
+        return Icons.play_circle;
+      case 'CONF':
+      case 'CON':
+        return Icons.check_circle;
+      case 'PEN':
+      case 'SOLIC':
+        return Icons.hourglass_top;
+      default:
+        return Icons.hourglass_top;
+    }
   }
 }

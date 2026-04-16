@@ -42,7 +42,7 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
         _cargando = false;
       });
     } catch (e) {
-      if(!mounted) return;
+      if (!mounted) return;
       setState(() {
         _cargando = false;
         _error = 'Error al cargar reservaciones';
@@ -55,11 +55,11 @@ class _InicioCoordinadorState extends State<InicioCoordinador> {
 
     String estadoCodigo;
     if (_actualIndice == 0) {
-      estadoCodigo = 'PROC';
-    } else if (_actualIndice == 1) {
       estadoCodigo = 'CON';
+    } else if (_actualIndice == 1) {
+      estadoCodigo = 'ENPRO';
     } else {
-      estadoCodigo = 'TERMI';
+      estadoCodigo = 'FIN';
     }
 
     return _reservaciones.where((r) {

@@ -52,11 +52,23 @@ class _SeleccionarReservacionExtraScreenState
             estado == 'PEN' ||
             estado == 'CONF' ||
             estado == 'CON' ||
-            estado == 'PROC';
+            estado == 'PROC' ||
+            estado == 'ENPRO';
       }).toList();
 
+      final enproReservaciones = reservacionesActivas
+          .where((r) => r['estado_codigo']?.toString().toUpperCase() == 'ENPRO')
+          .toList();
+      final otrasReservaciones = reservacionesActivas
+          .where((r) => r['estado_codigo']?.toString().toUpperCase() != 'ENPRO')
+          .toList();
+      final reservacionesOrdenadas = [
+        ...enproReservaciones,
+        ...otrasReservaciones,
+      ];
+
       setState(() {
-        _reservaciones = reservacionesActivas;
+        _reservaciones = reservacionesOrdenadas;
         _cargando = false;
       });
     } catch (e) {
@@ -78,6 +90,8 @@ class _SeleccionarReservacionExtraScreenState
         return 'Confirmado';
       case 'PROC':
         return 'En Proceso';
+      case 'ENPRO':
+        return 'En Proceso';
       default:
         return estado ?? 'Desconocido';
     }
@@ -94,6 +108,8 @@ class _SeleccionarReservacionExtraScreenState
         return Colors.green;
       case 'PROC':
         return Colors.purple;
+      case 'ENPRO':
+        return Colors.blue;
       default:
         return Colors.grey;
     }

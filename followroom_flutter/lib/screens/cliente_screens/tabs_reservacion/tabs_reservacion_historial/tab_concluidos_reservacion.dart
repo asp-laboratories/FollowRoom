@@ -30,8 +30,16 @@ class _TabConcluidosReservacionState extends State<TabConcluidosReservacion> {
         setState(() {
           _reservaciones = datos.where((r) {
             final estado = r['estado_codigo'] ?? '';
-            return estado == 'CONF' || estado == 'TERMI';
+            return estado == 'FIN' || estado == 'TERMI' || estado == 'CONF';
           }).toList();
+          _reservaciones.sort((a, b) {
+            final ordenA = _getOrden(a['estado_codigo'] ?? '');
+            final ordenB = _getOrden(b['estado_codigo'] ?? '');
+            return ordenB - ordenA;
+          });
+          print(
+            'DEBUG: Reservaciones concluidas: ${_reservaciones.map((r) => '${r['nombre']}:${r['estado_codigo']}').toList()}',
+          );
           _cargando = false;
         });
       }
@@ -114,22 +122,28 @@ class _TabConcluidosReservacionState extends State<TabConcluidosReservacion> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.15),
+                                color: _getBadgeColor(
+                                  r['estado_codigo'] ?? '',
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.check_circle,
+                                    _getBadgeIcon(r['estado_codigo'] ?? ''),
                                     size: 14,
-                                    color: Colors.blue,
+                                    color: _getBadgeColor(
+                                      r['estado_codigo'] ?? '',
+                                    ),
                                   ),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Concluido',
+                                    r['estado_nombre'] ?? 'Concluido',
                                     style: TextStyle(
-                                      color: Colors.blue,
+                                      color: _getBadgeColor(
+                                        r['estado_codigo'] ?? '',
+                                      ),
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -241,5 +255,44 @@ class _TabConcluidosReservacionState extends State<TabConcluidosReservacion> {
       '12': 'Diciembre',
     };
     return meses[m] ?? m;
+  }
+
+  int _getOrden(String estado) {
+    switch (estado) {
+      case 'FIN':
+        return 3;
+      case 'TERMI':
+        return 2;
+      case 'CONF':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  Color _getBadgeColor(String estado) {
+    switch (estado) {
+      case 'FIN':
+        return Colors.green;
+      case 'TERMI':
+        return Colors.green;
+      case 'CONF':
+        return Colors.blue;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  IconData _getBadgeIcon(String estado) {
+    switch (estado) {
+      case 'FIN':
+        return Icons.check_circle;
+      case 'TERMI':
+        return Icons.check_circle;
+      case 'CONF':
+        return Icons.check_circle;
+      default:
+        return Icons.check_circle;
+    }
   }
 }

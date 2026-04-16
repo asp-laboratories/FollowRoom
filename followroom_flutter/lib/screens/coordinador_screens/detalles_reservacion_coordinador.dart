@@ -69,6 +69,8 @@ class _PantallaDetallesCoordinadorState
   double _progresoChecklist = 0.0;
   bool _checklistAlmacenistaCompleto = false;
   String? _error;
+  Map<String, dynamic>? _encuesta;
+  bool _cargandoEncuesta = false;
 
   @override
   void initState() {
@@ -176,6 +178,31 @@ class _PantallaDetallesCoordinadorState
     }
   }
 
+  Future<void> _cargarEncuesta() async {
+    if (_encuesta != null || _cargandoEncuesta) return;
+    setState(() {
+      _cargandoEncuesta = true;
+    });
+
+    try {
+      final encuestaData = await _reservacionService.getEncuesta(
+        int.parse(widget.idReservacion),
+      );
+      if (mounted) {
+        setState(() {
+          _encuesta = encuestaData;
+          _cargandoEncuesta = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _cargandoEncuesta = false;
+        });
+      }
+    }
+  }
+
   bool _puedeMarcarChecklist(String key) {
     final keys = _checklist.map((e) => e.keys.first).toList();
     final index = keys.indexOf(key);
@@ -200,6 +227,48 @@ class _PantallaDetallesCoordinadorState
   }
 
   Future<void> _guardarChecklist() async {
+    // Verificar si se está marcando "Evento en curso" (índice 12) o "Cierre de Inventario" (índice 13)
+    final keys = _checklist.map((e) => e.keys.first).toList();
+    final eventoEnCursoKey = keys[12]; // "Evento en curso"
+    final cierreInventarioKey = keys[13]; // "Cierre de Inventario"
+
+    // Si se marca "Evento en curso", cambiar estado a ENPRO
+    if (_checklistCoordinador[eventoEnCursoKey] == true) {
+      // === VALIDACIÓN DE HORAS COMENTADA PARA PRUEBAS ===
+      // final fechaEvento = _datosCompletos?['fechaEvento'];
+      // final horaInicio = _datosCompletos?['horaInicio'];
+      // final horaFin = _datosCompletos?['horaFin'];
+      // final ahora = DateTime.now();
+      // final inicio = DateTime.parse('$fechaEvento $horaInicio');
+      // final fin = DateTime.parse('$fechaEvento $horaFin');
+      // if (ahora.isBefore(inicio) || ahora.isAfter(fin)) {
+      //   print('WARNING: La hora actual no coincide con el horario del evento');
+      // }
+      // === FIN VALIDACIÓN ===
+      try {
+        await _reservacionService.cambiarEstado(
+          int.parse(widget.idReservacion),
+          'ENPRO',
+        );
+        print('DEBUG: Estado cambiado a ENPRO');
+      } catch (e) {
+        print('Error al cambiar estado a ENPRO: $e');
+      }
+    }
+
+    // Si se marca "Cierre de Inventario", cambiar estado a FIN
+    if (_checklistCoordinador[cierreInventarioKey] == true) {
+      try {
+        await _reservacionService.cambiarEstado(
+          int.parse(widget.idReservacion),
+          'FIN',
+        );
+        print('DEBUG: Estado cambiado a FIN');
+      } catch (e) {
+        print('Error al cambiar estado a FIN: $e');
+      }
+    }
+
     try {
       final result = await _reservacionService.updateChecklist(
         int.parse(widget.idReservacion),
@@ -908,9 +977,78 @@ class _PantallaDetallesCoordinadorState
                       ),
                     ),
                   ),
+                  if (_progresoChecklist >= 1.0)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: ContainerStyles.sombreado,
+                        padding: EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Calificación del Cliente",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                if (_encuesta == null && !_cargandoEncuesta)
+                                  TextButton(
+                                    onPressed: _cargarEncuesta,
+                                    child: Text("Ver encuesta"),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            if (_cargandoEncuesta)
+                              Center(child: CircularProgressIndicator())
+                            else if (_encuesta != null) ...[
+                              _buildEncuestaDisplay(),
+                            ] else
+                              Text(
+                                "Aún no hay encuesta disponible",
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildEncuestaDisplay() {
+    if (_encuesta == null) return SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Puntuación: ${_encuesta!['puntuacion'] ?? 'No asignada'}/5",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: AppColores.primary,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          "Comentario: ${_encuesta!['comentario'] ?? 'Sin comentario'}",
+          style: TextStyle(fontSize: 12),
+        ),
+        SizedBox(height: 4),
+        Text(
+          "Fecha: ${_encuesta!['fecha_creacion'] ?? ''}",
+          style: TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+      ],
     );
   }
 
