@@ -51,6 +51,7 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
       });
     } catch (e) {
       print('Error: $e');
+      if (!mounted) return;
       setState(() => _cargando = false);
     }
   }

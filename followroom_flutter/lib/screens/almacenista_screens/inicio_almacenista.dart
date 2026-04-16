@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/widget_seccion_busqueda.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/core/texto_styles.dart';
@@ -15,6 +16,22 @@ class InicioAlmacenista extends StatefulWidget {
 
 class _InicioAlmacenistaState extends State<InicioAlmacenista> {
   final ReservacionService _reservacionService = ReservacionService();
+
+  DateTime? _fechaSeleccionada;
+  String? _salonSeleccionado;
+  String _textoBusqueda = '';
+
+  void _onFechaChanged(DateTime? fecha) {
+    setState(() => _fechaSeleccionada = fecha);
+  }
+
+  void _onSalonChanged(String? salon) {
+    setState(() => _salonSeleccionado = salon);
+  }
+
+  void _onBusquedaChanged(String text) {
+    setState(() => _textoBusqueda = text);
+  }
 
   int _actualIndice = 0;
   bool _cargando = true;
@@ -62,7 +79,38 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
 
     return _reservaciones.where((r) {
       final codigo = r['estado_codigo']?.toString() ?? '';
-      return codigo == estadoCodigo;
+      if (codigo != estadoCodigo) return false;
+
+      if (_salonSeleccionado != null && _salonSeleccionado != 'todos') {
+        if (r['salon_nombre'] != _salonSeleccionado) return false;
+      }
+
+      if (_textoBusqueda.isNotEmpty) {
+        final nombre = r['nombreEvento']?.toString().toLowerCase() ?? '';
+        if (!nombre.contains(_textoBusqueda.toLowerCase())) return false;
+
+        return true;
+      }
+
+      if (_fechaSeleccionada != null) {
+        final fechaRaw = r['fechaEvento'];
+        if (fechaRaw != null) {
+          final fecha = DateTime.tryParse(fechaRaw.toString());
+          if (fecha != null) {
+            final coincideFecha =
+                fecha.year == _fechaSeleccionada!.year &&
+                fecha.month == _fechaSeleccionada!.month &&
+                fecha.day == _fechaSeleccionada!.day;
+            if (!coincideFecha) return false;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      return true;
     }).toList();
   }
 
@@ -107,6 +155,15 @@ class _InicioAlmacenistaState extends State<InicioAlmacenista> {
                 },
               ),
             ),
+            _actualIndice != 1
+                ? FiltroReservacionesWidget(
+                    salones: [],
+                    seccionSalones: false,
+                    onFechaChanged: _onFechaChanged,
+                    onSalonChanged: _onSalonChanged,
+                    onBusquedaChanged: _onBusquedaChanged,
+                  )
+                : SizedBox(height: 4),
             const SizedBox(width: 24),
             ListView.builder(
               shrinkWrap: true,

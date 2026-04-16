@@ -72,6 +72,7 @@ class _SeleccionarReservacionExtraScreenState
         _cargando = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _cargando = false;
