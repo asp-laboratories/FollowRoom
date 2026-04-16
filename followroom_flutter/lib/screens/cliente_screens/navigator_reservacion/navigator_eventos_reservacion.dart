@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/widget_seccion_busqueda.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/services/disponibilidad_service.dart';
+import 'package:followroom_flutter/services/salon_service.dart';
 
 class NavigatorEventosReservacion extends StatefulWidget {
   const NavigatorEventosReservacion({super.key});
@@ -12,12 +14,16 @@ class NavigatorEventosReservacion extends StatefulWidget {
 
 class _NavigatorEventosReservacionState
     extends State<NavigatorEventosReservacion> {
-  DateTime fechaSeleccionada = DateTime.now();
-  String? salonSeleccionado;
-  final TextEditingController _busquedaController = TextEditingController();
+  DateTime? _fechaSeleccionada;
+  String? _salonSeleccionado;
+  String _textoBusqueda = '';
+
   final DisponibilidadService _disponibilidadService = DisponibilidadService();
-  List<Map<String, dynamic>> reservacionesDB = [];
-  List<Map<String, dynamic>> estadosSalonesDB = [];
+  final SalonService _salonServicios = SalonService();
+
+  List<Map<String, dynamic>> _reservacionesDB = [];
+  List<Map<String, dynamic>> _estadosSalonesDB = [];
+  List<Map<String, dynamic>> _salonesDB = [];
   bool _cargando = true;
 
   @override
@@ -29,19 +35,22 @@ class _NavigatorEventosReservacionState
   Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
     try {
-      final fechaStr =
-          '${fechaSeleccionada.year}-${fechaSeleccionada.month.toString().padLeft(2, '0')}-${fechaSeleccionada.day.toString().padLeft(2, '0')}';
+      String fechaStr = '';
+      if (_fechaSeleccionada != null){
+        fechaStr = 
+          '${_fechaSeleccionada!.year}-'
+          '${_fechaSeleccionada!.month.toString().padLeft(2, '0')}-'
+          '${_fechaSeleccionada!.day.toString().padLeft(2, '0')}';}
 
       final resultados = await Future.wait([
         _disponibilidadService.getReservacionesFecha(fechaStr),
         _disponibilidadService.getEstadosSalones(fechaStr),
+        _salonServicios.getSalonesConEstado(),
       ]);
 
-      final reservacionesData = resultados[0];
-      final estadosData = resultados[1];
-
+      if (!mounted) return;
       setState(() {
-        reservacionesDB = reservacionesData.map((item) {
+        _reservacionesDB = (resultados[0] as List).map((item) {
           return {
             'id': item['id'],
             'salon': item['salon_nombre'],
@@ -56,7 +65,7 @@ class _NavigatorEventosReservacionState
           };
         }).toList();
 
-        estadosSalonesDB = estadosData.map((item) {
+        _estadosSalonesDB = (resultados[1] as List).map((item) {
           return {
             'salonId': item['salon']?['id'] ?? item['salon'],
             'salonNombre': item['salon']?['nombre'] ?? '',
@@ -64,103 +73,82 @@ class _NavigatorEventosReservacionState
                 item['estado_codigo'] ?? item['estado_salon']?['codigo'] ?? '',
             'estadoNombre':
                 item['estado_nombre'] ?? item['estado_salon']?['nombre'] ?? '',
-            // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
-            // 'fechaFin': item['fecha_fin'] != null
-            //     ? DateTime.parse(item['fecha_fin'])
-            //     : null,
           };
+        }).toList();
+
+        _salonesDB = (resultados[2] as List).map((item) {
+          return {'id': item['id'], 'nombre': item['nombre']};
         }).toList();
 
         _cargando = false;
       });
     } catch (e) {
-      print("Error cargando datos: $e");
+      debugPrint("Error cargando datos: $e");
       setState(() => _cargando = false);
     }
   }
 
-  bool _esSalonReservable(String salonNombre) {
-    final estado = estadosSalonesDB
-        .where((e) => e['salonNombre'] == salonNombre)
-        .firstOrNull;
-
-    if (estado == null) return true;
-
-    final codigo = estado['estadoCodigo']?.toString().toUpperCase();
-    // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
-    // final fechaFin = estado['fechaFin'] as DateTime?;
-    // if (fechaFin != null && fechaFin.isBefore(fechaSeleccionada)) {
-    //   return true;
-    // }
-
-    return codigo == 'DISP' || codigo == 'DISPONIBLE';
+  void _onFechaChanged(DateTime? fecha) {
+    setState(() => _fechaSeleccionada = fecha);
+    _cargarDatos();
   }
 
-  String? _getEstadoSalon(String salonNombre) {
-    final estado = estadosSalonesDB
-        .where((e) => e['salonNombre'] == salonNombre)
-        .firstOrNull;
-
-    if (estado == null) return null;
-
-    final codigo = estado['estadoCodigo']?.toString().toUpperCase();
-    // TODO: Descomentar cuando se ejecute migración para agregar campo fecha_fin
-    // final fechaFin = estado['fechaFin'] as DateTime?;
-    // if (fechaFin != null && fechaFin.isBefore(fechaSeleccionada)) {
-    //   return null;
-    // }
-
-    return codigo;
+  void _onSalonChanged(String? salon) {
+    setState(() => _salonSeleccionado = salon);
   }
 
-  final List<Map<String, dynamic>> salonesDB = [
-    {'id': 1, 'nombre': 'Salón Imperial'},
-    {'id': 2, 'nombre': 'Salón Ejecutivo'},
-    {'id': 3, 'nombre': 'Salón Universal'},
-    {'id': 4, 'nombre': 'Salón Premium'},
-  ];
+  void _onBusquedaChanged(String texto) {
+    setState(() => _textoBusqueda = texto);
+  }
 
-  List<Map<String, dynamic>> get reservacionesFiltradas {
-    return reservacionesDB.where((r) {
-      bool coincideFecha = _esMismaFecha(r['fecha'], fechaSeleccionada);
-      bool coincideSalon =
-          salonSeleccionado == null ||
-          salonSeleccionado == 'todos' ||
-          r['salon'] == salonSeleccionado;
-      bool coincideBusqueda =
-          _busquedaController.text.isEmpty ||
-          r['evento'].toString().toLowerCase().contains(
-            _busquedaController.text.toLowerCase(),
-          );
-      return coincideFecha && coincideSalon && coincideBusqueda;
+  bool _esMismaFecha(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  List<Map<String, dynamic>> get _reservacionesFiltradas {
+    return _reservacionesDB.where((r) {
+      final coincideSalon =
+          _salonSeleccionado == null ||
+          _salonSeleccionado == 'todos' ||
+          r['salon'] == _salonSeleccionado;
+
+      if (!coincideSalon) return false;
+
+      if (_textoBusqueda.isNotEmpty) {
+        final eventoTexto = r['evento'].toString().toLowerCase();
+        if (eventoTexto.contains(_textoBusqueda.toLowerCase())) {
+          return true;
+        }
+        return false;
+      }
+
+      if (_fechaSeleccionada != null) {
+        return _esMismaFecha(r['fecha'], _fechaSeleccionada!);
+      }
+      return true;
     }).toList();
   }
 
-  bool _esMismaFecha(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
+  bool _esHoy(DateTime? fecha) =>
+      fecha != null && _esMismaFecha(fecha, DateTime.now());
 
-  bool _esHoy(DateTime fecha) {
-    return _esMismaFecha(fecha, DateTime.now());
-  }
+  bool _esManana(DateTime? fecha) =>
+      fecha != null &&
+      _esMismaFecha(fecha, DateTime.now().add(const Duration(days: 1)));
 
-  bool _esManana(DateTime fecha) {
-    return _esMismaFecha(fecha, DateTime.now().add(Duration(days: 1)));
-  }
-
-  String _formatearFecha(DateTime fecha) {
+  String _formatearFecha(DateTime? fecha) {
+    if (fecha == null) return 'Todas las fechas';
     if (_esHoy(fecha)) return 'HOY';
-    if (_esManana(fecha)) return 'MANANA';
-    final dias = [
+    if (_esManana(fecha)) return 'MAÑANA';
+    const dias = [
       'Lunes',
       'Martes',
-      'Miercoles',
+      'Miércoles',
       'Jueves',
       'Viernes',
-      'Sabado',
+      'Sábado',
       'Domingo',
     ];
-    final meses = [
+    const meses = [
       'Ene',
       'Feb',
       'Mar',
@@ -177,27 +165,44 @@ class _NavigatorEventosReservacionState
     return '${dias[fecha.weekday - 1]} ${fecha.day} de ${meses[fecha.month - 1]}';
   }
 
-  List<Map<String, dynamic>> _getReservacionesDelDia(DateTime fecha) {
-    return reservacionesFiltradas
-        .where((r) => _esMismaFecha(r['fecha'], fecha))
-        .toList();
+  bool _esSalonReservable(String salonNombre) {
+    final estado = _estadosSalonesDB
+        .where((e) => e['salonNombre'] == salonNombre)
+        .firstOrNull;
+    if (estado == null) return true;
+    final codigo = estado['estadoCodigo']?.toString().toUpperCase();
+    return codigo == 'DISP' || codigo == 'DISPONIBLE';
+  }
+
+  String? _getEstadoSalon(String salonNombre) {
+    final estado = _estadosSalonesDB
+        .where((e) => e['salonNombre'] == salonNombre)
+        .firstOrNull;
+    if (estado == null) return null;
+    return estado['estadoCodigo']?.toString().toUpperCase();
   }
 
   List<DateTime> _getFechasConReservaciones() {
-    Set<DateTime> fechas = {};
-    for (var r in reservacionesFiltradas) {
+    final fechas = <DateTime>{};
+    for (var r in _reservacionesFiltradas) {
       fechas.add(DateTime(r['fecha'].year, r['fecha'].month, r['fecha'].day));
     }
     return fechas.toList()..sort();
   }
 
+  List<Map<String, dynamic>> _getReservacionesDelDia(DateTime fecha) {
+    return _reservacionesFiltradas
+        .where((r) => _esMismaFecha(r['fecha'], fecha))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    List<DateTime> fechas = _getFechasConReservaciones();
+    final fechas = _getFechasConReservaciones();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Disponibilidad de Salones"),
+        title: const Text("Disponibilidad de Salones"),
         backgroundColor: AppColores.background2,
         foregroundColor: AppColores.foreground,
       ),
@@ -205,115 +210,13 @@ class _NavigatorEventosReservacionState
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              padding: EdgeInsets.all(12),
-              color: AppColores.backgroundComponent,
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _busquedaController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        size: 20,
-                        color: AppColores.foreground,
-                      ),
-                      filled: true,
-                      fillColor: AppColores.backgroundComponent,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onChanged: (value) => setState(() {}),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _selectDate(context),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: 16,
-                                  color: AppColores.primary,
-                                ),
-                                SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    _formatearFecha(fechaSeleccionada),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: salonSeleccionado,
-                          hint: Text("Todos", style: TextStyle(fontSize: 13)),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          items: [
-                            DropdownMenuItem(
-                              value: 'todos',
-                              child: Text(
-                                "Todos",
-                                style: TextStyle(fontSize: 13),
-                              ),
-                            ),
-                            ...salonesDB.map(
-                              (s) => DropdownMenuItem(
-                                value: s['nombre'],
-                                child: Text(
-                                  s['nombre'],
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: (value) =>
-                              setState(() => salonSeleccionado = value),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            FiltroReservacionesWidget(
+              salones: _salonesDB,
+              onFechaChanged: _onFechaChanged,
+              onSalonChanged: _onSalonChanged,
+              onBusquedaChanged: _onBusquedaChanged,
             ),
 
-            // Lista de reservaciones
             Expanded(
               child: _cargando
                   ? Center(
@@ -322,7 +225,7 @@ class _NavigatorEventosReservacionState
                       ),
                     )
                   : fechas.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -344,12 +247,11 @@ class _NavigatorEventosReservacionState
                       ),
                     )
                   : ListView.builder(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       itemCount: fechas.length,
                       itemBuilder: (context, index) {
                         final fecha = fechas[index];
                         final reservaciones = _getReservacionesDelDia(fecha);
-
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -362,10 +264,10 @@ class _NavigatorEventosReservacionState
                                     size: 20,
                                     color: AppColores.primary,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     _formatearFecha(fecha),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
@@ -373,10 +275,8 @@ class _NavigatorEventosReservacionState
                                 ],
                               ),
                             ),
-                            ...reservaciones.map(
-                              (r) => _buildCardReservacion(r),
-                            ),
-                            SizedBox(height: 16),
+                            ...reservaciones.map(_buildCardReservacion),
+                            const SizedBox(height: 16),
                           ],
                         );
                       },
@@ -431,9 +331,9 @@ class _NavigatorEventosReservacionState
     }
 
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -443,11 +343,17 @@ class _NavigatorEventosReservacionState
                 Expanded(
                   child: Text(
                     salonNombre,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: estadoColor,
                     borderRadius: BorderRadius.circular(12),
@@ -463,22 +369,23 @@ class _NavigatorEventosReservacionState
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
+                const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
                 Text(
-                  "${reservacion['horaInicio'].toString().padLeft(2, '0')}:00 - ${reservacion['horaFin'].toString().padLeft(2, '0')}:00",
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  "${reservacion['horaInicio'].toString().padLeft(2, '0')}:00"
+                  " - ${reservacion['horaFin'].toString().padLeft(2, '0')}:00",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.celebration, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
+                const Icon(Icons.celebration, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     reservacion['evento'],
@@ -487,39 +394,24 @@ class _NavigatorEventosReservacionState
                 ),
               ],
             ),
-            SizedBox(height: 4),
-            if (reservacion['tipo_evento'] != null)
+            if (reservacion['tipo_evento'] != null) ...[
+              const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.category, size: 16, color: Colors.grey),
-                  SizedBox(width: 4),
+                  const Icon(Icons.category, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       reservacion['tipo_evento'],
-                      style: TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: Colors.grey),
                     ),
                   ),
                 ],
               ),
+            ],
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime? seleccionada = await showDatePicker(
-      context: context,
-      initialDate: fechaSeleccionada,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
-    );
-
-    if (seleccionada != null) {
-      setState(() {
-        fechaSeleccionada = seleccionada;
-      });
-      _cargarDatos();
-    }
   }
 }

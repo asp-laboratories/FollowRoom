@@ -553,6 +553,10 @@ class _TabTotalReservacionState extends State<TabTotalReservacion> {
                         ),
                       ],
                     ),
+                    Text(
+                      "El pago se hace en persona con el personal del hotel",
+                      style: TextStyle(color: AppColores.foreground),
+                    ),
                   ],
                 ),
               ),
