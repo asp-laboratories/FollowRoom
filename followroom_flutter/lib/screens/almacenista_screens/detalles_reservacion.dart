@@ -366,39 +366,39 @@ class _PantallaDetallesState extends State<PantallaDetalles> {
                   ),
                   SizedBox(height: 10),
 
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(12),
-                      decoration: ContainerStyles.sombreado,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Total de la Reservación",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          _buildLabelValue(
-                            "Subtotal:",
-                            "\$${_calcularSubtotal()}",
-                          ),
-                          SizedBox(height: 2),
-                          _buildLabelValue("IVA (16%):", "\$${_calcularIVA()}"),
-                          Divider(height: 16),
-                          _buildLabelValue("Total:", "\$${_calcularTotal()}"),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(
+                  //     left: 16,
+                  //     right: 16,
+                  //     bottom: 16,
+                  //   ),
+                  //   child: Container(
+                  //     width: double.infinity,
+                  //     padding: EdgeInsets.all(12),
+                  //     decoration: ContainerStyles.sombreado,
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Text(
+                  //           "Total de la Reservación",
+                  //           style: TextStyle(
+                  //             fontWeight: FontWeight.bold,
+                  //             fontSize: 16,
+                  //           ),
+                  //         ),
+                  //         SizedBox(height: 8),
+                  //         _buildLabelValue(
+                  //           "Subtotal:",
+                  //           "\$${_calcularSubtotal()}",
+                  //         ),
+                  //         SizedBox(height: 2),
+                  //         _buildLabelValue("IVA (16%):", "\$${_calcularIVA()}"),
+                  //         Divider(height: 16),
+                  //         _buildLabelValue("Total:", "\$${_calcularTotal()}"),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

@@ -29,14 +29,18 @@ class TabSalon extends StatefulWidget {
   State<TabSalon> createState() => _TabSalonState();
 }
 
-class _TabSalonState extends State<TabSalon> {
+class _TabSalonState extends State<TabSalon> with AutomaticKeepAliveClientMixin {
   final SalonService _salonService = SalonService();
   List<Map<String, dynamic>> salonesDB = [];
   bool _cargando = true;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
+    print('TabSalon: initState - fecha: ${widget.fechaSeleccionada}');
     _cargarSalones();
   }
 
@@ -44,13 +48,19 @@ class _TabSalonState extends State<TabSalon> {
   void didUpdateWidget(TabSalon oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.fechaSeleccionada != oldWidget.fechaSeleccionada) {
+      print('TabSalon: actualizando fecha de ${oldWidget.fechaSeleccionada} a ${widget.fechaSeleccionada}');
       _cargarSalones();
     }
   }
 
   Future<void> _cargarSalones() async {
+    setState(() {
+      _cargando = true;
+    });
     try {
       List<Map<String, dynamic>> data;
+      print('TabSalon: Cargando salones para fecha: ${widget.fechaSeleccionada}');
+      
       if (widget.fechaSeleccionada != null &&
           widget.fechaSeleccionada!.isNotEmpty) {
         data = await _salonService.getSalonesDisponibles(
@@ -59,29 +69,35 @@ class _TabSalonState extends State<TabSalon> {
       } else {
         data = await _salonService.getSalonesConEstado();
       }
-      setState(() {
-        salonesDB = data.map((salon) {
-          final estadoSalon = salon['estado'];
-          String estadoNombre = '';
-          if (estadoSalon is Map) {
-            estadoNombre = estadoSalon['nombre']?.toString() ?? '';
-          } else {
-            estadoNombre = estadoSalon?.toString() ?? '';
-          }
-          return {
-            ...salon,
-            'precio': salon['costo'] ?? salon['precio'] ?? 0,
-            'capacidad': salon['maxCapacidad'] ?? salon['capacidad'] ?? 0,
-            'estado': estadoNombre,
-            'dimensiones': salon['dimensiones'] ?? 'No disponible',
-            'mtrCuad': salon['metrosCuadrados']?.toString() ?? "No disponible",
-          };
-        }).toList();
-        _cargando = false;
-      });
+      
+      if (mounted) {
+        setState(() {
+          salonesDB = data.map((salon) {
+            print('TabSalon: Salon ${salon['nombre']} - disponible: ${salon['disponible']} - estado: ${salon['estado']}');
+            final estadoSalon = salon['estado'];
+            String estadoNombre = '';
+            if (estadoSalon is Map) {
+              estadoNombre = estadoSalon['nombre']?.toString() ?? '';
+            } else {
+              estadoNombre = estadoSalon?.toString() ?? '';
+            }
+            return {
+              ...salon,
+              'precio': salon['costo'] ?? salon['precio'] ?? 0,
+              'capacidad': salon['maxCapacidad'] ?? salon['capacidad'] ?? 0,
+              'estado': estadoNombre,
+              'dimensiones': salon['dimensiones'] ?? 'No disponible',
+              'mtrCuad': salon['metrosCuadrados']?.toString() ?? "No disponible",
+            };
+          }).toList();
+          _cargando = false;
+        });
+      }
     } catch (e) {
       print('Error al cargar salones: $e');
-      setState(() => _cargando = false);
+      if (mounted) {
+        setState(() => _cargando = false);
+      }
     }
   }
 
@@ -94,19 +110,20 @@ class _TabSalonState extends State<TabSalon> {
   }
 
   bool _estaBloqueado(Map<String, dynamic> salon) {
+    // Si la API retorna un campo 'disponible' (bool), lo priorizamos
+    if (salon.containsKey('disponible')) {
+      return !(salon['disponible'] as bool);
+    }
+    
+    // Si no, fallback al nombre del estado
     final estado = salon['estado']?.toString().toUpperCase() ?? '';
-    return estado == 'RESV' ||
-        estado == 'RESERVADO' ||
-        estado == 'LIM' ||
-        estado == 'LIMPIEZA' ||
-        estado == 'NODIS' ||
-        estado == 'NO DISPONIBLE' ||
-        estado == 'RESER' ||
-        estado == 'Ocupado';
+    return estado != 'DISPONIBLE' && estado != 'DISP';
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    print('TabSalon: building - fechaSeleccionada: ${widget.fechaSeleccionada}');
     final bool haySalonSeleccionado = widget.salonSeleccionado != null;
 
     return SingleChildScrollView(
@@ -269,6 +286,34 @@ class _TabSalonState extends State<TabSalon> {
                                       Icon(
                                         Icons.check_circle,
                                         color: AppColores.primary,
+                                      ),
+                                    if (_estaBloqueado(salon))
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.red.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'NO DISPONIBLE',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                          ),
+                                        ),
                                       ),
                                   ],
                                 ),

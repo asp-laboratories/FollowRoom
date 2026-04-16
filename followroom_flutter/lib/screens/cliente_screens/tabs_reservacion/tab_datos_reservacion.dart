@@ -222,6 +222,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
       _timeController.text =
           "${_formatTimeOfDay(selectedInicio)} - ${_formatTimeOfDay(selectedFin)}";
     });
+    _autoSave();
   }
 
   @override
@@ -336,6 +337,7 @@ class _TabDatosReservacionState extends State<TabDatosReservacion>
         _fechaController.text =
             "${seleccionada.day}/${seleccionada.month}/${seleccionada.year}";
       });
+      _autoSave();
     }
   }
 }

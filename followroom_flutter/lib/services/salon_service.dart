@@ -53,19 +53,28 @@ class SalonService {
       if (fecha.contains('/')) {
         final partes = fecha.split('/');
         if (partes.length == 3) {
-          fechaFormateada = '${partes[2]}-${partes[1]}-${partes[0]}';
+          String dia = partes[0].padLeft(2, '0');
+          String mes = partes[1].padLeft(2, '0');
+          String anio = partes[2];
+          fechaFormateada = '$anio-$mes-$dia';
         }
       }
+      
+      print('SalonService: GET /disponibilidad-salones/ con fecha=$fechaFormateada');
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
+      
       final response = await dio.get(
-        '/disponibilidad-salones/?fecha=$fechaFormateada',
+        '/disponibilidad-salones/',
+        queryParameters: {'fecha': fechaFormateada},
       );
+
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
+        print('SalonService: Recibidos ${data.length} salones para la fecha $fechaFormateada');
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
       } else {
-        throw Exception('Error al cargar disponibilidad de salones');
+        throw Exception('Error al cargar disponibilidad de salones: ${response.statusCode}');
       }
     } catch (e) {
       print('Error al cargar disponibilidad: $e');
