@@ -251,11 +251,14 @@ class _TabResumenState extends State<TabResumen> {
                     ),
                     child: Column(
                       children: [
+                        _buildMobiliariosContainer(),
+                        SizedBox(height: 16),
+
                         _buildServiciosContainer(),
                         SizedBox(height: 16),
                         _buildEquipamientosContainer(),
-                        SizedBox(height: 16),
-                        _buildMobiliariosContainer(),
+                        // SizedBox(height: 16),
+                        // _buildMobiliariosContainer(),
                       ],
                     ),
                   );

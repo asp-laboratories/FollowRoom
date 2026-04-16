@@ -19,6 +19,19 @@ class _AlmacenistaSolicitudesScreenState
   bool _loading = true;
   String? _error;
 
+  List<Map<String, dynamic>> get _reservacionesENPRO => _reservaciones
+      .where((r) => r['estado_codigo']?.toString().toUpperCase() == 'ENPRO')
+      .toList();
+
+  List<Map<String, dynamic>> get _reservacionesOtras => _reservaciones
+      .where((r) => r['estado_codigo']?.toString().toUpperCase() != 'ENPRO')
+      .toList();
+
+  List<Map<String, dynamic>> get _reservacionesOrdenadas => [
+    ..._reservacionesENPRO,
+    ..._reservacionesOtras,
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +56,63 @@ class _AlmacenistaSolicitudesScreenState
         _loading = false;
       });
     }
+  }
+
+  Widget _buildEstadoBadge(Map<String, dynamic> reservacion) {
+    final estadoCodigo =
+        reservacion['estado_codigo']?.toString().toUpperCase() ?? '';
+    final estadoNombre =
+        reservacion['estado_nombre']?.toString() ?? estadoCodigo;
+
+    Color badgeColor;
+    String label;
+
+    switch (estadoCodigo) {
+      case 'ENPRO':
+        badgeColor = Colors.blue;
+        label = 'EN PROCESO';
+        break;
+      case 'PROC':
+        badgeColor = Colors.orange;
+        label = 'PROCESANDO';
+        break;
+      case 'CON':
+        badgeColor = Colors.green;
+        label = 'CONFIRMADO';
+        break;
+      case 'CONF':
+        badgeColor = Colors.green;
+        label = 'CONFIRMADO';
+        break;
+      case 'PEN':
+        badgeColor = Colors.orange;
+        label = 'PENDIENTE';
+        break;
+      case 'SOLIC':
+        badgeColor = Colors.purple;
+        label = 'SOLICITADO';
+        break;
+      default:
+        badgeColor = Colors.grey;
+        label = estadoNombre.isNotEmpty ? estadoNombre : 'DESCONOCIDO';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: badgeColor,
+        ),
+      ),
+    );
   }
 
   @override
@@ -106,9 +176,9 @@ class _AlmacenistaSolicitudesScreenState
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
-            itemCount: _reservaciones.length,
+            itemCount: _reservacionesOrdenadas.length,
             itemBuilder: (context, index) {
-              final item = _reservaciones[index];
+              final item = _reservacionesOrdenadas[index];
               final totalItems =
                   ((item['mobiliarios_extra'] as List?)?.length ?? 0) +
                   ((item['equipamiento_extra'] as List?)?.length ?? 0);
@@ -147,6 +217,8 @@ class _AlmacenistaSolicitudesScreenState
                         children: [
                           Row(
                             children: [
+                              _buildEstadoBadge(item),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   item['nombre'] ?? 'Reservación ${item['id']}',

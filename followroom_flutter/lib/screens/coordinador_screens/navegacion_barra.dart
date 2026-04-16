@@ -60,13 +60,59 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text("⚠️ Ambiente oscuro detectado"),
-        content: const Text(
-          "El nivel de luz es muy bajo. "
-          "Para evitar accidentes, te recomendamos:\n\n"
-          "• Encender la linterna del dispositivo\n"
-          "• Tener precaución al movilizar equipos\n"
-          "• Solicitar ayuda si es necesario",
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                "Ambiente oscuro",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "El nivel de luz es muy bajo. Para evitar accidentes, te recomendamos:",
+                style: TextStyle(fontSize: 14, color: AppColores.foreground),
+              ),
+              const SizedBox(height: 16),
+              _buildRecommendation(
+                Icons.flashlight_on,
+                "Encender la linterna del dispositivo",
+              ),
+              _buildRecommendation(
+                Icons.visibility,
+                "Tener precaución al movilizar equipos",
+              ),
+              _buildRecommendation(
+                Icons.support_agent,
+                "Solicitar ayuda si es necesario",
+              ),
+            ],
+          ),
         ),
         actions: <Widget>[
           TextButton(
@@ -74,7 +120,17 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
               Navigator.pop(context);
               _silenciarAlerta5Minutos();
             },
-            child: const Text("Silenciar 5 min"),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                "Silenciar 5 min",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -82,16 +138,31 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
               _prenderLinterna();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColores.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text("🔦 Linterna"),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.flashlight_on, size: 18),
+                SizedBox(width: 4),
+                Text("Linterna"),
+              ],
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColores.primary,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text("Entendido"),
           ),
@@ -100,6 +171,27 @@ class _NavegacionBarraState extends State<NavegacionBarra> {
     ).then((_) {
       _taAbiertoDialogo = false;
     });
+  }
+
+  Widget _buildRecommendation(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColores.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColores.foreground.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _silenciarAlerta5Minutos() {

@@ -28,6 +28,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
     'NODISP': 'No disponible',
     'REPAR': 'En reparación',
     'DESCOMP': 'Descompuesta',
+    'REVIS': 'Revisión Pendiente',
   };
 
   List<dynamic> _datosObtenidos = [];
@@ -79,21 +80,25 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
         // --- FILTRO 1: CATEGORÍA (Tipo) ---
         bool coincideTipo = true;
         if (_filtroAplicado != "Todos") {
-          final dynamic baseData = _actualIndice == 0 ? item['mobiliario'] : item['equipamiento'];
+          final dynamic baseData = _actualIndice == 0
+              ? item['mobiliario']
+              : item['equipamiento'];
           if (baseData is Map) {
             dynamic tipoValue;
             if (_actualIndice == 0) {
               tipoValue = baseData['tipo_movil'] ?? baseData['tipo'];
             } else {
-              tipoValue = baseData['tipo_equipa'] ?? 
-                          baseData['tipo_equipamiento'] ?? 
-                          baseData['tipo_equipa_id'] ??
-                          baseData['tipo_id'] ??
-                          baseData['tipo'] ??
-                          baseData['categoria'];
+              tipoValue =
+                  baseData['tipo_equipa'] ??
+                  baseData['tipo_equipamiento'] ??
+                  baseData['tipo_equipa_id'] ??
+                  baseData['tipo_id'] ??
+                  baseData['tipo'] ??
+                  baseData['categoria'];
             }
 
-            if (tipoValue is Map && tipoValue['nombre']?.toString() == _filtroAplicado) {
+            if (tipoValue is Map &&
+                tipoValue['nombre']?.toString() == _filtroAplicado) {
               coincideTipo = true;
             } else if (tipoValue is String && tipoValue == _filtroAplicado) {
               coincideTipo = true;
@@ -102,7 +107,8 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                 (t) => t['id'].toString() == tipoValue.toString(),
                 orElse: () => {},
               );
-              coincideTipo = tipoEnCatalogo['nombre']?.toString() == _filtroAplicado;
+              coincideTipo =
+                  tipoEnCatalogo['nombre']?.toString() == _filtroAplicado;
             } else {
               coincideTipo = false;
             }
@@ -114,10 +120,13 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
         // --- FILTRO 2: ESTADO (Disponible, Reparación, etc.) ---
         bool coincideEstado = true;
         if (_filtroEstadoAplicado != "Todos") {
-          final dynamic estadoData = _actualIndice == 0 ? item['estado_mobil'] : item['estado_equipa'];
-          
+          final dynamic estadoData = _actualIndice == 0
+              ? item['estado_mobil']
+              : item['estado_equipa'];
+
           if (estadoData is Map) {
-            coincideEstado = estadoData['codigo']?.toString() == _filtroEstadoAplicado;
+            coincideEstado =
+                estadoData['codigo']?.toString() == _filtroEstadoAplicado;
           } else {
             coincideEstado = estadoData?.toString() == _filtroEstadoAplicado;
           }
@@ -188,23 +197,30 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                       onTap: () async {
                         if (_tipos.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Cargando categorías...'), duration: Duration(milliseconds: 500)),
+                            const SnackBar(
+                              content: Text('Cargando categorías...'),
+                              duration: Duration(milliseconds: 500),
+                            ),
                           );
                           await _cargarTipos();
                         }
-                        
+
                         final listaNombres = _tipos
                             .map((t) => t['nombre']?.toString() ?? '')
                             .where((n) => n.isNotEmpty)
                             .toList();
 
                         if (mounted) {
-                          final String? seleccionado = await showModalBottomSheet<String>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Filtro(tipos: listaNombres, titulo: "Categoría");
-                            },
-                          );
+                          final String? seleccionado =
+                              await showModalBottomSheet<String>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Filtro(
+                                    tipos: listaNombres,
+                                    titulo: "Categoría",
+                                  );
+                                },
+                              );
 
                           if (seleccionado != null) {
                             _aplicarFiltro(seleccionado);
@@ -226,7 +242,11 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.category, size: 20, color: Colors.blue),
+                            const Icon(
+                              Icons.category,
+                              size: 20,
+                              color: Colors.blue,
+                            ),
                           ],
                         ),
                       ),
@@ -237,19 +257,23 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
-                        final String? seleccionado = await showModalBottomSheet<String>(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Filtro(
-                              tipos: _nombresEstados.values.toList(),
-                              titulo: "Estado",
+                        final String? seleccionado =
+                            await showModalBottomSheet<String>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Filtro(
+                                  tipos: _nombresEstados.values.toList(),
+                                  titulo: "Estado",
+                                );
+                              },
                             );
-                          },
-                        );
 
                         if (seleccionado != null) {
                           final codigo = _nombresEstados.entries
-                              .firstWhere((e) => e.value == seleccionado, orElse: () => const MapEntry('Todos', 'Todos'))
+                              .firstWhere(
+                                (e) => e.value == seleccionado,
+                                orElse: () => const MapEntry('Todos', 'Todos'),
+                              )
                               .key;
                           _aplicarFiltroEstado(codigo);
                         }
@@ -261,7 +285,8 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                _nombresEstados[_filtroEstadoAplicado] ?? "Estado",
+                                _nombresEstados[_filtroEstadoAplicado] ??
+                                    "Estado",
                                 overflow: TextOverflow.ellipsis,
                                 style: TextEstilos.labelCard.copyWith(
                                   fontSize: 12,
@@ -269,7 +294,11 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.settings_suggest, size: 20, color: Colors.orange),
+                            const Icon(
+                              Icons.settings_suggest,
+                              size: 20,
+                              color: Colors.orange,
+                            ),
                           ],
                         ),
                       ),
@@ -347,7 +376,10 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                             final data = _actualIndice != 0
                                                 ? itemActual['equipamiento']
                                                 : itemActual['mobiliario'];
-                                            if (data is Map) return data['nombre']?.toString() ?? 'Sin nombre';
+                                            if (data is Map)
+                                              return data['nombre']
+                                                      ?.toString() ??
+                                                  'Sin nombre';
                                             return 'ID: ${data.toString()}';
                                           }(),
                                           style: TextStyle(
@@ -396,7 +428,10 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                             final data = _actualIndice != 0
                                                 ? itemActual['estado_equipa']
                                                 : itemActual['estado_mobil'];
-                                            if (data is Map) return data['nombre']?.toString() ?? 'N/A';
+                                            if (data is Map)
+                                              return data['nombre']
+                                                      ?.toString() ??
+                                                  'N/A';
                                             return data?.toString() ?? 'N/A';
                                           }(),
                                           style: TextStyle(
@@ -460,13 +495,11 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
   String? _estadoOrigen;
   String? _estadoDestino;
   bool _procesando = false;
-
-  final Map<String, String> _nombresEstados = {
-    'DISP': 'Disponible',
-    'NODISP': 'No disponible',
-    'REPAR': 'En reparación',
-    'DESCOMP': 'Descompuesta',
-  };
+  bool _cargandoResumen = true;
+  List<Map<String, dynamic>> _resumenEstados = [];
+  int _totalFisico = 0;
+  Map<String, String> _nombresEstados = {};
+  List<Map<String, dynamic>> _estadosDisponibles = [];
 
   @override
   void initState() {
@@ -474,12 +507,53 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
     final data = widget.esEquipamiento
         ? widget.item['estado_equipa']
         : widget.item['estado_mobil'];
-    
+
     if (data is Map) {
       _estadoOrigen = data['codigo']?.toString();
     } else {
       _estadoOrigen = data?.toString();
     }
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    setState(() => _cargandoResumen = true);
+    try {
+      final estadosData = await _inventarioService.getEstadosInventario();
+      final estadosList = widget.esEquipamiento
+          ? estadosData['estados_equipamiento'] ?? []
+          : estadosData['estados_mobiliario'] ?? [];
+
+      _estadosDisponibles = estadosList
+          .map<Map<String, dynamic>>(
+            (e) => {'codigo': e['codigo'], 'nombre': e['nombre']},
+          )
+          .toList();
+
+      _nombresEstados = {};
+      for (var estado in estadosList) {
+        _nombresEstados[estado['codigo']] = estado['nombre'];
+      }
+
+      final resumen = widget.esEquipamiento
+          ? await _inventarioService.getResumenEstadosEquipa(widget.item['id'])
+          : await _inventarioService.getResumenEstadosMob(widget.item['id']);
+
+      if (resumen['status'] == 'success') {
+        _resumenEstados = List<Map<String, dynamic>>.from(
+          resumen['data'] ?? [],
+        );
+        _totalFisico = resumen['total'] ?? 0;
+      }
+    } catch (e) {
+      print('Error al cargar datos: $e');
+      _nombresEstados = {
+        'DISP': 'Disponible',
+        'REPAR': 'En reparación',
+        'REVIS': 'Revisión Pendiente',
+      };
+    }
+    if (mounted) setState(() => _cargandoResumen = false);
   }
 
   Future<void> _cambiarEstado() async {
@@ -494,9 +568,9 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
     final int cantidadActual = widget.item['cantidad'] ?? 0;
 
     if (cantidadMover == null || cantidadMover <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cantidad no válida')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cantidad no válida')));
       return;
     }
 
@@ -534,30 +608,30 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
       // Buscamos si ya existe el elemento en ese estado en la lista completa
       final int elementoBaseId = widget.esEquipamiento
           ? (widget.item['equipamiento'] is Map
-              ? widget.item['equipamiento']['id']
-              : widget.item['equipamiento'])
+                ? widget.item['equipamiento']['id']
+                : widget.item['equipamiento'])
           : (widget.item['mobiliario'] is Map
-              ? widget.item['mobiliario']['id']
-              : widget.item['mobiliario']);
+                ? widget.item['mobiliario']['id']
+                : widget.item['mobiliario']);
 
       Map<String, dynamic>? itemDestino;
       try {
         itemDestino = widget.fullList.firstWhere((item) {
           final itemMuebleId = widget.esEquipamiento
               ? (item['equipamiento'] is Map
-                  ? item['equipamiento']['id']
-                  : item['equipamiento'])
+                    ? item['equipamiento']['id']
+                    : item['equipamiento'])
               : (item['mobiliario'] is Map
-                  ? item['mobiliario']['id']
-                  : item['mobiliario']);
+                    ? item['mobiliario']['id']
+                    : item['mobiliario']);
 
           final itemEstadoCod = widget.esEquipamiento
               ? (item['estado_equipa'] is Map
-                  ? item['estado_equipa']['codigo']
-                  : item['estado_equipa'])
+                    ? item['estado_equipa']['codigo']
+                    : item['estado_equipa'])
               : (item['estado_mobil'] is Map
-                  ? item['estado_mobil']['codigo']
-                  : item['estado_mobil']);
+                    ? item['estado_mobil']['codigo']
+                    : item['estado_mobil']);
 
           return itemMuebleId == elementoBaseId &&
               itemEstadoCod == _estadoDestino;
@@ -610,9 +684,9 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
       widget.onUpdate();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _procesando = false);
     }
@@ -677,6 +751,87 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
                 Colors.green,
               ),
               const SizedBox(height: 10),
+              if (_cargandoResumen)
+                const Center(child: CircularProgressIndicator())
+              else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Resumen por estado:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppColores.foreground,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ..._resumenEstados.map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Text(
+                                '• ${e['estado_nombre']}: ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColores.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${e['cantidad']} uds',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColores.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total físico:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '$_totalFisico uds',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: AppColores.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
               Divider(color: AppColores.primary.withValues(alpha: 0.3)),
               const SizedBox(height: 10),
               Text(
@@ -729,13 +884,13 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
                       ),
                       icon: _procesando
                           ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : const Icon(Icons.swap_horiz_rounded),
                       label: Text(
                         _procesando ? "Procesando..." : "Cambiar Estado",
@@ -906,7 +1061,9 @@ class _FiltroState extends State<Filtro> {
           ...widget.tipos.map((tipo) {
             return ListTile(
               leading: Icon(
-                widget.titulo == "Estado" ? Icons.settings_suggest : Icons.category,
+                widget.titulo == "Estado"
+                    ? Icons.settings_suggest
+                    : Icons.category,
                 color: AppColores.primary,
               ),
               title: Text(tipo),

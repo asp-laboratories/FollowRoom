@@ -219,4 +219,55 @@ class InventarioService {
       throw Exception('Error al cargar tipos de equipamiento');
     }
   }
+
+  Future<Map<String, dynamic>> getEstadosInventario() async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/estados-inventario/');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al cargar estados de inventario');
+      }
+    } catch (e) {
+      print('Error estados inventario: $e');
+      throw Exception('Error al cargar estados de inventario');
+    }
+  }
+
+  Future<Map<String, dynamic>> getResumenEstadosEquipa(int inventarioId) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/resumen-estados-equipa/$inventarioId/');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al cargar resumen de estados');
+      }
+    } catch (e) {
+      print('Error resumen estados equip: $e');
+      throw Exception('Error al cargar resumen de estados');
+    }
+  }
+
+  Future<Map<String, dynamic>> getResumenEstadosMob(int inventarioId) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      final response = await dio.get('/resumen-estados-mob/$inventarioId/');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception('Error al cargar resumen de estados');
+      }
+    } catch (e) {
+      print('Error resumen estados mob: $e');
+      throw Exception('Error al cargar resumen de estados');
+    }
+  }
 }

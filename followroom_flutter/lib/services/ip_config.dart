@@ -5,4 +5,6 @@ class IpConfig {
 
   // static const ip = "172.18.6.99:8000";
   // static const ip = "10.100.68.41:8000";
+
+  // static const ip = "100.105.98.15:8000";
 }

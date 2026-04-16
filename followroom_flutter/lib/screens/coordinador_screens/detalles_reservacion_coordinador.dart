@@ -1027,28 +1027,90 @@ class _PantallaDetallesCoordinadorState
   Widget _buildEncuestaDisplay() {
     if (_encuesta == null) return SizedBox.shrink();
 
+    final personal = (_encuesta!['personal'] ?? 0).toInt();
+    final equipamiento = (_encuesta!['equipamiento'] ?? 0).toInt();
+    final servicios = (_encuesta!['servicios'] ?? 0).toInt();
+    final salon = (_encuesta!['salon'] ?? 0).toInt();
+    final mobiliario = (_encuesta!['mobiliario'] ?? 0).toInt();
+
+    final promedio =
+        (personal + equipamiento + servicios + salon + mobiliario) / 5;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Puntuación: ${_encuesta!['puntuacion'] ?? 'No asignada'}/5",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: AppColores.primary,
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColores.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star, color: AppColores.primary, size: 28),
+              SizedBox(width: 8),
+              Text(
+                promedio.toStringAsFixed(1),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: AppColores.primary,
+                ),
+              ),
+              Text(' / 5', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            ],
           ),
         ),
-        SizedBox(height: 4),
+        SizedBox(height: 12),
         Text(
-          "Comentario: ${_encuesta!['comentario'] ?? 'Sin comentario'}",
-          style: TextStyle(fontSize: 12),
+          'Calificaciones:',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         ),
         SizedBox(height: 4),
+        _buildRatingRow('Personal', personal),
+        _buildRatingRow('Equipamiento', equipamiento),
+        _buildRatingRow('Servicios', servicios),
+        _buildRatingRow('Salón', salon),
+        _buildRatingRow('Mobiliario', mobiliario),
+        if (_encuesta!['comentario'] != null &&
+            _encuesta!['comentario'].toString().isNotEmpty) ...[
+          SizedBox(height: 12),
+          Text(
+            'Comentario:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          SizedBox(height: 4),
+          Text(
+            _encuesta!['comentario'] ?? '',
+            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+        ],
+        SizedBox(height: 8),
         Text(
-          "Fecha: ${_encuesta!['fecha_creacion'] ?? ''}",
+          'Fecha: ${_encuesta!['fecha_creacion'] ?? ''}',
           style: TextStyle(fontSize: 10, color: Colors.grey),
         ),
       ],
+    );
+  }
+
+  Widget _buildRatingRow(String label, int value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text('$label: ', style: TextStyle(fontSize: 12)),
+          ...List.generate(
+            5,
+            (i) => Icon(
+              i < value ? Icons.star : Icons.star_border,
+              size: 14,
+              color: Colors.amber,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
