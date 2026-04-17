@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:followroom_flutter/components/widget_seccion_busqueda.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
 import 'package:followroom_flutter/services/salon_service.dart';
@@ -16,6 +17,9 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
   List<Map<String, dynamic>> salones = [];
   bool _cargando = true;
   DateTime _fechaSeleccionada = DateTime.now();
+
+  DateTime? _fechaFiltro;
+  String _textoBusqeueda = '';
 
   final List<String> estados = [
     "Todos",
@@ -40,8 +44,12 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
   Future<void> _cargarSalones() async {
     setState(() => _cargando = true);
     try {
-      final fechaIso = _formatearFechaIso(_fechaSeleccionada);
-      final data = await _salonService.getSalonesConEstado(fecha: fechaIso);
+      String fechaStr = '';
+      if (_fechaFiltro != null) {
+        fechaStr =
+            '${_fechaFiltro!.year}-${_fechaFiltro!.month.toString().padLeft(2, '0')}-${_fechaFiltro!.day.toString().padLeft(2, '0')}';
+      }
+      final data = await _salonService.getSalonesConEstado(fecha: fechaStr);
       print('DEBUG: Salones data: $data');
       setState(() {
         salones = data.map((item) {
@@ -53,6 +61,7 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
             'fecha': item['fecha'] ?? '',
           };
         }).toList();
+        _aplicarFiltrosLocales();
         salonesMostrados = List.from(salones);
         _cargando = false;
       });
@@ -63,17 +72,35 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
     }
   }
 
+  void _onFechaChanged(DateTime? fecha) {
+    setState(() => _fechaFiltro = fecha);
+    _cargarSalones();
+  }
+
+  void _onBusquedaChanged(String texto) {
+    setState(() {
+      _textoBusqeueda = texto.toLowerCase();
+      _aplicarFiltrosLocales();
+    });
+  }
+
+  void _aplicarFiltrosLocales() {
+    salonesMostrados = salones.where((salon) {
+      bool coincidenciaEstado =
+          estados[_estadoSeleccionado] == 'Todos' ||
+          salon['estado'] == estados[_estadoSeleccionado];
+      bool conincidenciaTexto =
+          _textoBusqeueda.isEmpty ||
+          salon['nombre'].toString().toLowerCase().contains(_textoBusqeueda);
+      return conincidenciaTexto && coincidenciaEstado;
+    }).toList();
+  }
+
   void filtrarPorEstado(int index) {
     setState(() {
       _estadoSeleccionado = index;
 
-      if (estados[index] == "Todos") {
-        salonesMostrados = List.from(salones);
-      } else {
-        salonesMostrados = salones.where((salon) {
-          return salon['estado'] == estados[index];
-        }).toList();
-      }
+      _aplicarFiltrosLocales();
     });
   }
 
@@ -90,14 +117,17 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
         nuevoCodigo,
         nuevaFecha,
       );
-      setState(() {
-        salonesMostrados[index]['estado'] = nuevoEstado;
-        final originalIndex = salones.indexWhere((s) => s['id'] == salonId);
-        if (originalIndex != -1) {
-          salones[originalIndex]['estado'] = nuevoEstado;
-          salones[originalIndex]['estado_codigo'] = nuevoCodigo;
-        }
-      });
+
+      await _cargarSalones();
+
+      // setState(() {
+      //   salonesMostrados[index]['estado'] = nuevoEstado;
+      //   final originalIndex = salones.indexWhere((s) => s['id'] == salonId);
+      //   if (originalIndex != -1) {
+      //     salones[originalIndex]['estado'] = nuevoEstado;
+      //     salones[originalIndex]['estado_codigo'] = nuevoCodigo;
+      //   }
+      // });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -183,42 +213,14 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: GestureDetector(
-                onTap: _seleccionarFecha,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColores.backgroundComponent,
-                    border: Border.all(
-                      color: AppColores.primary.withValues(alpha: 0.3),
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 18,
-                        color: AppColores.primary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Fecha: ${_formatearFecha(_fechaSeleccionada)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColores.foreground,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_drop_down, color: AppColores.primary),
-                    ],
-                  ),
-                ),
-              ),
+            FiltroReservacionesWidget(
+              salones: const [],
+              seccionSalones: false,
+              onFechaChanged: _onFechaChanged,
+              onSalonChanged: (salon) {},
+              onBusquedaChanged: _onBusquedaChanged,
             ),
+            const SizedBox(height: 8),
             SizedBox(
               height: 60,
               child: ListView.builder(

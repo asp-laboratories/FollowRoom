@@ -12,7 +12,7 @@ class SalonService {
       dio.options.baseUrl = baseUrl;
 
       Map<String, dynamic> queryParams = {};
-      if (fecha != null) {
+      if (fecha != null && fecha.isNotEmpty) {
         queryParams['fecha'] = fecha;
       }
 
