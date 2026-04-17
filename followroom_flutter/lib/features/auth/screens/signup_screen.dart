@@ -64,15 +64,29 @@ class _RegistroState extends State<Registro> {
         password: passwordController.text,
       );
 
+      print('Firebase user created: ${userCredential.user?.email}');
+
       final idToken = await userCredential.user!.getIdToken();
+      print('ID Token obtained, length: ${idToken?.length ?? 0}');
+
+      if (idToken == null || idToken.isEmpty) {
+        setState(() {
+          _mensajeError = 'Error al obtener token de autenticación';
+          _isLoading = false;
+        });
+        return;
+      }
 
       final dio = Dio();
       dio.options.baseUrl = _baseUrl;
 
-      await dio.post(
+      print('Sending signup request...');
+      final response = await dio.post(
         '/signup/',
         data: {'token': idToken, 'nombre': nombreController.text.trim()},
       );
+
+      print('Signup response: ${response.data}');
 
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -85,6 +99,17 @@ class _RegistroState extends State<Registro> {
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _mensajeError = _obtenerMensajeError(e.code));
+    } on DioException catch (e) {
+      String mensaje = 'Error al registrar';
+      if (e.response != null) {
+        final data = e.response!.data;
+        if (data is Map && data.containsKey('error')) {
+          mensaje = data['error'];
+        } else if (data is String) {
+          mensaje = data;
+        }
+      }
+      setState(() => _mensajeError = mensaje);
     } catch (e) {
       setState(() => _mensajeError = 'Error al registrar: $e');
     } finally {

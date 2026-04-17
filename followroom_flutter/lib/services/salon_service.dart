@@ -4,11 +4,22 @@ import 'package:followroom_flutter/services/ip_config.dart';
 class SalonService {
   static const String baseUrl = 'http://${IpConfig.ip}/api';
 
-  Future<List<Map<String, dynamic>>> getSalonesConEstado() async {
+  Future<List<Map<String, dynamic>>> getSalonesConEstado({
+    String? fecha,
+  }) async {
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.get('/salon/');
+
+      Map<String, dynamic> queryParams = {};
+      if (fecha != null) {
+        queryParams['fecha'] = fecha;
+      }
+
+      final response = await dio.get(
+        '/salon/',
+        queryParameters: queryParams.isEmpty ? null : queryParams,
+      );
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -59,11 +70,13 @@ class SalonService {
           fechaFormateada = '$anio-$mes-$dia';
         }
       }
-      
-      print('SalonService: GET /disponibilidad-salones/ con fecha=$fechaFormateada');
+
+      print(
+        'SalonService: GET /disponibilidad-salones/ con fecha=$fechaFormateada',
+      );
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      
+
       final response = await dio.get(
         '/disponibilidad-salones/',
         queryParameters: {'fecha': fechaFormateada},
@@ -71,10 +84,14 @@ class SalonService {
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
-        print('SalonService: Recibidos ${data.length} salones para la fecha $fechaFormateada');
+        print(
+          'SalonService: Recibidos ${data.length} salones para la fecha $fechaFormateada',
+        );
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
       } else {
-        throw Exception('Error al cargar disponibilidad de salones: ${response.statusCode}');
+        throw Exception(
+          'Error al cargar disponibilidad de salones: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error al cargar disponibilidad: $e');

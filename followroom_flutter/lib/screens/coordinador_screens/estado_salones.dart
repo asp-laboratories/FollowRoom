@@ -15,6 +15,7 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
   final SalonService _salonService = SalonService();
   List<Map<String, dynamic>> salones = [];
   bool _cargando = true;
+  DateTime _fechaSeleccionada = DateTime.now();
 
   final List<String> estados = [
     "Todos",
@@ -32,10 +33,15 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
 
   List<Map<String, dynamic>> salonesMostrados = [];
 
+  String _formatearFechaIso(DateTime fecha) {
+    return '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _cargarSalones() async {
     setState(() => _cargando = true);
     try {
-      final data = await _salonService.getSalonesConEstado();
+      final fechaIso = _formatearFechaIso(_fechaSeleccionada);
+      final data = await _salonService.getSalonesConEstado(fecha: fechaIso);
       print('DEBUG: Salones data: $data');
       setState(() {
         salones = data.map((item) {
@@ -44,6 +50,7 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
             'nombre': item['nombre'] ?? 'Sin nombre',
             'estado': item['estado'] ?? 'Sin estado',
             'estado_codigo': item['estado_codigo'] ?? '',
+            'fecha': item['fecha'] ?? '',
           };
         }).toList();
         salonesMostrados = List.from(salones);
@@ -134,6 +141,40 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
     }
   }
 
+  String _formatearFecha(DateTime fecha) {
+    final meses = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+    return '${fecha.day} ${meses[fecha.month - 1]} ${fecha.year}';
+  }
+
+  Future<void> _seleccionarFecha() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _fechaSeleccionada,
+      firstDate: DateTime.now().subtract(Duration(days: 365)),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+      helpText: "Selecciona la fecha",
+    );
+    if (picked != null && picked != _fechaSeleccionada) {
+      setState(() {
+        _fechaSeleccionada = picked;
+      });
+      _cargarSalones();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -142,6 +183,42 @@ class _PantallaEstadoSalonesState extends State<PantallaEstadoSalones> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: GestureDetector(
+                onTap: _seleccionarFecha,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColores.backgroundComponent,
+                    border: Border.all(
+                      color: AppColores.primary.withValues(alpha: 0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: AppColores.primary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Fecha: ${_formatearFecha(_fechaSeleccionada)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColores.foreground,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down, color: AppColores.primary),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             SizedBox(
               height: 60,
               child: ListView.builder(
