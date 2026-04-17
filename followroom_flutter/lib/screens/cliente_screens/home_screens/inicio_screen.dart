@@ -52,39 +52,44 @@ class _ReservacionState extends State<Reservacion> {
     Icons.workspace_premium,
     Icons.auto_awesome,
   ];
-Future<void> _cargarPaquetes() async {
-  try {
-    final data = await _paqueteService.getPaquetes();
-    setState(() {
-      paquetesDB = data.asMap().entries.map((entry) {
-        final i = entry.key;
-        final item = entry.value;
-      
-        final precioRaw = item['total'] ?? item['costo'] ?? item['precio'] ?? '0';
-        print(precioRaw);
-        final precio = double.tryParse(precioRaw.toString()) ?? 0;
-        print(precio);
-        
-        return {
-          'id': item['id'],
-          'nombre': item['nombre_paquete'] ?? item['nombre'] ?? 'Sin nombre',
-          
-          'descripcion': item['descripEvento'] ?? item['descripcion'] ?? 'Sin descripción',
-          
-          'precio': precio,
-          'color': _coloresPaquetes[i % _coloresPaquetes.length],
-          'icono': _iconosPaquetes[i % _iconosPaquetes.length],
-          'salon_nombre': item['salon_nombre'],
-          'salon_id': item['salon_id'],
-          'montaje_id': item['montaje_id'],
-          'montaje_nombre': item['montaje_nombre'],
-          'servicios': item['servicios'] ?? [],
-          'mobiliarios': item['mobiliarios'] ?? [],
-          'equipamentos': item['equipamentos'] ?? [],
-        };
-      }).toList();
-      _cargandoPaquetes = false;
-    });
+  Future<void> _cargarPaquetes() async {
+    try {
+      final data = await _paqueteService.getPaquetes();
+      setState(() {
+        paquetesDB = data.asMap().entries.map((entry) {
+          final i = entry.key;
+          final item = entry.value;
+
+          final precioRaw =
+              item['total'] ?? item['costo'] ?? item['precio'] ?? '0';
+          print(precioRaw);
+          final precio = double.tryParse(precioRaw.toString()) ?? 0;
+          print(precio);
+
+          return {
+            'id': item['id'],
+            'nombre': item['nombre_paquete'] ?? item['nombre'] ?? 'Sin nombre',
+            'descripcion':
+                item['descripEvento'] ??
+                item['descripcion'] ??
+                'Sin descripción',
+            'precio': precio,
+            'color': _coloresPaquetes[i % _coloresPaquetes.length],
+            'icono': _iconosPaquetes[i % _iconosPaquetes.length],
+            'salon_nombre': item['salon_nombre'],
+            'salon_id': item['salon_id'],
+            'salon_precio': item['salon_precio'],
+            'salon_capacidad': item['salon_capacidad'],
+            'tipo_montaje_id': item['tipo_montaje_id'],
+            'montaje_id': item['montaje_id'],
+            'montaje_nombre': item['montaje_nombre'],
+            'servicios': item['servicios'] ?? [],
+            'mobiliarios': item['mobiliarios'] ?? [],
+            'equipamentos': item['equipamentos'] ?? [],
+          };
+        }).toList();
+        _cargandoPaquetes = false;
+      });
     } catch (e) {
       print('Error al cargar paquetes: $e');
       setState(() {
@@ -424,7 +429,8 @@ Future<void> _cargarPaquetes() async {
                                   ),
                                   child: SingleChildScrollView(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
@@ -520,7 +526,8 @@ Future<void> _cargarPaquetes() async {
                                                 ),
                                               ),
                                         ],
-                                        if (paquete['salon_nombre'] != null) ...[
+                                        if (paquete['salon_nombre'] !=
+                                            null) ...[
                                           SizedBox(height: 4),
                                           Row(
                                             children: [

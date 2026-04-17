@@ -92,7 +92,7 @@ class _TabSalonState extends State<TabSalon>
           widget.fechaSeleccionada!,
         );
       } else {
-        data = await _salonService.getSalonesConEstado();
+        data = await _salonService.getSalonesConEstado(null);
       }
 
       if (mounted) {

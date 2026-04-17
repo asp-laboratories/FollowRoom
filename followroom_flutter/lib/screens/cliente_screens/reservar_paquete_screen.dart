@@ -125,53 +125,8 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
   }
 
   Future<void> _confirmarReservacion() async {
-    if (_cargando) return;
-
-    setState(() {
-      _cargando = true;
-    });
-
-    try {
-      final datosReserv = {
-        'nombre': datosReservacion['nombre'] ?? '',
-        'fecha': datosReservacion['fecha'] ?? '',
-        'horario': datosReservacion['horario'] ?? '',
-        'asistentes': datosReservacion['asistentes'] ?? '',
-        'tipo': datosReservacion['tipo'] ?? '',
-      };
-
-      await _reservacionService.crearReservacion(
-        datosReservacion: datosReserv,
-        datosCliente: datosCliente,
-        salonId: widget.paquete['salon_id'],
-        montageId: widget.paquete['montaje_id'],
-        servicios: List<Map<String, dynamic>>.from(
-          widget.paquete['servicios'] ?? [],
-        ),
-        equipamentos: List<Map<String, dynamic>>.from(
-          widget.paquete['equipamentos'] ?? [],
-        ),
-        mobiliarios: [],
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reservación creada exitosamente')),
-        );
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear reservación: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _cargando = false;
-        });
-      }
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 
@@ -192,6 +147,8 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: Contenido del paquete": ${widget.paquete}');
+
     final salon = {
       'id': widget.paquete['salon_id'],
       'nombre': widget.paquete['salon_nombre'],
@@ -202,7 +159,7 @@ class _ReservarPaqueteScreenState extends State<ReservarPaqueteScreen> {
     if (widget.paquete['salon_id'] != null &&
         widget.paquete['montaje_nombre'] != null) {
       montajesPorSalon[widget.paquete['salon_id']] =
-          '${widget.paquete['montaje_nombre']}-${widget.paquete['montaje_id']}';
+          '${widget.paquete['montaje_nombre']}-${widget.paquete['tipo_montaje_id']}';
     }
 
     return DefaultTabController(

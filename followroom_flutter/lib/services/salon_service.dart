@@ -4,11 +4,15 @@ import 'package:followroom_flutter/services/ip_config.dart';
 class SalonService {
   static const String baseUrl = 'http://${IpConfig.ip}/api';
 
-  Future<List<Map<String, dynamic>>> getSalonesConEstado() async {
+  Future<List<Map<String, dynamic>>> getSalonesConEstado(String? decha) async {
+    String url = '/salon/';
+    if (decha != null && decha.isNotEmpty){
+      url += '?fecha=$decha';
+    }
     try {
       var dio = Dio();
       dio.options.baseUrl = baseUrl;
-      final response = await dio.get('/salon/');
+      final response = await dio.get(url);
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
