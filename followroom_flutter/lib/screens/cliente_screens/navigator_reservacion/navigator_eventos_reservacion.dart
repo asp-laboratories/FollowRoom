@@ -45,7 +45,7 @@ class _NavigatorEventosReservacionState
       final resultados = await Future.wait([
         _disponibilidadService.getReservacionesFecha(fechaStr),
         _disponibilidadService.getEstadosSalones(fechaStr),
-        _salonServicios.getSalonesConEstado(null),
+        _salonServicios.getSalonesConEstado(),
       ]);
 
       if (!mounted) return;

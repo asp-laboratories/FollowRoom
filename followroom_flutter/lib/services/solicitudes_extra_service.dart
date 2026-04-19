@@ -82,6 +82,7 @@ class SolicitudesExtraService {
     required int reservacionId,
     List<int> mobiliariosIds = const [],
     List<int> equipamentosIds = const [],
+    List<int> serviciosIds = const [],
   }) async {
     try {
       var dio = Dio();
@@ -90,6 +91,7 @@ class SolicitudesExtraService {
       final data = {
         'mobiliarios_ids': mobiliariosIds,
         'equipamentos_ids': equipamentosIds,
+        'servicios_ids': serviciosIds,
       };
 
       print('Aceptando solicitud $reservacionId: $data');

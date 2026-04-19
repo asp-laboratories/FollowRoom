@@ -26,6 +26,7 @@ class SolicitudesScreen extends StatefulWidget {
 }
 
 class _SolicitudesScreenState extends State<SolicitudesScreen> {
+  bool _mostrandoTabs = false;
   final MobiliarioService _mobiliarioService = MobiliarioService();
   final EquipamientoService _equipamientoService = EquipamientoService();
   final ReservacionService _reservacionService = ReservacionService();
@@ -433,6 +434,10 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
 
   Future<void> _confirmarSolicitud(int reservacionId) async {
     Navigator.pop(context);
+    
+    setState(() {
+      _mostrandoTabs = true;
+    });
 
     final mobiliarios = _mobiliario
         .where(
@@ -568,17 +573,27 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                   fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 10),
+                            const SizedBox(height: 10),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: AppColores.primary,
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
-                  _mostrarDialogoReservacion();
+                  if (_seleccionados.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Selecciona al menos un elemento')),
+                    );
+                    return;
+                  }
+                  if (widget.reservacionId != null) {
+                    _confirmarSolicitud(widget.reservacionId!);
+                  } else {
+                    Navigator.pop(context);
+                    _mostrarDialogoReservacion();
+                  }
                 },
-                child: const Text('Seleccionar Reservación'),
+                child: const Text('Confirmar Solicitud'),
               ),
             ],
           ),
@@ -647,6 +662,12 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   }
 
   Widget _buildMainContent() {
+    if (widget.reservacionId == null && !_mostrandoTabs && _reservacionesActivas.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mostrarDialogoReservacion();
+      });
+    }
+
     if (_error != null) {
       return Center(
         child: Column(

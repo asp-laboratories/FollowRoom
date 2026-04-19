@@ -18,6 +18,17 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
   List<Map<String, dynamic>> _reservaciones = [];
   bool _loading = true;
   String? _error;
+  final Set<int> _seleccionados = {};
+
+  void _toggleSeleccion(int itemId) {
+    setState(() {
+      if (_seleccionados.contains(itemId)) {
+        _seleccionados.remove(itemId);
+      } else {
+        _seleccionados.add(itemId);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -301,6 +312,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 titulo: "Mobiliario",
                                 lista: mobiliarios,
                                 icono: Icons.chair,
+                                seleccionable: true,
                               ),
                               if (mobiliarios.isNotEmpty &&
                                   (equipamentos.isNotEmpty ||
@@ -310,6 +322,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 titulo: "Equipamiento",
                                 lista: equipamentos,
                                 icono: Icons.devices,
+                                seleccionable: true,
                               ),
                               if (equipamentos.isNotEmpty &&
                                   servicios.isNotEmpty)
@@ -318,6 +331,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 titulo: "Servicios",
                                 lista: servicios,
                                 icono: Icons.room_service,
+                                seleccionable: true,
                               ),
                               if (totalItems > 0) ...[
                                 const SizedBox(height: 12),
@@ -360,6 +374,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                             reservacion,
                                             mobiliarios,
                                             equipamentos,
+                                            servicios,
                                           )
                                         : null,
                                     style: ElevatedButton.styleFrom(
@@ -397,6 +412,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
     required String titulo,
     required List lista,
     required IconData icono,
+    bool seleccionable = false,
   }) {
     if (lista.isEmpty) return const SizedBox();
 
@@ -424,83 +440,103 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         const SizedBox(height: 8),
         ...lista.map((item) {
           final completado = item['completado'] ?? false;
+          final itemId = item['id'] as int;
+          final seleccionado = !completado && _seleccionados.contains(itemId);
           final precio = (item['precio'] ?? 0) as num;
           final cantidad = item['cantidad'] ?? 1;
           final subtotal = precio * cantidad;
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: completado
-                  ? Colors.green.withValues(alpha: 0.05)
-                  : Colors.grey.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(10),
-              border: completado
-                  ? Border.all(color: Colors.green.withValues(alpha: 0.2))
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  completado ? Icons.check_circle : Icons.pending,
-                  size: 16,
-                  color: completado ? Colors.green : Colors.orange,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          return GestureDetector(
+            onTap: () {
+              if (!completado && seleccionable) {
+                _toggleSeleccion(itemId);
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: completado
+                    ? Colors.green.withValues(alpha: 0.05)
+                    : seleccionado
+                        ? Colors.blue.withValues(alpha: 0.1)
+                        : Colors.grey.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: completado
+                    ? Border.all(color: Colors.green.withValues(alpha: 0.2))
+                    : seleccionado
+                        ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
+                        : null,
+              ),
+              child: Row(
+                children: [
+                  if (seleccionable && !completado)
+                    Checkbox(
+                      value: seleccionado,
+                      onChanged: (_) => _toggleSeleccion(itemId),
+                      activeColor: Colors.blue,
+                    )
+                  else
+                    Icon(
+                      completado ? Icons.check_circle : Icons.pending,
+                      size: 16,
+                      color: completado ? Colors.green : Colors.orange,
+                    ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['nombre'] ?? '',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColores.foreground.withValues(alpha: 0.8),
+                            decoration: completado
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                        if (item['descripcion'] != null &&
+                            item['descripcion'].toString().isNotEmpty)
+                          Text(
+                            item['descripcion'] ?? '',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        item['nombre'] ?? '',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColores.foreground.withValues(alpha: 0.8),
-                          decoration: completado
-                              ? TextDecoration.lineThrough
-                              : null,
+                        cantidad > 1 ? 'x$cantidad' : '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColores.primary,
+                          fontSize: 12,
                         ),
                       ),
-                      if (item['descripcion'] != null &&
-                          item['descripcion'].toString().isNotEmpty)
+                      Text(
+                        '\$${precio.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      if (cantidad > 1)
                         Text(
-                          item['descripcion'] ?? '',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[500],
+                          '=\$${subtotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColores.primary,
+                            fontSize: 11,
                           ),
                         ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      cantidad > 1 ? 'x$cantidad' : '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColores.primary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      '\$${precio.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    if (cantidad > 1)
-                      Text(
-                        '=\$${subtotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColores.primary,
-                          fontSize: 11,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),
@@ -569,14 +605,21 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
     Map<String, dynamic> reservacion,
     List mobiliarios,
     List equipamentos,
+    List servicios,
   ) async {
     try {
-      // Conversión segura de IDs para evitar errores de tipo (int vs String vs double)
+      // Conversión segura de IDs - solo los seleccionados
       final mobiliariosIds = mobiliarios
+          .where((m) => _seleccionados.contains(int.parse(m['id'].toString())))
           .map((m) => int.parse(m['id'].toString()))
           .toList();
       final equipamentosIds = equipamentos
+          .where((e) => _seleccionados.contains(int.parse(e['id'].toString())))
           .map((e) => int.parse(e['id'].toString()))
+          .toList();
+      final serviciosIds = servicios
+          .where((s) => _seleccionados.contains(int.parse(s['id'].toString())))
+          .map((s) => int.parse(s['id'].toString()))
           .toList();
       final reservacionId = int.parse(reservacion['id'].toString());
 
@@ -610,11 +653,13 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
       print('Llamando aceptarSolicitud para reservación $reservacionId');
       print('mobiliariosIds: $mobiliariosIds');
       print('equipamentosIds: $equipamentosIds');
+      print('serviciosIds: $serviciosIds');
 
       final result = await _service.aceptarSolicitud(
         reservacionId: reservacionId,
         mobiliariosIds: mobiliariosIds,
         equipamentosIds: equipamentosIds,
+        serviciosIds: serviciosIds,
       );
 
       print('Resultado: $result');
@@ -631,6 +676,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
           ),
         );
         await _cargarDatos();
+        _seleccionados.clear();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
