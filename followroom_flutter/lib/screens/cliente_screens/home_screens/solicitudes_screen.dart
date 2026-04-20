@@ -85,7 +85,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         _equipamientoService.getEquipamientos(),
         _equipamientoService.getServicios(),
         _mobiliarioService.getTiposMobil(),
-        _equipamientoService.getServicios(),
+        _equipamientoService.getTiposEquipa(),
+        _equipamientoService.getTiposServicio(),
         _reservacionService.getMisReservaciones(email),
         _solicitudesExtraService.getMisSolicitudesExtra(email),
       ]);
@@ -102,13 +103,16 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
       final tiposMobiliarioAPI = (results[3] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-      final tiposServicioAPI = (results[4] as List)
+      final tiposEquipamientoAPI = (results[4] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-      final reservaciones = (results[5] as List)
+      final tiposServicioAPI = (results[5] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-      final misSolicitudesExtra = (results[6] as List)
+      final reservaciones = (results[6] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final misSolicitudesExtra = (results[7] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
 
@@ -192,12 +196,11 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
           };
         }).toList();
         _tiposMobiliario = tiposMobiliarioAPI;
-        _tiposEquipamiento = [
-          {'id': 1, 'nombre': 'audio'},
-          {'id': 2, 'nombre': 'video'},
-          {'id': 3, 'nombre': 'iluminacion'},
-        ];
+        _tiposEquipamiento = tiposEquipamientoAPI;
         _tiposServicio = tiposServicioAPI;
+        print('DEBUG - Tipos equipamiento: ${tiposEquipamientoAPI.length}');
+        print('DEBUG - Tipos servicio: ${tiposServicioAPI.length}');
+        print('DEBUG - Servicios: ${serviciosAPI.length}');
         _reservacionesActivas = reservacionesActivas;
         _misSolicitudesExtra = misSolicitudesExtra;
         _noReservacionesActivas = reservacionesActivas.isEmpty;
@@ -232,25 +235,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
     }
     return _equipamiento.where((e) {
       final tipoId = e['tipo_equipa'];
-      final tipoNombre =
-          e['tipo_nombre']?.toString().toLowerCase() ??
-          e['tipo_equipa']?.toString().toLowerCase() ??
-          '';
-
-      print(
-        'Equipamiento: ${e['nombre']}, tipo_equipa: $tipoId, tipo_nombre: $tipoNombre, filtro: $_tipoEquipamientoSeleccionado',
-      );
-
-      if (_tipoEquipamientoSeleccionado == 'audio') {
-        return tipoNombre.contains('audio');
-      }
-      if (_tipoEquipamientoSeleccionado == 'video') {
-        return tipoNombre.contains('video');
-      }
-      if (_tipoEquipamientoSeleccionado == 'iluminacion') {
-        return tipoNombre.contains('ilumin');
-      }
-      return true;
+      return tipoId.toString() == _tipoEquipamientoSeleccionado;
     }).toList();
   }
 
@@ -259,17 +244,14 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         _tipoServicioSeleccionado == 'todos') {
       return _servicios;
     }
-    return _servicios.where((s) {
-      final tipoId = s['tipo_servicio'];
-      final tipoNombre = s['tipo_servicio']?.toString().toLowerCase() ?? '';
-
-      print(
-        'Servicio: ${s['nombre']}, tipo_servicio: $tipoId, filtro: $_tipoServicioSeleccionado',
-      );
-
-      return tipoId.toString() == _tipoServicioSeleccionado ||
-          tipoNombre.contains(_tipoServicioSeleccionado!.toLowerCase());
+    print('DEBUG filtro servicio, seleccionado: $_tipoServicioSeleccionado');
+    final filtered = _servicios.where((s) {
+      final tipoId = s['tipo_servicio_id'];
+      print('DEBUG - servicio: ${s['nombre']}, tipo_servicio_id: $tipoId');
+      return tipoId.toString() == _tipoServicioSeleccionado;
     }).toList();
+    print('DEBUG - servicios filtrados: ${filtered.length}');
+    return filtered;
   }
 
   void _actualizarCantidad(
@@ -1082,14 +1064,12 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                 final cantidad = item['cantidad'] as int;
                 final yaSolicitado = item['ya_solicitado'] as bool? ?? false;
 
-                String tipoNombre = '';
                 final tipoId = item['tipo_equipa'];
-                if (tipoId == 1)
-                  tipoNombre = 'audio';
-                else if (tipoId == 2)
-                  tipoNombre = 'video';
-                else if (tipoId == 3)
-                  tipoNombre = 'iluminacion';
+                final tipoObj = _tiposEquipamiento.firstWhere(
+                  (t) => t['id'] == tipoId,
+                  orElse: () => {'nombre': 'Otro'},
+                );
+                final tipoNombre = tipoObj['nombre'] ?? 'Otro';
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
