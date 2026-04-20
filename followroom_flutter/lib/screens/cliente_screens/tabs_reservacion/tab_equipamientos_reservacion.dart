@@ -83,6 +83,7 @@ class _TabEquipamientosReservacionState
                   'descripcion': e['descripcion'] ?? '',
                   'precio': e['costo'] ?? 0,
                   'stock': e['stock'] ?? 0,
+                  'stockDisponible': e['stockDisponible'] ?? 0,
                 },
               )
               .toList();
@@ -348,7 +349,7 @@ class _TabEquipamientosReservacionState
                                     style: TextStyle(color: Colors.grey),
                                   ),
                                   Text(
-                                    "\$${equipamiento['precio']} c/u - Stock: ${equipamiento['stock']}",
+                                    "\$${equipamiento['precio']} c/u - Stock: ${equipamiento['stockDisponible'] ?? equipamiento['stock']}",
                                     style: TextStyle(
                                       color: AppColores.primary,
                                       fontWeight: FontWeight.w500,
@@ -362,7 +363,7 @@ class _TabEquipamientosReservacionState
                               children: [
                                 WidgetCantidadElementos(
                                   cantidadActual: cantidad,
-                                  stockMaximo: equipamiento['stock'] as int,
+                                  stockMaximo: equipamiento['stockDisponible'] as int? ?? equipamiento['stock'] as int? ?? 0,
                                   onChange: (nuevaCantidad) =>
                                       actualizarCantidad(
                                         equipamiento,
