@@ -884,48 +884,56 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              Row(
-                                children: [
-                                  if (item['caracteristicas'] != null)
-                                    ...item['caracteristicas'].take(2).map((
-                                      carac,
-                                    ) {
-                                      return Text(
-                                        "- $carac ",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
+                              if ((item['caracteristicas'] as List?) != null &&
+                                  item['caracteristicas'].isNotEmpty)
+                                Wrap(
+                                  spacing: 4,
+                                  children: item['caracteristicas']
+                                      .take(2)
+                                      .map<Widget>(
+                                        (carac) => Text(
+                                          "- $carac ",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
                                         ),
-                                      );
-                                    }),
-                                ],
-                              ),
-                              Row(
+                                      )
+                                      .toList(),
+                                ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColores.primary.withValues(
-                                        alpha: 0.1,
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      item['tipo_nombre'] ??
-                                          item['tipo_movil']?.toString() ??
-                                          '',
-                                      style: const TextStyle(
-                                        color: AppColores.primary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                      decoration: BoxDecoration(
+                                        color: AppColores.primary.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        item['tipo_nombre'] ??
+                                            item['tipo_movil']?.toString() ??
+                                            '',
+                                        style: const TextStyle(
+                                          color: AppColores.primary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
                                   Text(
                                     '\$${item['precio'] ?? item['costo'] ?? 0}',
                                     style: const TextStyle(
@@ -1137,30 +1145,37 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              Row(
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColores.primary.withValues(
-                                        alpha: 0.1,
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      tipoNombre,
-                                      style: const TextStyle(
-                                        color: AppColores.primary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                      decoration: BoxDecoration(
+                                        color: AppColores.primary.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        tipoNombre,
+                                        style: const TextStyle(
+                                          color: AppColores.primary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
                                   Text(
                                     '\$${item['costo'] ?? 0}',
                                     style: const TextStyle(
