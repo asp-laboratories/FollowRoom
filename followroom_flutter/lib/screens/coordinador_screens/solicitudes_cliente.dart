@@ -312,7 +312,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 titulo: "Mobiliario",
                                 lista: mobiliarios,
                                 icono: Icons.chair,
-                                seleccionable: true,
+                                seleccionable: false,
                               ),
                               if (mobiliarios.isNotEmpty &&
                                   (equipamentos.isNotEmpty ||
@@ -322,7 +322,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 titulo: "Equipamiento",
                                 lista: equipamentos,
                                 icono: Icons.devices,
-                                seleccionable: true,
+                                seleccionable: false,
                               ),
                               if (equipamentos.isNotEmpty &&
                                   servicios.isNotEmpty)

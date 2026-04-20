@@ -1167,7 +1167,7 @@ class _PantallaDetallesCoordinadorState
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${(_datosCompletos?['servicios'] as List).fold<int>(0, (sum, s) => sum + ((s['precio'] ?? 0) as int))}",
+                  "\$${(_datosCompletos?['servicios'] as List).fold<int>(0, (sum, s) => sum + ((s['servicio__costo'] ?? s['costo'] ?? s['precio'] ?? 0) as int))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -1235,7 +1235,7 @@ class _PantallaDetallesCoordinadorState
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Text(
-                  "\$${(_datosCompletos?['equipamentos'] as List).fold<int>(0, (sum, e) => sum + (((e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
+                  "\$${(_datosCompletos?['equipamentos'] as List).fold<int>(0, (sum, e) => sum + (((e['equipamiento__costo'] ?? e['costo'] ?? e['precio'] ?? 0) as int) * ((e['cantidad'] ?? 1) as int)))}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

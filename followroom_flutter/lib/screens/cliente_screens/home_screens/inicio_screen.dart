@@ -166,21 +166,20 @@ class _ReservacionState extends State<Reservacion> {
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
-                margin: EdgeInsets.all(16),
+                margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
                 decoration: BoxDecoration(
                   color: AppColores.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColores.primary),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
                   children: [
-                    Text(
-                      "Tienes una reservación pendiente",
-                      style: TextEstilos.subtitulos,
+                    Expanded(
+                      child: Text(
+                        "Tienes una reservación pendiente",
+                        style: TextEstilos.subtitulos,
+                      ),
                     ),
-                    SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(
@@ -324,16 +323,18 @@ class _ReservacionState extends State<Reservacion> {
                 ),
               ),
             ),
-            SizedBox(height: 12),
-            CarouselSlider(
-              options: CarouselOptions(
-                height: 380.0,
-                enlargeCenterPage: true,
-                viewportFraction: 0.85,
-                autoPlay: true,
-                autoPlayInterval: Duration(seconds: 5),
-                autoPlayAnimationDuration: Duration(milliseconds: 800),
-              ),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 24),
+              child: CarouselSlider(
+                options: CarouselOptions(
+                  height: 380.0,
+                  enlargeCenterPage: true,
+                  viewportFraction: 0.8,
+                  autoPlay: true,
+                  autoPlayInterval: Duration(seconds: 5),
+                  autoPlayAnimationDuration: Duration(milliseconds: 800),
+                ),
               items: paquetesDB.map((paquete) {
                 return Builder(
                   builder: (BuildContext context) {
@@ -628,6 +629,7 @@ class _ReservacionState extends State<Reservacion> {
                   },
                 );
               }).toList(),
+              ),
             ),
           ],
         ),
