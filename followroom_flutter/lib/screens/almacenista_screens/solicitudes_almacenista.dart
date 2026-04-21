@@ -380,17 +380,10 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
   Future<void> _guardarCambios() async {
     setState(() => _guardando = true);
 
-    final mobiliariosActualizados = _mobiliarios
-        .map((m) => {'id': m['id'], 'completado': m['completado'] ?? false})
-        .toList();
-    final equipamentosActualizados = _equipamientos
-        .map((e) => {'id': e['id'], 'completado': e['completado'] ?? false})
-        .toList();
-
     final success = await _service.completarItems(
       reservacionId: widget.reservacion['id'],
-      mobiliarios: mobiliariosActualizados,
-      equipamentos: equipamentosActualizados,
+      mobiliarios: _mobiliarios,
+      equipamentos: _equipamientos,
     );
 
     if (mounted) {
@@ -620,22 +613,25 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Cant: ', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                      SizedBox(
-                        width: 50,
-                        child: WidgetCantidadElementos(
-                          cantidadActual: item['cantidad'] ?? 1,
-                          stockMaximo: item['cantidad'] ?? 1,
-                          onChange: (nuevaCantidad) {
-                            onToggle(index, nuevaCantidad > 0);
-                          },
+                  IntrinsicHeight(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Cant: ', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                        SizedBox(
+                          width: 100,
+                          height: 35,
+                          child: WidgetCantidadElementos(
+                            cantidadActual: item['cantidad'] ?? 1,
+                            stockMaximo: item['cantidad'] ?? 1,
+                            onChange: (nuevaCantidad) {
+                              onToggle(index, nuevaCantidad > 0);
+                            },
+                          ),
                         ),
-                      ),
-                      Text(' /${item['cantidad']}', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    ],
+                        Text(' /${item['cantidad']}', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      ],
+                    ),
                   ),
                   CheckboxListTile(
                     value: completado,

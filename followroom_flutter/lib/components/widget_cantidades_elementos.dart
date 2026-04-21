@@ -68,6 +68,8 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
       children: [
         // Botón Menos
         IconButton(
+          constraints: const BoxConstraints(),
+          padding: const EdgeInsets.all(4),
           onPressed: widget.cantidadActual > 0
               ? () {
                   _validacionActualizados(
@@ -76,30 +78,30 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
                   _controlador.text = (widget.cantidadActual - 1).toString();
                 }
               : null,
-          icon: Icon(Icons.remove_circle_outline),
+          icon: const Icon(Icons.remove_circle_outline, size: 20),
           color: widget.cantidadActual > 0 ? AppColores.primary : Colors.grey,
         ),
 
         // El nuevo Campo de Texto
         SizedBox(
-          width: 50,
+          width: 40,
           child: TextField(
             controller: _controlador,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             onTapOutside: (event) {
               FocusManager.instance.primaryFocus?.unfocus();
             },
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(4),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColores.primary, width: 2),
+                borderRadius: BorderRadius.circular(4),
+                borderSide: const BorderSide(color: AppColores.primary, width: 1),
               ),
             ),
             onChanged: _validacionActualizados,
@@ -108,6 +110,8 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
 
         // Botón Más
         IconButton(
+          constraints: const BoxConstraints(),
+          padding: const EdgeInsets.all(4),
           onPressed: widget.cantidadActual < widget.stockMaximo
               ? () {
                   _validacionActualizados(
@@ -116,7 +120,7 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
                   _controlador.text = (widget.cantidadActual + 1).toString();
                 }
               : null,
-          icon: Icon(Icons.add_circle_outline),
+          icon: const Icon(Icons.add_circle_outline, size: 20),
           color: widget.cantidadActual < widget.stockMaximo
               ? AppColores.primary
               : Colors.grey,

@@ -19,17 +19,12 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
   bool _buscar = true;
   bool _cargando = true;
   String _filtroAplicado = "Todos";
-  String _filtroEstadoAplicado = "Todos"; // Nuevo: Filtro por estado
+  String _filtroEstadoAplicado = "Todos";
   List<Map<String, dynamic>> _tipos = [];
-
-  final Map<String, String> _nombresEstados = {
-    'Todos': 'Todos los estados',
-    'DISP': 'Disponible',
-    'NODISP': 'No disponible',
-    'REPAR': 'En reparación',
-    'DESCOMP': 'Descompuesta',
-    'REVIS': 'Revisión Pendiente',
-  };
+  Map<String, String> _nombresEstados = {'Todos': 'Todos los estados'};
+  List<Map<String, dynamic>> _estadosBD = [];
+  List<Map<String, dynamic>> _estadosMob = [];
+  List<Map<String, dynamic>> _estadosEquipa = [];
 
   List<dynamic> _datosObtenidos = [];
   List<dynamic> _datosMostrados = [];
@@ -37,8 +32,37 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
   @override
   void initState() {
     super.initState();
-    _datosBaseDatos();
-    _cargarTipos();
+    _cargarEstados().then((_) {
+      _cargarTipos();
+      _datosBaseDatos();
+    });
+  }
+
+  Future<void> _cargarEstados() async {
+    try {
+      final estados = await _inventarioService.getEstadosInventario();
+      _estadosMob = List<Map<String, dynamic>>.from(estados['estados_mobiliario'] ?? []);
+      _estadosEquipa = List<Map<String, dynamic>>.from(estados['estados_equipamiento'] ?? []);
+      _actualizarEstadosPorIndice();
+    } catch (e) {
+      print('Error al cargar estados: $e');
+    }
+  }
+
+  void _actualizarEstadosPorIndice() {
+    final estadosFiltrar = _actualIndice == 0 ? _estadosMob : _estadosEquipa;
+    setState(() {
+      _estadosBD = List<Map<String, dynamic>>.from(estadosFiltrar);
+      _nombresEstados = {'Todos': 'Todos los estados'};
+      for (var e in estadosFiltrar) {
+        final codigo = e['codigo']?.toString();
+        final nombre = e['nombre']?.toString();
+        if (codigo != null && nombre != null) {
+          _nombresEstados[codigo] = nombre;
+        }
+      }
+      _filtroEstadoAplicado = 'Todos';
+    });
   }
 
   Future<void> _datosBaseDatos() async {
@@ -74,9 +98,25 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
     }
   }
 
-  void _actualizarListaFiltrada() {
+void _actualizarListaFiltrada() {
     setState(() {
       _datosMostrados = _datosObtenidos.where((item) {
+        // --- FILTRO 0: CANTIDAD > 0 ---
+        final int cantidad = item['cantidad'] ?? 0;
+        if (cantidad <= 0) return false;
+
+        // --- FILTRO 0b: EXCLUIR RESEV EN MOBILIARIO ---
+        if (_actualIndice == 0) {
+          final dynamic estadoData = item['estado_mobil'];
+          String? codigoEstado;
+          if (estadoData is Map) {
+            codigoEstado = estadoData['codigo']?.toString();
+          } else {
+            codigoEstado = estadoData?.toString();
+          }
+          if (codigoEstado == 'RESEV') return false;
+        }
+
         // --- FILTRO 1: CATEGORÍA (Tipo) ---
         bool coincideTipo = true;
         if (_filtroAplicado != "Todos") {
@@ -177,11 +217,11 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                 alSeleccionar: (int nuevoIndice) {
                   setState(() {
                     _actualIndice = nuevoIndice;
-                    _tipos = []; // Limpiar catálogos al cambiar de sección
-                    _filtroAplicado = "Todos"; // Resetear filtro
-                    _filtroEstadoAplicado = "Todos"; // Resetear ambos
+                    _tipos = [];
+                    _filtroAplicado = "Todos";
                     _cargando = true;
                   });
+                  _actualizarEstadosPorIndice();
                   _datosBaseDatos();
                 },
               ),
@@ -350,6 +390,7 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                           fullList: _datosObtenidos,
                                           esEquipamiento: _actualIndice != 0,
                                           onUpdate: _datosBaseDatos,
+                                          estados: _nombresEstados,
                                         ),
                                       ),
                                     ),
@@ -428,11 +469,19 @@ class _AlmacenistaEstadoScreenState extends State<AlmacenistaEstadoScreen> {
                                             final data = _actualIndice != 0
                                                 ? itemActual['estado_equipa']
                                                 : itemActual['estado_mobil'];
-                                            if (data is Map)
-                                              return data['nombre']
-                                                      ?.toString() ??
-                                                  'N/A';
-                                            return data?.toString() ?? 'N/A';
+                                            String? codigo;
+                                            String? nombreFallback;
+                                            if (data is Map) {
+                                              codigo =
+                                                  data['codigo']?.toString();
+                                              nombreFallback =
+                                                  data['nombre']?.toString();
+                                            } else {
+                                              codigo = data?.toString();
+                                            }
+                                            return _nombresEstados[codigo] ??
+                                                nombreFallback ??
+                                                'N/A';
                                           }(),
                                           style: TextStyle(
                                             fontSize: 10,
@@ -474,6 +523,7 @@ class TarjetaMobiliarioElegante extends StatefulWidget {
   final List<dynamic> fullList;
   final bool esEquipamiento;
   final VoidCallback onUpdate;
+  final Map<String, String> estados;
 
   const TarjetaMobiliarioElegante({
     super.key,
@@ -481,6 +531,7 @@ class TarjetaMobiliarioElegante extends StatefulWidget {
     required this.fullList,
     required this.esEquipamiento,
     required this.onUpdate,
+    required this.estados,
   });
 
   @override
@@ -499,11 +550,11 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
   List<Map<String, dynamic>> _resumenEstados = [];
   int _totalFisico = 0;
   Map<String, String> _nombresEstados = {};
-  List<Map<String, dynamic>> _estadosDisponibles = [];
 
   @override
   void initState() {
     super.initState();
+    _nombresEstados = Map<String, String>.from(widget.estados);
     final data = widget.esEquipamiento
         ? widget.item['estado_equipa']
         : widget.item['estado_mobil'];
@@ -519,22 +570,6 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
   Future<void> _cargarDatos() async {
     setState(() => _cargandoResumen = true);
     try {
-      final estadosData = await _inventarioService.getEstadosInventario();
-      final estadosList = widget.esEquipamiento
-          ? estadosData['estados_equipamiento'] ?? []
-          : estadosData['estados_mobiliario'] ?? [];
-
-      _estadosDisponibles = estadosList
-          .map<Map<String, dynamic>>(
-            (e) => {'codigo': e['codigo'], 'nombre': e['nombre']},
-          )
-          .toList();
-
-      _nombresEstados = {};
-      for (var estado in estadosList) {
-        _nombresEstados[estado['codigo']] = estado['nombre'];
-      }
-
       final resumen = widget.esEquipamiento
           ? await _inventarioService.getResumenEstadosEquipa(widget.item['id'])
           : await _inventarioService.getResumenEstadosMob(widget.item['id']);
@@ -547,11 +582,6 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
       }
     } catch (e) {
       print('Error al cargar datos: $e');
-      _nombresEstados = {
-        'DISP': 'Disponible',
-        'REPAR': 'En reparación',
-        'REVIS': 'Revisión Pendiente',
-      };
     }
     if (mounted) setState(() => _cargandoResumen = false);
   }
@@ -706,8 +736,15 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
       final data = widget.esEquipamiento
           ? widget.item['estado_equipa']
           : widget.item['estado_mobil'];
-      if (data is Map) return data['nombre']?.toString() ?? 'N/A';
-      return data?.toString() ?? 'N/A';
+      String? codigo;
+      String? nombreFallback;
+      if (data is Map) {
+        codigo = data['codigo']?.toString();
+        nombreFallback = data['nombre']?.toString();
+      } else {
+        codigo = data?.toString();
+      }
+      return _nombresEstados[codigo] ?? nombreFallback ?? 'N/A';
     })();
 
     return Card(

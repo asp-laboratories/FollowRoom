@@ -54,10 +54,20 @@ class SolicitudesExtraService {
 
       final data = {
         'mobiliarios': mobiliarios
-            .map((m) => {'id': m['id'], 'completado': m['completado'] ?? true})
+            .map((m) => {
+                  'id': m['id'],
+                  'completado': m['completado'] ?? true,
+                  'cantidad_entregada':
+                      m['cantidad_entregada'] ?? m['cantidad'],
+                })
             .toList(),
         'equipamentos': equipamentos
-            .map((e) => {'id': e['id'], 'completado': e['completado'] ?? true})
+            .map((e) => {
+                  'id': e['id'],
+                  'completado': e['completado'] ?? true,
+                  'cantidad_entregada':
+                      e['cantidad_entregada'] ?? e['cantidad'],
+                })
             .toList(),
       };
 
