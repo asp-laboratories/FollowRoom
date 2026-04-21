@@ -944,6 +944,26 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                 );
                               },
                             ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: ((item['stockDisponible'] ?? item['stock'] ?? 0) as int) > 0
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.red.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Stock: ${item['stockDisponible'] ?? item['stock'] ?? 0}',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: ((item['stockDisponible'] ?? item['stock'] ?? 0) as int) > 0
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              ),
+                            ),
                             // IconButton(
                             //   onPressed: cantidad > 0
                             //       ? () {
@@ -1185,6 +1205,26 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                   nuevaCantidad,
                                 );
                               },
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: ((item['stockDisponible'] ?? item['stock'] ?? 0) as int) > 0
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.red.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Stock: ${item['stockDisponible'] ?? item['stock'] ?? 0}',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: ((item['stockDisponible'] ?? item['stock'] ?? 0) as int) > 0
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              ),
                             ),
                             // IconButton(
                             //   onPressed: cantidad > 0

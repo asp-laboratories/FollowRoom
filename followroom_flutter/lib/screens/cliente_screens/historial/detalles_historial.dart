@@ -646,6 +646,8 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 16),
+                  _buildMobiliariosContainer(),
                   // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -663,8 +665,6 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                               _buildServiciosContainer(),
                               SizedBox(height: 16),
                               _buildEquipamientosContainer(),
-                              SizedBox(height: 16),
-                              _buildMobiliariosContainer(),
                             ],
                           ),
                         );
@@ -683,8 +683,6 @@ class _DetallesHistorialState extends State<DetallesHistorial> {
                               child: Column(
                                 children: [
                                   _buildServiciosContainer(),
-                                  SizedBox(height: 16),
-                                  _buildMobiliariosContainer(),
                                 ],
                               ),
                             ),
