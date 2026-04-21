@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:followroom_flutter/core/colores.dart';
 import 'package:followroom_flutter/core/container_styles.dart';
+import 'package:followroom_flutter/components/widget_cantidades_elementos.dart';
 import 'package:followroom_flutter/services/solicitudes_extra_service.dart';
 
 class AlmacenistaSolicitudesScreen extends StatefulWidget {
@@ -616,42 +617,47 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                     ? Border.all(color: Colors.green.withValues(alpha: 0.3))
                     : null,
               ),
-              child: CheckboxListTile(
-                value: completado,
-                activeColor: Colors.green,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item['nombre'] ?? '',
-                        style: TextStyle(
-                          decoration: completado
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: completado
-                              ? Colors.grey
-                              : AppColores.foreground,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Cant: ', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                      SizedBox(
+                        width: 50,
+                        child: WidgetCantidadElementos(
+                          cantidadActual: item['cantidad'] ?? 1,
+                          stockMaximo: item['cantidad'] ?? 1,
+                          onChange: (nuevaCantidad) {
+                            onToggle(index, nuevaCantidad > 0);
+                          },
                         ),
                       ),
-                    ),
-                    Text(
-                      'x${item['cantidad'] ?? 0}',
+                      Text(' /${item['cantidad']}', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    ],
+                  ),
+                  CheckboxListTile(
+                    value: completado,
+                    activeColor: Colors.green,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      item['nombre'] ?? '',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: completado ? Colors.green : AppColores.primary,
+                        decoration: completado ? TextDecoration.lineThrough : null,
+                        color: completado ? Colors.grey : AppColores.foreground,
+                        fontSize: 13,
                       ),
                     ),
-                  ],
-                ),
-                subtitle: Text(
-                  item['descripcion'] ?? '',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                ),
-                onChanged: (bool? value) {
-                  onToggle(index, value ?? false);
-                },
+                    subtitle: Text(
+                      item['descripcion'] ?? '',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                    ),
+                    onChanged: (bool? value) {
+                      onToggle(index, value ?? false);
+                    },
+                  ),
+                ],
               ),
             );
           }),

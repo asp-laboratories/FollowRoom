@@ -114,4 +114,37 @@ class SolicitudesExtraService {
       return null;
     }
   }
+
+  Future<bool> rechazarSolicitud({
+    required int reservacionId,
+    required List<int> rechazados,
+  }) async {
+    try {
+      var dio = Dio();
+      dio.options.baseUrl = baseUrl;
+
+      final data = {
+        'rechazados': rechazados,
+      };
+
+      print('Rechazando solicitud $reservacionId: $data');
+      final response = await dio.post(
+        '/solicitudes-extra/$reservacionId/rechazar/',
+        data: data,
+      );
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print('Error: ${e.response?.statusCode} - ${e.response?.data}');
+      }
+      print('Error al rechazar solicitud: $e');
+      return false;
+    }
+  }
 }

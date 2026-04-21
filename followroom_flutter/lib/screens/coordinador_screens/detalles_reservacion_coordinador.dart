@@ -641,8 +641,8 @@ class _PantallaDetallesCoordinadorState
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  _buildMobiliariosContainer(),
+                  // SizedBox(height: 16),
+                  // _buildMobiliariosContainer(),
                   // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {

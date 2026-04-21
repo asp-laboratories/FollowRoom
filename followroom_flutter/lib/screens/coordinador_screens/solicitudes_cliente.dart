@@ -388,6 +388,29 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                     label: const Text('Aceptar solicitudes'),
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: totalItems > 0
+                                        ? () => _mostrarModalRechazar(
+                                            reservacion,
+                                            mobiliarios,
+                                            equipamentos,
+                                            servicios,
+                                          )
+                                        : null,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.cancel),
+                                    label: const Text('Rechazar solicitudes'),
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -700,6 +723,223 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         setState(() {
           _loading = false;
         });
+      }
+    }
+  }
+
+  void _mostrarModalRechazar(
+    Map<String, dynamic> reservacion,
+    List mobiliarios,
+    List equipamentos,
+    List servicios,
+  ) async {
+    final Set<int> _rechazados = {};
+    final reservacionId = int.parse(reservacion['id'].toString());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Seleccionar elementos a rechazar',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Selecciona los elementos que deseas rechazar:',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            if (mobiliarios.isNotEmpty) ...[
+                              const Text('Mobiliario',
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              ...mobiliarios.map((m) => CheckboxListTile(
+                                    value: _rechazados.contains(int.parse(m['id'].toString())),
+                                    onChanged: (sel) {
+                                      setModalState(() {
+                                        if (sel == true) {
+                                          _rechazados.add(int.parse(m['id'].toString()));
+                                        } else {
+                                          _rechazados.remove(int.parse(m['id'].toString()));
+                                        }
+                                      });
+                                    },
+                                    title: Text(m['nombre'] ?? ''),
+                                    subtitle: Text('x${m['cantidad'] ?? 1}'),
+                                  )),
+                              const Divider(),
+                            ],
+                            if (equipamentos.isNotEmpty) ...[
+                              const Text('Equipamiento',
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              ...equipamentos.map((e) => CheckboxListTile(
+                                    value: _rechazados.contains(int.parse(e['id'].toString())),
+                                    onChanged: (sel) {
+                                      setModalState(() {
+                                        if (sel == true) {
+                                          _rechazados.add(int.parse(e['id'].toString()));
+                                        } else {
+                                          _rechazados.remove(int.parse(e['id'].toString()));
+                                        }
+                                      });
+                                    },
+                                    title: Text(e['nombre'] ?? ''),
+                                    subtitle: Text('x${e['cantidad'] ?? 1}'),
+                                  )),
+                              const Divider(),
+                            ],
+                            if (servicios.isNotEmpty) ...[
+                              const Text('Servicios',
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              ...servicios.map((s) => CheckboxListTile(
+                                    value: _rechazados.contains(int.parse(s['id'].toString())),
+                                    onChanged: (sel) {
+                                      setModalState(() {
+                                        if (sel == true) {
+                                          _rechazados.add(int.parse(s['id'].toString()));
+                                        } else {
+                                          _rechazados.remove(int.parse(s['id'].toString()));
+                                        }
+                                      });
+                                    },
+                                    title: Text(s['nombre'] ?? ''),
+                                  )),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _rechazados.isEmpty
+                              ? null
+                              : () async {
+                                  Navigator.pop(context);
+                                  await _rechazarSolicitud(
+                                    reservacionId,
+                                    _rechazados.toList(),
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: const Icon(Icons.cancel),
+                          label: Text(
+                              'Rechazar ${_rechazados.length} elementos'),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _rechazarSolicitud(int reservacionId, List<int> rechazados) async {
+    setState(() => _loading = true);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar rechazo'),
+        content: Text(
+            '¿Estás seguro de rechazar ${rechazados.length} elementos? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Rechazar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) {
+      setState(() => _loading = false);
+      return;
+    }
+
+    try {
+      final result = await _service.rechazarSolicitud(
+        reservacionId: reservacionId,
+        rechazados: rechazados,
+      );
+
+      if (!mounted) return;
+
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${rechazados.length} elementos rechazados'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        await _cargarDatos();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al rechazar en el servidor'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
       }
     }
   }
