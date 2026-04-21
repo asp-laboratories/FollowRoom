@@ -555,16 +555,32 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
   void initState() {
     super.initState();
     _nombresEstados = Map<String, String>.from(widget.estados);
+    _estadoOrigen = _getEstadoCodigo();
+    _cargarDatos();
+  }
+
+  String? _getEstadoCodigo() {
     final data = widget.esEquipamiento
         ? widget.item['estado_equipa']
         : widget.item['estado_mobil'];
-
     if (data is Map) {
-      _estadoOrigen = data['codigo']?.toString();
-    } else {
-      _estadoOrigen = data?.toString();
+      return data['codigo']?.toString();
     }
-    _cargarDatos();
+    return data?.toString();
+  }
+
+  List<Map<String, String>> _getOpcionesEstado() {
+    if (_estadoOrigen == 'OCUP' && !widget.esEquipamiento) {
+      return [];
+    }
+    if (_estadoOrigen == 'RESV' && widget.esEquipamiento) {
+      return [];
+    }
+    final estadosNoDestino = widget.esEquipamiento ? [] : ['RESEV'];
+    return _nombresEstados.entries
+        .where((e) => e.key != _estadoOrigen && !estadosNoDestino.contains(e.key))
+        .map((e) => {'codigo': e.key, 'nombre': e.value})
+        .toList();
   }
 
   Future<void> _cargarDatos() async {
@@ -879,19 +895,41 @@ class _TarjetaMobiliarioEleganteState extends State<TarjetaMobiliarioElegante> {
                 ),
               ),
               const SizedBox(height: 15),
-              Row(
-                children: [
-                  Expanded(
-                    child: _selectInput(
-                      "A (estado)",
-                      Icons.input_rounded,
-                      _nombresEstados.entries
-                          .where((e) => e.key != _estadoOrigen)
-                          .map((e) => {'codigo': e.key, 'nombre': e.value})
-                          .toList(),
-                      _estadoDestino,
-                      (val) => setState(() => _estadoDestino = val),
-                    ),
+              if ((_estadoOrigen == 'OCUP' && !widget.esEquipamiento) ||
+                  (_estadoOrigen == 'RESV' && widget.esEquipamiento))
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lock, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _estadoOrigen == 'RESV'
+                              ? 'Estado Reservado no puede modificarse'
+                              : 'Estado Occupado no puede modificarse',
+                          style: TextStyle(color: Colors.orange.shade800, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _selectInput(
+                        "A (estado)",
+                        Icons.input_rounded,
+                        _getOpcionesEstado(),
+                        _estadoDestino,
+                        (val) => setState(() => _estadoDestino = val),
+                      ),
                   ),
                 ],
               ),

@@ -488,9 +488,10 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                 titulo: 'Mobiliario Extra',
                 icono: Icons.chair,
                 items: _mobiliarios,
-                onToggle: (index, value) {
+                onChanged: (index, completado, cantidad) {
                   setState(() {
-                    _mobiliarios[index]['completado'] = value;
+                    _mobiliarios[index]['completado'] = completado;
+                    _mobiliarios[index]['cantidad_entregada'] = cantidad;
                   });
                 },
               ),
@@ -499,9 +500,10 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                 titulo: 'Equipamiento Extra',
                 icono: Icons.devices,
                 items: _equipamientos,
-                onToggle: (index, value) {
+                onChanged: (index, completado, cantidad) {
                   setState(() {
-                    _equipamientos[index]['completado'] = value;
+                    _equipamientos[index]['completado'] = completado;
+                    _equipamientos[index]['cantidad_entregada'] = cantidad;
                   });
                 },
               ),
@@ -538,7 +540,7 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
     required String titulo,
     required IconData icono,
     required List<Map<String, dynamic>> items,
-    required Function(int, bool) onToggle,
+    required Function(int, bool, int) onChanged,
   }) {
     if (items.isEmpty) {
       return Container(
@@ -597,18 +599,24 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
             final index = entry.key;
             final item = entry.value;
             final completado = item['completado'] ?? false;
+            final cantidadTotal = item['cantidad'] ?? 1;
+            final cantidadEntregada =
+                item['cantidad_entregada'] ??
+                (completado ? cantidadTotal : 0);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: completado
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.grey.withValues(alpha: 0.05),
+                color:
+                    completado
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.grey.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
-                border: completado
-                    ? Border.all(color: Colors.green.withValues(alpha: 0.3))
-                    : null,
+                border:
+                    completado
+                        ? Border.all(color: Colors.green.withValues(alpha: 0.3))
+                        : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,19 +625,28 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Cant: ', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                        Text(
+                          'Cant: ',
+                          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                        ),
                         SizedBox(
                           width: 100,
                           height: 35,
                           child: WidgetCantidadElementos(
-                            cantidadActual: item['cantidad'] ?? 1,
-                            stockMaximo: item['cantidad'] ?? 1,
+                            cantidadActual: cantidadEntregada,
+                            stockMaximo: cantidadTotal,
                             onChange: (nuevaCantidad) {
-                              onToggle(index, nuevaCantidad > 0);
+                              onChanged(index, nuevaCantidad > 0, nuevaCantidad);
                             },
                           ),
                         ),
-                        Text(' /${item['cantidad']}', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                        Text(
+                          ' /$cantidadTotal',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -640,7 +657,8 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                     title: Text(
                       item['nombre'] ?? '',
                       style: TextStyle(
-                        decoration: completado ? TextDecoration.lineThrough : null,
+                        decoration:
+                            completado ? TextDecoration.lineThrough : null,
                         color: completado ? Colors.grey : AppColores.foreground,
                         fontSize: 13,
                       ),
@@ -650,7 +668,12 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                       style: TextStyle(fontSize: 10, color: Colors.grey[500]),
                     ),
                     onChanged: (bool? value) {
-                      onToggle(index, value ?? false);
+                      final nuevoValor = value ?? false;
+                      onChanged(
+                        index,
+                        nuevoValor,
+                        nuevoValor ? cantidadTotal : 0,
+                      );
                     },
                   ),
                 ],
