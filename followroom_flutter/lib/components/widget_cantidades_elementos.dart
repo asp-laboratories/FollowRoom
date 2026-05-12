@@ -63,14 +63,14 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
 
   @override
   Widget build(BuildContext context) {
+    final puedeRestar = widget.cantidadActual > 0;
+    final puedeSumar = widget.cantidadActual < widget.stockMaximo;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Botón Menos
-        IconButton(
-          constraints: const BoxConstraints(),
-          padding: const EdgeInsets.all(4),
-          onPressed: widget.cantidadActual > 0
+        GestureDetector(
+          onTap: puedeRestar
               ? () {
                   _validacionActualizados(
                     (widget.cantidadActual - 1).toString(),
@@ -78,11 +78,18 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
                   _controlador.text = (widget.cantidadActual - 1).toString();
                 }
               : null,
-          icon: const Icon(Icons.remove_circle_outline, size: 20),
-          color: widget.cantidadActual > 0 ? AppColores.primary : Colors.grey,
+          child: Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.remove_circle_outline,
+              size: 22,
+              color: puedeRestar ? AppColores.primary : Colors.grey,
+            ),
+          ),
         ),
-
-        // El nuevo Campo de Texto
+        const SizedBox(width: 2),
         SizedBox(
           width: 40,
           child: TextField(
@@ -107,12 +114,9 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
             onChanged: _validacionActualizados,
           ),
         ),
-
-        // Botón Más
-        IconButton(
-          constraints: const BoxConstraints(),
-          padding: const EdgeInsets.all(4),
-          onPressed: widget.cantidadActual < widget.stockMaximo
+        const SizedBox(width: 2),
+        GestureDetector(
+          onTap: puedeSumar
               ? () {
                   _validacionActualizados(
                     (widget.cantidadActual + 1).toString(),
@@ -120,10 +124,16 @@ class _WidgetCantidadElementosState extends State<WidgetCantidadElementos> {
                   _controlador.text = (widget.cantidadActual + 1).toString();
                 }
               : null,
-          icon: const Icon(Icons.add_circle_outline, size: 20),
-          color: widget.cantidadActual < widget.stockMaximo
-              ? AppColores.primary
-              : Colors.grey,
+          child: Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.add_circle_outline,
+              size: 22,
+              color: puedeSumar ? AppColores.primary : Colors.grey,
+            ),
+          ),
         ),
       ],
     );

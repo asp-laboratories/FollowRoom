@@ -630,7 +630,7 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                           style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                         ),
                         SizedBox(
-                          width: 100,
+                          width: 130,
                           height: 35,
                           child: WidgetCantidadElementos(
                             cantidadActual: cantidadEntregada,
@@ -653,6 +653,7 @@ class _SolicitudesDetalleState extends State<SolicitudesDetalle> {
                   CheckboxListTile(
                     value: completado,
                     activeColor: Colors.green,
+                    contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
                     title: Text(
                       item['nombre'] ?? '',
