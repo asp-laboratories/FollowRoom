@@ -150,12 +150,18 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
               final equipamentos =
                   (reservacion['equipamiento_extra'] as List?) ?? [];
               final servicios = (reservacion['servicios_extra'] as List?) ?? [];
-              final totalItems =
-                  mobiliarios.length + equipamentos.length + servicios.length;
+              final mobiliariosCompletados =
+                  mobiliarios.where((m) => m['completado'] == true).toList();
+              final equipamentosCompletados =
+                  equipamentos.where((e) => e['completado'] == true).toList();
+              final hayItemsParaAceptar = mobiliariosCompletados.isNotEmpty ||
+                  equipamentosCompletados.isNotEmpty ||
+                  servicios.isNotEmpty;
 
               final todosCompletados =
                   mobiliarios.every((m) => m['completado'] == true) &&
-                  equipamentos.every((e) => e['completado'] == true);
+                  equipamentos.every((e) => e['completado'] == true) &&
+                  servicios.every((s) => s['completado'] == true);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -333,7 +339,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 icono: Icons.room_service,
                                 seleccionable: true,
                               ),
-                              if (totalItems > 0) ...[
+                              if (hayItemsParaAceptar) ...[
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.all(12),
@@ -369,14 +375,12 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
-                                    onPressed: totalItems > 0
-                                        ? () => _aceptarSolicitud(
-                                            reservacion,
-                                            mobiliarios,
-                                            equipamentos,
-                                            servicios,
-                                          )
-                                        : null,
+                                    onPressed: () => _aceptarSolicitud(
+                                      reservacion,
+                                      mobiliarios,
+                                      equipamentos,
+                                      servicios,
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green,
                                       foregroundColor: Colors.white,
@@ -392,14 +396,12 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
-                                    onPressed: totalItems > 0
-                                        ? () => _mostrarModalRechazar(
-                                            reservacion,
-                                            mobiliarios,
-                                            equipamentos,
-                                            servicios,
-                                          )
-                                        : null,
+                                    onPressed: () => _mostrarModalRechazar(
+                                      reservacion,
+                                      mobiliarios,
+                                      equipamentos,
+                                      servicios,
+                                    ),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Colors.red,
                                       side: const BorderSide(color: Colors.red),
@@ -624,6 +626,34 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
     );
   }
 
+  double _calcularTotalAceptar(
+    List mobiliarios,
+    List equipamentos,
+    List servicios,
+  ) {
+    double total = 0;
+    for (var m in mobiliarios) {
+      if (m['completado'] == true) {
+        total +=
+            ((m['precio'] ?? 0) as num).toDouble() *
+            ((m['cantidad'] ?? 1) as num).toDouble();
+      }
+    }
+    for (var e in equipamentos) {
+      if (e['completado'] == true) {
+        total +=
+            ((e['precio'] ?? 0) as num).toDouble() *
+            ((e['cantidad'] ?? 1) as num).toDouble();
+      }
+    }
+    for (var s in servicios) {
+      if (_seleccionados.contains(int.parse(s['id'].toString()))) {
+        total += (s['precio'] ?? 0) as num;
+      }
+    }
+    return total;
+  }
+
   Future<void> _aceptarSolicitud(
     Map<String, dynamic> reservacion,
     List mobiliarios,
@@ -631,27 +661,34 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
     List servicios,
   ) async {
     try {
-      // Conversión segura de IDs - solo los seleccionados
+      // Mobiliarios y equipamientos completados por almacenista se incluyen automáticamente
       final mobiliariosIds = mobiliarios
-          .where((m) => _seleccionados.contains(int.parse(m['id'].toString())))
+          .where((m) => m['completado'] == true)
           .map((m) => int.parse(m['id'].toString()))
           .toList();
       final equipamentosIds = equipamentos
-          .where((e) => _seleccionados.contains(int.parse(e['id'].toString())))
+          .where((e) => e['completado'] == true)
           .map((e) => int.parse(e['id'].toString()))
           .toList();
+      // Servicios: solo los seleccionados por el coordinador
       final serviciosIds = servicios
           .where((s) => _seleccionados.contains(int.parse(s['id'].toString())))
           .map((s) => int.parse(s['id'].toString()))
           .toList();
       final reservacionId = int.parse(reservacion['id'].toString());
 
+      final totalAdicional = _calcularTotalAceptar(
+        mobiliarios,
+        equipamentos,
+        servicios,
+      );
+
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Aceptar solicitudes'),
-          content: const Text(
-            '¿Está seguro de aceptar las solicitudes extra? Esto aumentará el precio total de la reservación.',
+          content: Text(
+            '¿Está seguro de aceptar las solicitudes extra? Se agregará un total adicional de \$${totalAdicional.toStringAsFixed(2)} a la reservación.',
           ),
           actions: [
             TextButton(
@@ -693,7 +730,7 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Solicitudes aceptadas. Total adicional: \$${result['total_adicional']?.toStringAsFixed(2) ?? '0'}',
+              'Solicitudes aceptadas. Total adicional: \$${totalAdicional.toStringAsFixed(2)}',
             ),
             backgroundColor: Colors.green,
           ),
@@ -782,46 +819,6 @@ class _ReservacionesVisualScreenState extends State<ReservacionesVisualScreen> {
                         child: ListView(
                           controller: scrollController,
                           children: [
-                            if (mobiliarios.isNotEmpty) ...[
-                              const Text('Mobiliario',
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 8),
-                              ...mobiliarios.map((m) => CheckboxListTile(
-                                    value: _rechazados.contains(int.parse(m['id'].toString())),
-                                    onChanged: (sel) {
-                                      setModalState(() {
-                                        if (sel == true) {
-                                          _rechazados.add(int.parse(m['id'].toString()));
-                                        } else {
-                                          _rechazados.remove(int.parse(m['id'].toString()));
-                                        }
-                                      });
-                                    },
-                                    title: Text(m['nombre'] ?? ''),
-                                    subtitle: Text('x${m['cantidad'] ?? 1}'),
-                                  )),
-                              const Divider(),
-                            ],
-                            if (equipamentos.isNotEmpty) ...[
-                              const Text('Equipamiento',
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 8),
-                              ...equipamentos.map((e) => CheckboxListTile(
-                                    value: _rechazados.contains(int.parse(e['id'].toString())),
-                                    onChanged: (sel) {
-                                      setModalState(() {
-                                        if (sel == true) {
-                                          _rechazados.add(int.parse(e['id'].toString()));
-                                        } else {
-                                          _rechazados.remove(int.parse(e['id'].toString()));
-                                        }
-                                      });
-                                    },
-                                    title: Text(e['nombre'] ?? ''),
-                                    subtitle: Text('x${e['cantidad'] ?? 1}'),
-                                  )),
-                              const Divider(),
-                            ],
                             if (servicios.isNotEmpty) ...[
                               const Text('Servicios',
                                   style: TextStyle(fontWeight: FontWeight.bold)),

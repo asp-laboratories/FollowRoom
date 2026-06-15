@@ -147,7 +147,7 @@ padding: EdgeInsets.all(12),
                     ),
                   ),
                   SizedBox(height: 16),
-                  _buildMobiliariosContainer(),
+                  // _buildMobiliariosContainer(),
                   // SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -397,71 +397,71 @@ padding: EdgeInsets.all(12),
     return _calcularSubtotal() + _calcularIVA();
   }
 
-  Widget _buildMobiliariosContainer() {
-    final mobiliariosList = _datosCompletos?['mobiliarios'] as List? ?? [];
+//   Widget _buildMobiliariosContainer() {
+//     final mobiliariosList = _datosCompletos?['mobiliarios'] as List? ?? [];
 
-    return Container(
-      width: double.infinity,
-      decoration: ContainerStyles.sombreado,
-      padding: EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Mobiliarios",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          SizedBox(height: 8),
-          if (mobiliariosList.isEmpty)
-            Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
-          else
-            ...mobiliariosList.map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        "- ${m['mobiliario__nombre'] ?? m['nombre'] ?? 'Mobiliario'} (x${m['cantidad'] ?? 1})",
-                        style: TextStyle(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      "\$${((m['mobiliario__costo'] ?? m['costo'] ?? m['precio'] ?? 0) as num).toDouble().toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (mobiliariosList.isNotEmpty) ...[
-            Divider(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Total:",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                Text(
-                  "\$${mobiliariosList.fold<num>(0, (sum, m) => sum + (((m['mobiliario__costo'] ?? m['costo'] ?? m['precio'] ?? 0) as num).toDouble() * ((m['cantidad'] ?? 1) as num).toDouble()))}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColores.primary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+//     return Container(
+//       width: double.infinity,
+//       decoration: ContainerStyles.sombreado,
+//       padding: EdgeInsets.all(12),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text(
+//             "Mobiliarios",
+//             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+//           ),
+//           SizedBox(height: 8),
+//           if (mobiliariosList.isEmpty)
+//             Text("Sin mobiliarios", style: TextStyle(fontSize: 12))
+//           else
+//             ...mobiliariosList.map(
+//               (m) => Padding(
+//                 padding: const EdgeInsets.only(bottom: 4),
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   mainAxisSize: MainAxisSize.min,
+//                   children: [
+//                     Flexible(
+//                       child: Text(
+//                         "- ${m['mobiliario__nombre'] ?? m['nombre'] ?? 'Mobiliario'} (x${m['cantidad'] ?? 1})",
+//                         style: TextStyle(fontSize: 12),
+//                         overflow: TextOverflow.ellipsis,
+//                       ),
+//                     ),
+//                     Text(
+//                       "\$${((m['mobiliario__costo'] ?? m['costo'] ?? m['precio'] ?? 0) as num).toDouble().toStringAsFixed(2)}",
+//                       style: TextStyle(
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 12,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           if (mobiliariosList.isNotEmpty) ...[
+//             Divider(height: 16),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Text(
+//                   "Total:",
+//                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+//                 ),
+//                 Text(
+//                   "\$${mobiliariosList.fold<num>(0, (sum, m) => sum + (((m['mobiliario__costo'] ?? m['costo'] ?? m['precio'] ?? 0) as num).toDouble() * ((m['cantidad'] ?? 1) as num).toDouble()))}",
+//                   style: TextStyle(
+//                     fontWeight: FontWeight.bold,
+//                     fontSize: 14,
+//                     color: AppColores.primary,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
 }
