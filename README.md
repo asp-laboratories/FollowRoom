@@ -1,7 +1,7 @@
 <h1 align="center">FollowRoom - Aplicación Móvil de Gestión de Eventos en Hoteles</h1>
 
 <p align="center">
-  <img src="assets/images/followroom_logo.png" alt="FollowRoom" width="200"/>
+  <img src="followroom_flutter/assets/images/followroom_logo.png" alt="FollowRoom" width="200"/>
 </p>
 
 ## Tabla de contenidos
