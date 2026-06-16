@@ -13,7 +13,6 @@
 - [Cómo contribuir](#cómo-contribuir)
 - [Autor/es](#autores)
 - [Información adicional](#información-adicional)
-- [Licencia](#licencia)
 - [Limitaciones del sistema](#limitaciones-del-sistema)
 
 ## Descripción y contexto
@@ -233,9 +232,7 @@ Esta aplicación es el **cliente móvil** del sistema **BookingRoom** (repositor
 
 La aplicación consume la API REST del backend BookingRoom y utiliza **Firebase Authentication** para la autenticación de usuarios.
 
-## Licencia
 
-Este proyecto está bajo la licencia **MIT**. Consulta el archivo `LICENSE` para más detalles.
 
 ## Limitaciones del sistema
 
